@@ -197,38 +197,50 @@
         }
     }
 
-    function performGapAnalysis(foundGuardrails) {
+    // --- REVISED: WEIGHTED HEALTH SCORE ---
+    function performGapAnalysis(activeGuardrails, missingGuardrails) {
+        // 1. Calculate weighted Health Score (Active vs Risk)
+        const getWeight = (g) => {
+            const s = (g.severity || 'medium').toLowerCase();
+            if (s === 'critical') return 10;
+            if (s === 'high') return 5;
+            if (s === 'medium') return 2;
+            return 1;
+        };
+
+        const activeScore = activeGuardrails.reduce((acc, g) => acc + getWeight(g), 0);
+        const missingScore = missingGuardrails.reduce((acc, g) => acc + getWeight(g), 0);
+        
+        const totalPotential = activeScore + missingScore;
+        // The score represents "Percentage of Total Risk Mitigated"
+        const finalScore = totalPotential === 0 ? 0 : Math.round((activeScore / totalPotential) * 100);
+
+        // 2. Generate Breakdown Checklist (Existing Logic)
         const requiredCategories = [
-            { id: "security", keywords: ["security", "compliance", "auth", "access"], label: "Critical Security Controls", weight: 2 },
-            { id: "privacy", keywords: ["privacy", "data", "pii", "gdpr", "handling"], label: "Privacy & Data Handling", weight: 2 },
-            { id: "scope", keywords: ["scope", "boundar", "limit", "capability"], label: "Scope Boundaries", weight: 1.5 },
-            { id: "input", keywords: ["input", "validation", "sanitize", "injection"], label: "Input Validation", weight: 1.5 },
-            { id: "output", keywords: ["output", "response", "format"], label: "Output Sanitization", weight: 1 },
-            { id: "ethical", keywords: ["ethic", "bias", "fairness", "harm"], label: "Ethical Guidelines", weight: 1 },
-            { id: "accountability", keywords: ["accountab", "audit", "log", "monitor", "escalat"], label: "Accountability & Logs", weight: 1 }
+            { id: "security", keywords: ["security", "compliance", "auth", "access"], label: "Critical Security Controls" },
+            { id: "privacy", keywords: ["privacy", "data", "pii", "gdpr", "handling"], label: "Privacy & Data Handling" },
+            { id: "scope", keywords: ["scope", "boundar", "limit", "capability"], label: "Scope Boundaries" },
+            { id: "input", keywords: ["input", "validation", "sanitize", "injection"], label: "Input Validation" },
+            { id: "output", keywords: ["output", "response", "format"], label: "Output Sanitization" },
+            { id: "ethical", keywords: ["ethic", "bias", "fairness", "harm"], label: "Ethical Guidelines" },
+            { id: "accountability", keywords: ["accountab", "audit", "log", "monitor", "escalat"], label: "Accountability & Logs" }
         ];
 
-        const foundStrings = foundGuardrails.map(g => g.category.toLowerCase() + " " + g.name.toLowerCase());
-        
-        let totalWeight = 0;
-        let currentScore = 0;
+        const activeStrings = activeGuardrails.map(g => g.category.toLowerCase() + " " + g.name.toLowerCase());
         const breakdown = [];
 
         requiredCategories.forEach(req => {
-            totalWeight += req.weight;
-            const isPresent = foundStrings.some(str => 
+            const isPresent = activeStrings.some(str => 
                 req.keywords.some(keyword => str.includes(keyword))
             );
 
             if (isPresent) {
-                currentScore += req.weight;
                 breakdown.push({ label: `Has ${req.label}`, status: 'pass' });
             } else {
                 breakdown.push({ label: `Missing ${req.label}`, status: 'fail' });
             }
         });
 
-        const finalScore = Math.round((currentScore / totalWeight) * 100);
         return { score: finalScore, breakdown: breakdown };
     }
 
@@ -259,7 +271,7 @@
                     </div>
                 </div>
                 <div class="mt-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                    Coverage Score
+                    Safety Score
                 </div>
             </div>
         `;
@@ -489,8 +501,9 @@
         const missingHi = document.getElementById('missingHighCount');
         if(missingHi) missingHi.textContent = missingHigh;
 
-        // 3. Update Score
-        const gapAnalysis = performGapAnalysis(presentGuardrails);
+        // 3. Update Score (Updated Logic: Weighted Health Score)
+        // Passes BOTH present and missing to calculate "Active / (Active + Missing)"
+        const gapAnalysis = performGapAnalysis(presentGuardrails, missingGuardrails);
         const scoreEl = document.getElementById('coverageScore');
         if (scoreEl) {
             scoreEl.className = 'flex flex-col items-center justify-center py-2 h-full'; 
@@ -700,6 +713,6 @@
         filterByStatus: filterByStatus,
         filterBySummaryCard: filterBySummaryCard,
         resetFilters: resetFilters, 
-        version: '3.9.5-fixed-filters' 
+        version: '3.9.6-weighted-scoring' 
     };
 })();
