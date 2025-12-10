@@ -42,6 +42,7 @@
         "Low": { badge: "bg-blue-50 text-blue-700 border border-blue-200 ring-1 ring-blue-600/10" }
     };
 
+    // New styles for Enforcement actions
     const actionStyles = {
         "block": "bg-red-100 text-red-800 border-red-200",
         "mask": "bg-blue-100 text-blue-800 border-blue-200",
@@ -194,78 +195,51 @@
         }
     }
 
-    // --- LOGIC FIX: SCORE PENALTY SYSTEM ---
-    // Previous version mistakenly counted "Risk Found" as "Category Covered".
-    // New version starts at 100% and subtracts based on Severity of findings.
+    // --- REVERTED: REWARD-BASED SCORING ---
     function performGapAnalysis(foundGuardrails) {
-        // Base score starts perfect
-        let currentScore = 100;
-
-        // Categories we want to see covered
+        // We look for these "Concepts", allowing for loose matching on names
         const requiredCategories = [
-            { id: "security", keywords: ["security", "compliance", "auth", "access"], label: "Critical Security Controls" },
-            { id: "privacy", keywords: ["privacy", "data", "pii", "gdpr", "handling"], label: "Privacy & Data Handling" },
-            { id: "scope", keywords: ["scope", "boundar", "limit", "capability"], label: "Scope Boundaries" },
-            { id: "input", keywords: ["input", "validation", "sanitize", "injection"], label: "Input Validation" },
-            { id: "ethical", keywords: ["ethic", "bias", "fairness", "harm"], label: "Ethical Guidelines" },
+            { id: "security", keywords: ["security", "compliance", "auth", "access"], label: "Critical Security Controls", weight: 2 },
+            { id: "privacy", keywords: ["privacy", "data", "pii", "gdpr", "handling"], label: "Privacy & Data Handling", weight: 2 },
+            { id: "scope", keywords: ["scope", "boundar", "limit", "capability"], label: "Scope Boundaries", weight: 1.5 },
+            { id: "input", keywords: ["input", "validation", "sanitize", "injection"], label: "Input Validation", weight: 1.5 },
+            { id: "output", keywords: ["output", "response", "format"], label: "Output Sanitization", weight: 1 },
+            { id: "ethical", keywords: ["ethic", "bias", "fairness", "harm"], label: "Ethical Guidelines", weight: 1 },
+            { id: "accountability", keywords: ["accountab", "audit", "log", "monitor", "escalat"], label: "Accountability & Logs", weight: 1 }
         ];
 
+        const foundStrings = foundGuardrails.map(g => g.category.toLowerCase() + " " + g.name.toLowerCase());
+        
+        let totalWeight = 0;
+        let currentScore = 0;
         const breakdown = [];
 
-        // 1. Calculate Score based on RISKS found
-        // The backend returns "Guardrails" which are actually "Risk Assessments"
-        // High/Critical Severity means a GAP exists.
-        foundGuardrails.forEach(g => {
-            const sev = g.severity ? g.severity.toLowerCase() : "medium";
-            if (sev === "critical") currentScore -= 20;
-            else if (sev === "high") currentScore -= 10;
-            else if (sev === "medium") currentScore -= 5;
-            else if (sev === "low") currentScore -= 1; // Minor ding for low risks
-        });
-
-        // Clamp score
-        if (currentScore < 0) currentScore = 0;
-
-        // 2. Build the Gap Analysis List
-        // If a category has Critical/High risks -> FAIL
-        // If a category has NO Critical/High risks -> PASS
         requiredCategories.forEach(req => {
-            // Find all findings for this category
-            const categoryFindings = foundGuardrails.filter(g => {
-                const catStr = g.category.toLowerCase();
-                const nameStr = g.name.toLowerCase();
-                return req.keywords.some(k => catStr.includes(k)) || req.keywords.some(k => nameStr.includes(k));
-            });
+            totalWeight += req.weight;
+            
+            // Check if ANY found guardrail matches ANY keyword for this requirement
+            const isPresent = foundStrings.some(str => 
+                req.keywords.some(keyword => str.includes(keyword))
+            );
 
-            // Check if any finding is "Bad" (High/Critical OR mentions "Missing")
-            const hasMajorRisk = categoryFindings.some(g => {
-                const sev = g.severity.toLowerCase();
-                const text = (g.name + " " + g.description).toLowerCase();
-                // Logic: It's a fail if severity is high OR text explicitly says "missing/lack"
-                return (sev === "critical" || sev === "high") || 
-                       (text.includes("missing") || text.includes("lack of") || text.includes("no "));
-            });
-
-            // Determine Status
-            // Note: If finding list is empty? For "Be helpful", list is usually populated with Missing items.
-            // If completely empty, we assume PASS (No risks found), UNLESS prompt was super short.
-            if (hasMajorRisk) {
-                breakdown.push({ label: `${req.label} Gaps Detected`, status: 'fail' });
+            if (isPresent) {
+                currentScore += req.weight;
+                breakdown.push({ label: `Has ${req.label}`, status: 'pass' });
             } else {
-                breakdown.push({ label: `${req.label} Verified`, status: 'pass' });
+                breakdown.push({ label: `Missing ${req.label}`, status: 'fail' });
             }
         });
 
-        return { score: currentScore, breakdown: breakdown };
+        const finalScore = Math.round((currentScore / totalWeight) * 100);
+        return { score: finalScore, breakdown: breakdown };
     }
 
     function renderScoreChart(score) {
         let color = '#dc2626'; // Red
         let textColor = 'text-red-700';
         
-        // Stricter scoring thresholds
-        if (score >= 85) { color = '#16a34a'; textColor = 'text-green-700'; }
-        else if (score >= 60) { color = '#ea580c'; textColor = 'text-orange-700'; }
+        if (score >= 80) { color = '#16a34a'; textColor = 'text-green-700'; }
+        else if (score >= 50) { color = '#ea580c'; textColor = 'text-orange-700'; }
 
         const radius = 45; 
         const circumference = 2 * Math.PI * radius;
@@ -287,7 +261,7 @@
                     </div>
                 </div>
                 <div class="mt-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                    Safety Score
+                    Coverage Score
                 </div>
             </div>
         `;
@@ -332,7 +306,7 @@
                     severity: g.risk_level || g.severity || "Medium", 
                     mechanism: g.recommendation || g.mechanism || "No recommendation provided.",
                     triggers: Array.isArray(g.triggers) ? g.triggers : [],
-                    enforcement: g.enforcement || "Review", 
+                    enforcement: g.enforcement || "Review", // Fallback if missing
                     location: g.location || "" 
                 }));
             }
@@ -450,7 +424,6 @@
         renderGuardrails(filtered);
     }
 
-    // --- RENDER FUNCTION (Unchanged from previous V3.5) ---
     function renderGuardrails(guardrails) {
         const container = document.getElementById('guardrailsDisplay');
         
@@ -470,6 +443,7 @@
                 }
             }
             
+            // Resolve Action Style
             const actionKey = (g.enforcement || "default").toLowerCase();
             let actionClass = actionStyles["default"];
             for (const key in actionStyles) {
@@ -607,5 +581,5 @@
 
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 
-    window.guardrailAnalyzer = { filterByCategory: filterByCategory, version: '3.6.0-logic-fix' };
+    window.guardrailAnalyzer = { filterByCategory: filterByCategory, version: '3.8.0-reward-enforce' };
 })();
