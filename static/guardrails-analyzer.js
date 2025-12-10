@@ -261,30 +261,6 @@
             </div>
         `;
     }
-   function simulateLoadingSteps() {
-        const steps = [
-            "🤖 Initializing Autonomous Auditor Agent...",
-            "🔍 Scanning for 'Excessive Agency' risks...",
-            "🛡️ Simulating tool execution paths...",
-            "🧠 Evaluating reasoning chain vulnerabilities...",
-            "⚖️ Auditing against OWASP & NIST Agentic standards...",
-            "📝 Generating governance report..."
-        ];
-        let stepIndex = 0;
-        
-        if (window.loadingInterval) clearInterval(window.loadingInterval);
-        
-        window.loadingInterval = setInterval(() => {
-            const loadingElement = document.getElementById('loadingState');
-            if (!loadingElement || loadingElement.classList.contains('hidden')) {
-                clearInterval(window.loadingInterval);
-                return;
-            }
-            const progressText = document.getElementById('progressText');
-            if (progressText) progressText.textContent = steps[stepIndex];
-            stepIndex = (stepIndex + 1) % steps.length;
-        }, 1200); // Faster updates for an "active" feel
-    }
   
     async function analyzeInstruction(apiKey, instruction) {
         hideError();
