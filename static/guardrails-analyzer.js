@@ -677,115 +677,119 @@
         resultsSection.classList.remove('hidden');
     }
 
-    function renderGuardrails(guardrails) {
-    const container = document.getElementById('guardrailsDisplay');
-    
-    if (guardrails.length === 0) {
-        container.innerHTML = '<div class="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-100"><p class="text-gray-500 text-lg">No guardrails found matching current filters.</p></div>';
-        return;
-    }
-
-    container.innerHTML = guardrails.map((g, idx) => {
-        const sevStyle = severityStyles[g.severity] || severityStyles["Medium"];
+function renderGuardrails(guardrails) {
+        const container = document.getElementById('guardrailsDisplay');
         
-        // 1. Determine Category Style (for Badges)
-        const catKey = g.category.toLowerCase();
-        let styleToUse = categoryStyles["default"];
-        for (const key in categoryStyles) {
-            if (catKey.includes(key)) {
-                styleToUse = categoryStyles[key];
-                break;
-            }
-        }
-        
-        // --- FIX APPLIED HERE ---
-        // Check if the guardrail is ACTIVE (Present) based on location
-        const isActive = g.location && g.location.trim().length > 0;
-
-        // Visual Logic:
-        // - Active (Safe) = Professional Slate/Blue Gradient
-        // - Missing (Risk) = Category Default (e.g., Red for Security)
-        const headerGradient = isActive 
-            ? "bg-gradient-to-r from-slate-700 to-slate-800" 
-            : styleToUse.gradient;
-        // ------------------------
-
-        const actionKey = (g.enforcement || "default").toLowerCase();
-        let actionClass = actionStyles["default"];
-        for (const key in actionStyles) {
-            if (actionKey.includes(key)) {
-                actionClass = actionStyles[key];
-                break;
-            }
+        if (guardrails.length === 0) {
+            container.innerHTML = '<div class="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-100"><p class="text-gray-500 text-lg">No guardrails found matching current filters.</p></div>';
+            return;
         }
 
-        return `
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden fade-in" style="animation-delay: ${idx * 0.05}s">
-            <div class="${headerGradient} p-5 text-white">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <h3 class="text-xl font-bold mb-1">${escapeHtml(g.name)}</h3>
-                        <p class="text-white text-opacity-90 text-sm">${escapeHtml(g.description)}</p>
-                    </div>
-                    <div class="flex flex-col items-end gap-2 ml-4">
-                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${sevStyle.badge}">
-                            ${escapeHtml(g.severity)}
-                        </span>
-                        <span class="px-2 py-0.5 rounded text-[10px] uppercase font-medium bg-white/20 text-white border border-white/30">
-                            ${escapeHtml(g.category)}
-                        </span>
-                    </div>
-                </div>
-            </div>
+        container.innerHTML = guardrails.map((g, idx) => {
+            const sevStyle = severityStyles[g.severity] || severityStyles["Medium"];
+            
+            // 1. Determine Category Style (for Badges)
+            const catKey = g.category.toLowerCase();
+            let styleToUse = categoryStyles["default"];
+            for (const key in categoryStyles) {
+                if (catKey.includes(key)) {
+                    styleToUse = categoryStyles[key];
+                    break;
+                }
+            }
+            
+            // Check if the guardrail is ACTIVE (Present) based on location
+            const isActive = g.location && g.location.trim().length > 0;
 
-            <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Action</h4>
+            // Visual Logic:
+            const headerGradient = isActive 
+                ? "bg-gradient-to-r from-slate-700 to-slate-800" 
+                : styleToUse.gradient;
+
+            const actionKey = (g.enforcement || "default").toLowerCase();
+            let actionClass = actionStyles["default"];
+            for (const key in actionStyles) {
+                if (actionKey.includes(key)) {
+                    actionClass = actionStyles[key];
+                    break;
+                }
+            }
+
+            // Default icon if missing from style
+            const iconSvg = styleToUse.icon || categoryStyles["default"].icon;
+
+            return `
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden fade-in" style="animation-delay: ${idx * 0.05}s">
+                <div class="${headerGradient} p-5 text-white">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm shadow-sm text-white">
+                                    ${iconSvg}
+                                </div>
+                                <h3 class="text-xl font-bold leading-tight">${escapeHtml(g.name)}</h3>
+                            </div>
+                            <p class="text-white text-opacity-90 text-sm pl-[3.25rem]">${escapeHtml(g.description)}</p>
                         </div>
-                        <span class="inline-block px-3 py-1 rounded text-xs font-bold border uppercase tracking-wide ${actionClass}">
-                            ${escapeHtml(g.enforcement)}
-                        </span>
-                    </div>
-
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Mechanism</h4>
-                        <div class="pl-3 border-l-4 border-blue-400">
-                            <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(g.mechanism)}</p>
+                        <div class="flex flex-col items-end gap-2 ml-4">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${sevStyle.badge}">
+                                ${escapeHtml(g.severity)}
+                            </span>
+                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-medium bg-white/20 text-white border border-white/30">
+                                ${escapeHtml(g.category)}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    ${g.location ? `
+                <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
                         <div>
-                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Detected In Context</h4>
-                            <div class="bg-slate-50 border border-slate-200 rounded p-3 text-xs font-mono text-slate-600 italic">
-                                "${escapeHtml(g.location)}"
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Action</h4>
+                            </div>
+                            <span class="inline-block px-3 py-1 rounded text-xs font-bold border uppercase tracking-wide ${actionClass}">
+                                ${escapeHtml(g.enforcement)}
+                            </span>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Mechanism</h4>
+                            <div class="pl-3 border-l-4 border-blue-400">
+                                <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(g.mechanism)}</p>
                             </div>
                         </div>
-                    ` : ''}
+                    </div>
 
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Triggers</h4>
-                        <ul class="space-y-2">
-                            ${g.triggers.map(t => `
-                                <li class="flex items-start gap-2.5">
-                                    <svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                    <span class="text-sm text-gray-700 leading-relaxed">${escapeHtml(t)}</span>
-                                </li>
-                            `).join('')}
-                        </ul>
+                    <div class="space-y-4">
+                        ${g.location ? `
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Detected In Context</h4>
+                                <div class="bg-slate-50 border border-slate-200 rounded p-3 text-xs font-mono text-slate-600 italic">
+                                    "${escapeHtml(g.location)}"
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Triggers</h4>
+                            <ul class="space-y-2">
+                                ${g.triggers.map(t => `
+                                    <li class="flex items-start gap-2.5">
+                                        <svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        <span class="text-sm text-gray-700 leading-relaxed">${escapeHtml(t)}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        `;
-    }).join('');
-}
+            `;
+        }).join('');
+    }
 
     // Export PDF Helper
     function exportPdf() {
