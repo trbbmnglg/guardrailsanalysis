@@ -266,13 +266,13 @@
         hideError();
         hideResults();
         showLoading();
-
+    
         try {
             // 1. Get the Toggle State (Default to false if missing)
             const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
-
+    
             updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
-
+    
             // 2. Send 'enable_profiling' in the body
             const response = await fetch('/analyze', {
                 method: 'POST',
@@ -280,42 +280,50 @@
                 body: JSON.stringify({ 
                     instruction: instruction, 
                     api_key: apiKey,
-                    enable_profiling: enableProfiling // <--- SENT HERE
+                    enable_profiling: enableProfiling // <--- Passed to backend
                 })
             });
-
+    
             if (!response.ok) {
                 const errData = await response.json().catch(() => ({}));
                 throw new Error(errData.detail || `Backend Error: ${response.status}`);
             }
-
+    
             updateProgress(75, 'Generating Report...');
             const data = await response.json();
             
             if (!data.result) throw new Error("Backend returned empty result.");
+            
+            // Use your utility to strip Markdown (```json ...) if present
             let parsed = cleanAndParseJSON(data.result); 
-
-            // Normalization
+    
+            // 3. Normalization: Handle schema drift from LLM (e.g., risk_level vs severity)
             if (parsed.guardrails) {
                 parsed.guardrails = parsed.guardrails.map(g => ({
                     ...g,
-                    severity: g.risk_level || g.severity || "Medium",
+                    // Fallback for key variations
+                    severity: g.risk_level || g.severity || "Medium", 
                     mechanism: g.recommendation || g.mechanism || "No recommendation provided.",
-                    triggers: g.triggers || []
+                    triggers: Array.isArray(g.triggers) ? g.triggers : [] // Ensure array
                 }));
             }
             
             analysisResults = parsed;
             updateProgress(100, 'Report Ready!');
-            setTimeout(() => { hideLoading(); displayResults(); }, 500);
-
+            
+            // Small delay for UX before switching views
+            setTimeout(() => { 
+                hideLoading(); 
+                displayResults(); 
+            }, 500);
+    
         } catch (error) {
             console.error("Analysis failed:", error);
             hideLoading();
-            showError(error.message || 'Connection to Python backend failed.');
+            showError(error.message || 'Connection to backend failed.');
         }
     }
-
+  
     function displayResults() {
         if (!analysisResults) return;
 
