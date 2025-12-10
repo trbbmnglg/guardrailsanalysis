@@ -362,6 +362,10 @@ async def run_analysis(request: AnalysisRequest):
         report_description = f"""
         Synthesize ALL audit findings into a comprehensive JSON report.
         
+        You MUST:
+        1. REVIEW the audit findings.
+        2. REMOVE redundant guardrails.
+        
         CRITICAL REQUIREMENTS:
         1. Output ONLY raw JSON (no markdown, no ```json blocks)
         2. Include BOTH present and missing guardrails
