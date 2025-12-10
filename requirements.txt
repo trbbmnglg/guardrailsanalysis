@@ -4,3 +4,4 @@ crewai
 langchain_openai
 python-multipart
 litellm
+apscheduler
