@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from crewai import Agent, Task, Crew, Process
-from langchain_openai import ChatOpenAI
+from litellm import completion
 
 app = FastAPI()
 
@@ -15,18 +15,48 @@ class AnalysisRequest(BaseModel):
     api_key: str
     enable_profiling: bool = False 
 
+# --- CUSTOM LLM WRAPPER FOR CREWAI ---
+class LiteLLMWrapper:
+    """Wrapper to make LiteLLM compatible with CrewAI's expected interface"""
+    
+    def __init__(self, model: str, api_key: str, base_url: str, temperature: float = 0.1):
+        self.model = model
+        self.api_key = api_key
+        self.base_url = base_url
+        self.temperature = temperature
+    
+    def __call__(self, prompt: str) -> str:
+        """Make the wrapper callable for CrewAI compatibility"""
+        try:
+            response = completion(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                api_key=self.api_key,
+                base_url=self.base_url,
+                temperature=self.temperature
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"LiteLLM Error: {e}")
+            raise
+    
+    def invoke(self, prompt: str) -> str:
+        """Alternative method name for compatibility"""
+        return self.__call__(prompt)
+
+
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
     try:
-        # 1. SETUP LLM
+        # 1. SETUP LLM with LiteLLM
         os.environ["OPENAI_API_KEY"] = request.api_key
-        # Note: Using Router for flexible model routing
         os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
 
-        llm = ChatOpenAI(
-            model="openai/meta-llama/Llama-3.3-70B-Instruct",
-            base_url="https://router.huggingface.co/v1",
+        # Use the custom wrapper instead of ChatOpenAI
+        llm = LiteLLMWrapper(
+            model="huggingface/meta-llama/Llama-3.3-70B-Instruct",
             api_key=request.api_key,
+            base_url="https://router.huggingface.co/v1",
             temperature=0.1
         )
 
@@ -35,35 +65,62 @@ async def run_analysis(request: AnalysisRequest):
             role='Security & Safety Engineer',
             goal='Enforce OWASP Top 10 & ISO 42001 Safety standards',
             backstory="You validate the AI Agent instructions if it contains proper Input Validation, handles Prompt Injection, and has Safety Controls.",
-            llm=llm, allow_delegation=False, verbose=True
+            llm=llm, 
+            allow_delegation=False, 
+            verbose=True
         )
 
         privacy_ops_agent = Agent(
             role='Privacy & Operations Controller',
             goal='Enforce NIST AI RMF 1.0 standards',
             backstory="You validate the AI Agent instructions for properly handling Privacy (PII), has Scope Control, and Operational Limits.",
-            llm=llm, allow_delegation=False, verbose=True
+            llm=llm, 
+            allow_delegation=False, 
+            verbose=True
         )
 
         rai_agent = Agent(
             role='Accenture Responsible AI Specialist',
             goal='Enforce Ethical Conduct & Accountability',
             backstory="You validate the AI Agent instructions for handling bias, fairness, and accountability (human oversight).",
-            llm=llm, allow_delegation=False, verbose=True
+            llm=llm, 
+            allow_delegation=False, 
+            verbose=True
         )
 
         qa_agent = Agent(
             role='Prompt QA Lead',
             goal='Ensure Functional Suitability (ISO/IEC 25059)',
             backstory="You evaluate prompt logic, clarity, and robustness.",
-            llm=llm, allow_delegation=False, verbose=True
+            llm=llm, 
+            allow_delegation=False, 
+            verbose=True
         )
 
         # 3. DEFINE TASKS
-        task_security = Task(description=f"Analyze for Security risks: '{request.instruction}'", agent=security_agent, expected_output="Professional security assessment. Do not provide conclusion. Keep it 1-2 sentences only.")
-        task_privacy = Task(description=f"Analyze for Privacy risks: '{request.instruction}'", agent=privacy_ops_agent, expected_output="Professional privacy assessment. Do not provide conclusion. Keep it 1-2 sentences only.")
-        task_rai = Task(description=f"Analyze for Ethical risks: '{request.instruction}'", agent=rai_agent, expected_output="Professional RAI assessment. Do not provide conclusion. Keep it 1-2 sentences only.")
-        task_qa = Task(description=f"Analyze for QA risks: '{request.instruction}'", agent=qa_agent, expected_output="Professional QA assessment. Do not provide conclusion. Keep it 1-2 sentences only.")
+        task_security = Task(
+            description=f"Analyze for Security risks: '{request.instruction}'", 
+            agent=security_agent, 
+            expected_output="Professional security assessment. Do not provide conclusion. Keep it 1-2 sentences only."
+        )
+        
+        task_privacy = Task(
+            description=f"Analyze for Privacy risks: '{request.instruction}'", 
+            agent=privacy_ops_agent, 
+            expected_output="Professional privacy assessment. Do not provide conclusion. Keep it 1-2 sentences only."
+        )
+        
+        task_rai = Task(
+            description=f"Analyze for Ethical risks: '{request.instruction}'", 
+            agent=rai_agent, 
+            expected_output="Professional RAI assessment. Do not provide conclusion. Keep it 1-2 sentences only."
+        )
+        
+        task_qa = Task(
+            description=f"Analyze for QA risks: '{request.instruction}'", 
+            agent=qa_agent, 
+            expected_output="Professional QA assessment. Do not provide conclusion. Keep it 1-2 sentences only."
+        )
 
         # 4. PREPARE LISTS
         agents_list = [security_agent, privacy_ops_agent, rai_agent, qa_agent]
@@ -76,7 +133,9 @@ async def run_analysis(request: AnalysisRequest):
                 role='Cost & Compute Architect',
                 goal='Determine Tier (1-4) based on risks',
                 backstory="You review findings from Security & Safety Engineer, Privacy & Operations Controller, Accenture Responsible AI Specialist, Prompt QA Lead then assess and assign the right compute tier (Tier 1=Regex, Tier 4=Reasoning).",
-                llm=llm, allow_delegation=False, verbose=True
+                llm=llm, 
+                allow_delegation=False, 
+                verbose=True
             )
             
             task_tiering = Task(
@@ -95,7 +154,9 @@ async def run_analysis(request: AnalysisRequest):
             role='Chief Governance Officer',
             goal='Synthesize findings into JSON',
             backstory='You output ONLY valid JSON. No markdown formatting.',
-            llm=llm, allow_delegation=False, verbose=True
+            llm=llm, 
+            allow_delegation=False, 
+            verbose=True
         )
 
         # Construct the conditional JSON schema parts
@@ -163,18 +224,30 @@ async def run_analysis(request: AnalysisRequest):
 
         result = crew.kickoff()
         
-        # Clean the output to ensure it's valid JSON (sometimes LLMs wrap in ```json)
+        # Clean the output to ensure it's valid JSON
         raw_output = str(result)
         cleaned_output = raw_output.replace("```json", "").replace("```", "").strip()
 
         return {"result": cleaned_output}
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"❌ Analysis Error: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+# Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 async def read_index():
     return FileResponse('static/index.html')
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for debugging"""
+    return {
+        "status": "healthy",
+        "litellm_available": True,
+        "message": "LiteLLM wrapper configured"
+    }
