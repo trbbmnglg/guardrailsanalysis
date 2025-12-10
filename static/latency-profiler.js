@@ -44,7 +44,6 @@
         return tips;
     }
 
-    // --- FIX: Removed the outer 'guardrails.forEach' loop that was breaking logic ---
     function analyzeProfile(guardrails) {
         let totalBaseLatency = 30; 
         let highestTier = 1; 
@@ -268,7 +267,6 @@
             update();
         }
     }
-
     // Expose the render function as 'analyze' so guardrails-analyzer.js can call it
     window.latencyProfiler = { analyze: renderReport };
     console.log('🚀 Enterprise Optimization Engine (2025 Hybrid Edition) Loaded');
