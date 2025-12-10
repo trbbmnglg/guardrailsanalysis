@@ -440,6 +440,8 @@ async def run_analysis(request: AnalysisRequest):
             # Fallback to raw string parsing (for normal requests or if pydantic fails)
             raw_output = str(result)
             cleaned_output = raw_output.replace("```json", "").replace("```", "").strip()
+            # CRITICAL FIX: Ensure newlines are replaced in the fallback path as well
+            cleaned_output = cleaned_output.replace("\n", " ")
         
         # Attempt to parse and validate
         try:
