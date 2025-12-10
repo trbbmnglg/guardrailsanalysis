@@ -155,19 +155,19 @@
                         </p>
                         <ul class="space-y-3">
                             <li class="flex items-start gap-3 text-sm">
-                                <span class="bg-red-100 text-red-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">SEC</span>
+                                <span class="bg-red-100 text-red-700 w-10 text-center py-1 rounded text-xs font-bold mt-0.5 flex-shrink-0">SEC</span>
                                 <span class="text-slate-700"><strong>Security Engineer:</strong> Checks for OWASP vulnerabilities and injection risks.</span>
                             </li>
                             <li class="flex items-start gap-3 text-sm">
-                                <span class="bg-emerald-100 text-emerald-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">PRV</span>
+                                <span class="bg-emerald-100 text-emerald-700 w-10 text-center py-1 rounded text-xs font-bold mt-0.5 flex-shrink-0">PRV</span>
                                 <span class="text-slate-700"><strong>Privacy Controller:</strong> Scans for PII (GDPR) and data residency issues.</span>
                             </li>
                             <li class="flex items-start gap-3 text-sm">
-                                <span class="bg-purple-100 text-purple-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">RAI</span>
+                                <span class="bg-purple-100 text-purple-700 w-10 text-center py-1 rounded text-xs font-bold mt-0.5 flex-shrink-0">RAI</span>
                                 <span class="text-slate-700"><strong>Ethical Specialist:</strong> Ensures fairness, inclusivity, and accountability.</span>
                             </li>
                             <li class="flex items-start gap-3 text-sm">
-                                <span class="bg-blue-100 text-blue-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">OPS</span>
+                                <span class="bg-blue-100 text-blue-700 w-10 text-center py-1 rounded text-xs font-bold mt-0.5 flex-shrink-0">OPS</span>
                                 <span class="text-slate-700"><strong>Compute Architect:</strong> Estimates latency, cost, and complexity tiers.</span>
                             </li>
                         </ul>
@@ -182,7 +182,7 @@
                             <div class="absolute left-6 top-4 bottom-4 w-0.5 bg-slate-200"></div>
         
                             <div class="flex items-center gap-4 relative z-10">
-                                <div class="w-12 h-12 rounded-full bg-white border-2 border-indigo-100 flex items-center justify-center shadow-sm text-xl shrink-0">👤</div>
+                                <div class="w-12 h-12 rounded-full bg-white border-2 border-indigo-100 flex items-center justify-center shadow-sm text-xl">👤</div>
                                 <div class="bg-white px-3 py-2 rounded shadow-sm border border-slate-100 text-xs w-full">
                                     <strong>User Input</strong><br>
                                     <span class="text-slate-400">"Create a SQL query..."</span>
@@ -190,15 +190,15 @@
                             </div>
         
                             <div class="flex items-center gap-4 relative z-10">
-                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md text-white text-xl shrink-0">🤖</div>
+                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md text-white text-xl">🤖</div>
                                 <div class="bg-indigo-50 px-3 py-2 rounded border border-indigo-100 text-xs w-full">
                                     <strong>Agent Swarm</strong><br>
-                                    <span class="text-indigo-600">Security • Privacy • Ethics • QA • Cost</span>
+                                    <span class="text-indigo-600">Security • Privacy • QA • Cost</span>
                                 </div>
                             </div>
         
                             <div class="flex items-center gap-4 relative z-10">
-                                <div class="w-12 h-12 rounded-full bg-white border-2 border-green-100 flex items-center justify-center shadow-sm text-xl shrink-0">📊</div>
+                                <div class="w-12 h-12 rounded-full bg-white border-2 border-green-100 flex items-center justify-center shadow-sm text-xl">📊</div>
                                 <div class="bg-green-50 px-3 py-2 rounded border border-green-100 text-xs w-full">
                                     <strong>Final Report</strong><br>
                                     <span class="text-green-700">Synthesized JSON Output</span>
@@ -280,79 +280,27 @@ Mission: Provide customer support...
             
             <div class="bg-white rounded-xl shadow-lg p-8 mb-8 fade-in">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6">Analysis Summary</h2>
-                
-                <div class="flex flex-col gap-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div onclick="window.guardrailAnalyzer.filterBySummaryCard('active')" 
-                             class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200 cursor-pointer transition-transform hover:scale-[1.02] hover:shadow-md group">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <div class="text-4xl font-bold text-blue-700 group-hover:text-blue-800" id="activeCount">0</div>
-                                    <div class="text-sm text-gray-700 font-medium mt-1">Active Guardrails</div>
-                                </div>
-                                <div class="bg-blue-200 text-blue-800 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-gradient-to-br from-green-50 to-green-100 p-2 rounded-lg border border-green-200 flex flex-col items-center justify-center">
-                            <div id="coverageScore" class="w-full h-full flex items-center justify-center"></div>
-                        </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
+                        <div class="text-4xl font-bold text-blue-700" id="totalGuardrails">0</div>
+                        <div class="text-sm text-gray-700 font-medium mt-1">Total Guardrails</div>
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div onclick="window.guardrailAnalyzer.filterBySummaryCard('missing')" 
-                             class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-lg border border-gray-200 cursor-pointer transition-transform hover:scale-[1.02] hover:shadow-md group">
-                            <div class="text-4xl font-bold text-gray-700 group-hover:text-gray-900" id="missingTotalCount">0</div>
-                            <div class="text-sm text-gray-700 font-medium mt-1">Missing Guardrails</div>
-                        </div>
-
-                        <div onclick="window.guardrailAnalyzer.filterBySummaryCard('critical')" 
-                             class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg border border-red-200 cursor-pointer transition-transform hover:scale-[1.02] hover:shadow-md group">
-                            <div class="text-4xl font-bold text-red-700 group-hover:text-red-800" id="missingCriticalCount">0</div>
-                            <div class="text-sm text-gray-700 font-medium mt-1">Critical Gaps</div>
-                        </div>
-
-                        <div onclick="window.guardrailAnalyzer.filterBySummaryCard('high')" 
-                             class="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg border border-orange-200 cursor-pointer transition-transform hover:scale-[1.02] hover:shadow-md group">
-                            <div class="text-4xl font-bold text-orange-700 group-hover:text-orange-800" id="missingHighCount">0</div>
-                            <div class="text-sm text-gray-700 font-medium mt-1">High Priority Gaps</div>
-                        </div>
+                    <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg border border-red-200">
+                        <div class="text-4xl font-bold text-red-700" id="criticalCount">0</div>
+                        <div class="text-sm text-gray-700 font-medium mt-1">Critical Controls</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg border border-orange-200">
+                        <div class="text-4xl font-bold text-orange-700" id="highCount">0</div>
+                        <div class="text-sm text-gray-700 font-medium mt-1">High Priority</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 p-2 rounded-lg border border-green-200 flex flex-col items-center justify-center">
+                        <div id="coverageScore" class="w-full h-full flex items-center justify-center"></div>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-                <div class="flex flex-col gap-4">
-                    
-                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">View:</span>
-                        <div class="flex bg-gray-100 rounded-lg p-1 gap-1">
-                            <button onclick="window.guardrailAnalyzer.filterByStatus('active')" id="btn-status-active" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-blue-700">
-                                Active Only
-                            </button>
-                            <button onclick="window.guardrailAnalyzer.filterByStatus('missing')" id="btn-status-missing" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900">
-                                Missing Only
-                            </button>
-                            <button onclick="window.guardrailAnalyzer.filterByStatus('all')" id="btn-status-all" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900">
-                                Show All
-                            </button>
-                        </div>
-                        
-                        <div id="activeFilterBadge" class="hidden ml-auto px-3 py-1 rounded-full text-xs font-bold bg-gray-800 text-white flex items-center gap-2">
-                            <span id="activeFilterText">Filtered</span>
-                            <button onclick="window.guardrailAnalyzer.resetFilters()" class="hover:text-gray-300">✕</button>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">Category:</span>
-                        <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
-                    </div>
-                </div>
+                <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
             </div>
 
             <div id="guardrailsDisplay" class="space-y-6"></div>
@@ -388,22 +336,22 @@ Mission: Provide customer support...
             </div>
 
         </div>
-      <div class="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-xl shadow-lg p-8 mt-12 text-white border-t border-indigo-900">
-          <div class="max-w-auto">
-              <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-indigo-100">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  AI Diligence & Attribution
-              </h3>
-              <div class="italic space-y-4 text-sm text-indigo-200">
-                      "The final output accurately reflects my understanding, expertise, and intended meaning. While AI assistance was instrumental in the process, I maintain full responsibility for the content, its accuracy, and its presentation. This disclosure is made in the spirit of transparency and to acknowledge the role of AI in the creation process."
-                  <div class="text-xs text-indigo-400 pt-4 border-t border-indigo-900/50 mt-4">
-                      <p>© 2025 Robert Bumanglag • Powered by Llama 3.3 via HuggingFace</p>
-                  </div>
-              </div>
-          </div>
-      </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mt-12">
+            <div class="max-w-auto">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    AI Diligence & Attribution
+                </h3>
+                <div class="italic space-y-4 text-sm text-slate-600">
+                        "The final output accurately reflects my understanding, expertise, and intended meaning. While AI assistance was instrumental in the process, I maintain full responsibility for the content, its accuracy, and its presentation. This disclosure is made in the spirit of transparency and to acknowledge the role of AI in the creation process."
+                    <div class="text-xs text-slate-400 pt-4 border-t border-slate-100 mt-4">
+                        <p>© 2025 Robert Bumanglag • Powered by Llama 3.3 via HuggingFace</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
