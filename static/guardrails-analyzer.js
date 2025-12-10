@@ -7,7 +7,9 @@
 
     // Global state
     let analysisResults = null;
-    let currentFilter = 'all';
+    let currentCategoryFilter = 'all';
+    let currentStatusFilter = 'active'; 
+    let currentSeverityFilter = 'all';
 
     // DOM elements
     let apiKeyInput, instructionInput, charCount, analyzeBtn;
@@ -266,6 +268,147 @@
             </div>
         `;
     }
+
+  function applyFilters() {
+        if (!analysisResults) return;
+
+        let filtered = analysisResults.guardrails;
+
+        // 1. Apply Status Filter (Active vs Missing)
+        if (currentStatusFilter === 'active') {
+            filtered = filtered.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
+        } else if (currentStatusFilter === 'missing') {
+            filtered = filtered.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
+        }
+
+        // 2. Apply Severity Filter (From Summary Cards)
+        if (currentSeverityFilter !== 'all') {
+            filtered = filtered.filter(g => g.severity?.toLowerCase() === currentSeverityFilter.toLowerCase());
+        }
+
+        // 3. Apply Category Filter
+        if (currentCategoryFilter !== 'all') {
+            filtered = filtered.filter(g => g.category === currentCategoryFilter);
+        }
+
+        renderGuardrails(filtered);
+        updateFilterUI();
+    }
+
+    // --- NEW: Handle Summary Card Clicks ---
+    function filterBySummaryCard(type) {
+        // Reset category to ensure user sees the relevant items across all categories first
+        currentCategoryFilter = 'all'; 
+
+        switch(type) {
+            case 'active':
+                currentStatusFilter = 'active';
+                currentSeverityFilter = 'all';
+                break;
+            case 'missing':
+                currentStatusFilter = 'missing';
+                currentSeverityFilter = 'all';
+                break;
+            case 'critical':
+                currentStatusFilter = 'missing'; // Critical gaps are inherently 'missing'
+                currentSeverityFilter = 'critical';
+                break;
+            case 'high':
+                currentStatusFilter = 'missing'; // High gaps are inherently 'missing'
+                currentSeverityFilter = 'high';
+                break;
+        }
+        applyFilters();
+    }
+
+    function filterByStatus(status) {
+        currentStatusFilter = status;
+        currentSeverityFilter = 'all'; // Reset severity when manually changing status tab
+        applyFilters();
+    }
+
+    function filterByCategory(category) {
+        currentCategoryFilter = category;
+        applyFilters();
+    }
+    
+    function resetFilters() {
+        currentStatusFilter = 'active';
+        currentSeverityFilter = 'all';
+        currentCategoryFilter = 'all';
+        applyFilters();
+    }
+
+    function updateFilterUI() {
+        // Update Status Buttons
+        const statuses = ['active', 'missing', 'all'];
+        statuses.forEach(s => {
+            const btn = document.getElementById(`btn-status-${s}`);
+            if (btn) {
+                // If we are filtering by specific severity (e.g. Critical), we still want the 'missing' tab highlighted
+                const isActive = currentStatusFilter === s;
+                btn.className = isActive 
+                    ? "px-4 py-1.5 rounded-md text-sm font-bold transition-all shadow-sm bg-white text-blue-700 ring-1 ring-black/5"
+                    : "px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-900 hover:bg-gray-200/50";
+            }
+        });
+
+        // Show/Hide Filter Badge
+        const badge = document.getElementById('activeFilterBadge');
+        const badgeText = document.getElementById('activeFilterText');
+        if (badge && badgeText) {
+            if (currentSeverityFilter !== 'all') {
+                badge.classList.remove('hidden');
+                badgeText.textContent = `Filtered by: ${currentSeverityFilter.charAt(0).toUpperCase() + currentSeverityFilter.slice(1)}`;
+                badge.className = currentSeverityFilter === 'critical' ? 'ml-auto px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 flex items-center gap-2' 
+                                : 'ml-auto px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800 flex items-center gap-2';
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Render Category Buttons based on current view context
+        let contextGuardrails = analysisResults.guardrails;
+        
+        // Context depends on Status
+        if (currentStatusFilter === 'active') {
+            contextGuardrails = contextGuardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
+        } else if (currentStatusFilter === 'missing') {
+            contextGuardrails = contextGuardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
+        }
+        // Context depends on Severity (if set)
+        if (currentSeverityFilter !== 'all') {
+            contextGuardrails = contextGuardrails.filter(g => g.severity?.toLowerCase() === currentSeverityFilter.toLowerCase());
+        }
+
+        const categories = ['all', ...new Set(contextGuardrails.map(g => g.category))];
+        const counts = {};
+        contextGuardrails.forEach(g => { counts[g.category] = (counts[g.category] || 0) + 1; });
+        const total = contextGuardrails.length;
+
+        const container = document.getElementById('categoryFilters');
+        if (container) {
+            container.innerHTML = categories.map(cat => {
+                const count = cat === 'all' ? total : (counts[cat] || 0);
+                const isDisabled = count === 0;
+                const label = cat === 'all' ? `All (${count})` : `${cat} (${count})`;
+                
+                return `
+                <button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" 
+                        ${isDisabled ? 'disabled' : ''}
+                        class="px-3 py-1.5 rounded-lg font-medium transition-all text-xs border ${
+                    currentCategoryFilter === cat 
+                        ? 'bg-blue-600 text-white shadow-md border-blue-600' 
+                        : isDisabled 
+                            ? 'bg-gray-50 text-gray-300 cursor-not-allowed border-transparent' 
+                            : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200 shadow-sm'
+                }">
+                    ${escapeHtml(label)}
+                </button>
+            `;
+            }).join('');
+        }
+    }
   
     async function analyzeInstruction(apiKey, instruction) {
         hideError();
@@ -326,50 +469,45 @@
         }
     }
   
-    function displayResults() {
+function displayResults() {
         if (!analysisResults) return;
 
-        // 1. Separate Present vs Missing Guardrails
-        // Logic: Checks if name starts with "MISSING" OR if location is empty
+        // 1. Calculate Stats
         const presentGuardrails = analysisResults.guardrails.filter(g => 
             !g.name.toUpperCase().startsWith('MISSING') && g.location !== ""
         );
-        
         const missingGuardrails = analysisResults.guardrails.filter(g => 
             g.name.toUpperCase().startsWith('MISSING') || g.location === ""
         );
 
-        // 2. Calculate Stats for Missing Section
         const missingCritical = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'critical').length;
         const missingHigh = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'high').length;
 
-        // 3. Update DOM - Active Section
-        const activeCountEl = document.getElementById('activeCount');
-        if (activeCountEl) activeCountEl.textContent = presentGuardrails.length;
-
-        // 4. Update DOM - Missing Section
-        const missingTotalEl = document.getElementById('missingTotalCount');
-        if (missingTotalEl) missingTotalEl.textContent = missingGuardrails.length;
-
-        const missingCriticalEl = document.getElementById('missingCriticalCount');
-        if (missingCriticalEl) missingCriticalEl.textContent = missingCritical;
-
-        const missingHighEl = document.getElementById('missingHighCount');
-        if (missingHighEl) missingHighEl.textContent = missingHigh;
-
-        // 5. Update Coverage Score (Based on Present Guardrails only)
-        // We pass only presentGuardrails so the score accurately reflects what EXISTS
-        const gapAnalysis = performGapAnalysis(presentGuardrails);
+        // 2. Update UI Counts
+        const activeCount = document.getElementById('activeCount');
+        if(activeCount) activeCount.textContent = presentGuardrails.length;
         
+        const missingTotal = document.getElementById('missingTotalCount');
+        if(missingTotal) missingTotal.textContent = missingGuardrails.length;
+
+        const missingCrit = document.getElementById('missingCriticalCount');
+        if(missingCrit) missingCrit.textContent = missingCritical;
+
+        const missingHi = document.getElementById('missingHighCount');
+        if(missingHi) missingHi.textContent = missingHigh;
+
+        // 3. Update Score
+        const gapAnalysis = performGapAnalysis(presentGuardrails);
         const scoreEl = document.getElementById('coverageScore');
         if (scoreEl) {
             scoreEl.className = 'flex flex-col items-center justify-center py-2 h-full'; 
             scoreEl.innerHTML = renderScoreChart(gapAnalysis.score);
         }
 
-        // 6. Render Recommendations
+        // 4. Render Recommendations
         const breakdownContainer = document.getElementById('recommendations');
-        const checklistHTML = `
+        // ... [Keep recommendation HTML logic] ...
+         const checklistHTML = `
         <div class="mb-6 bg-white bg-opacity-50 rounded-lg p-4">
             <h4 class="font-bold text-purple-900 mb-3 uppercase text-xs tracking-wider">Gap Analysis</h4>
             <ul class="space-y-2">
@@ -396,13 +534,11 @@
                 </li>
             `).join('')}
         </ul>`;
-
+        
         breakdownContainer.innerHTML = checklistHTML + recsHTML;
 
-        // 7. Render Lists
-        const categories = ['all', ...new Set(analysisResults.guardrails.map(g => g.category))];
-        renderCategoryFilters(categories);
-        renderGuardrails(analysisResults.guardrails);
+        // 5. Initial Render - Default to Active
+        resetFilters();
 
         if (window.latencyProfiler) {
             window.latencyProfiler.analyze(analysisResults.guardrails);
@@ -605,5 +741,11 @@
 
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 
-    window.guardrailAnalyzer = { filterByCategory: filterByCategory, version: '3.8.0-reward-enforce' };
+    window.guardrailAnalyzer = { 
+        filterByCategory: filterByCategory, 
+        filterByStatus: filterByStatus,
+        filterBySummaryCard: filterBySummaryCard, // Export new function
+        resetFilters: resetFilters, // Export reset
+        version: '3.9.5-interactive-dashboard' 
+    };
 })();
