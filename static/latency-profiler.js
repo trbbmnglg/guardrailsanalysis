@@ -1,18 +1,19 @@
 function analyzeProfile(guardrails) {
+        guardrails.forEach(g => {
         let totalBaseLatency = 30; 
         let highestTier = 1; 
         let breakdown = [];
 
         guardrails.forEach(g => {
-            // FIX: Skip this item if it is a "Missing" guardrail
-            // In your system, missing guardrails have an empty 'location' string
-            if (!g.location || g.location.trim() === "") {
-                return; 
+            // 1. Check if name starts with "MISSING" (Case insensitive)
+            // 2. Check if location is empty or too short to be a valid quote
+            if (g.name.toUpperCase().startsWith("MISSING") || !g.location || g.location.trim().length < 2) {
+                return; // Skip this item - it incurs no latency
             }
 
             let tier = 1; 
             let mechLabel = "Standard Check"; 
-            let mechKey = "regex"; 
+            let mechKey = "regex";
             
             if (g.complexity_tier) { 
                 tier = g.complexity_tier; 
