@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from typing import List, Literal
+from typing import List, Literal, Optional
 from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
 
@@ -35,7 +35,7 @@ class GuardrailAnalysis(BaseModel):
     """Complete analysis output"""
     guardrails: List[Guardrail] = Field(description="List of guardrails - both present and missing")
     recommendations: List[str] = Field(description="High-level recommendations for improving the agent's guardrails")
-    tiering_strategy: TieringStrategy = Field(default=None, description="Optional tiering analysis")
+    tiering_strategy: Optional[TieringStrategy] = Field(default=None, description="Optional tiering analysis")
 
 # --- REQUEST MODEL ---
 class AnalysisRequest(BaseModel):
@@ -418,8 +418,20 @@ async def run_analysis(request: AnalysisRequest):
         result = crew.kickoff()
         
         # 8. CLEAN AND VALIDATE OUTPUT
-        raw_output = str(result)
-        cleaned_output = raw_output.replace("```json", "").replace("```", "").strip()
+        
+        # Check if we got a structured Pydantic output (CrewAI feature)
+        # When output_pydantic is used, result.pydantic contains the model instance
+        if hasattr(result, 'pydantic') and result.pydantic:
+            try:
+                # Try Pydantic V2 method
+                cleaned_output = result.pydantic.model_dump_json()
+            except AttributeError:
+                # Fallback to Pydantic V1 method
+                cleaned_output = result.pydantic.json()
+        else:
+            # Fallback to raw string parsing (for normal requests or if pydantic fails)
+            raw_output = str(result)
+            cleaned_output = raw_output.replace("```json", "").replace("```", "").strip()
         
         # Attempt to parse and validate
         try:
