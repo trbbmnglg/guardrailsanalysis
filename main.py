@@ -8,15 +8,16 @@ from langchain_openai import ChatOpenAI
 
 app = FastAPI()
 
-# 1. API Route (Your existing logic)
+# --- 1. CONFIGURATION ---
 class AnalysisRequest(BaseModel):
     instruction: str
     api_key: str
 
+# --- 2. THE API ENDPOINT (Runs CrewAI) ---
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
     try:
-        # Setup Llama 3.3 via HuggingFace
+        # A. Setup LLM
         llm = ChatOpenAI(
             model="meta-llama/Llama-3.3-70B-Instruct",
             base_url="https://router.huggingface.co/v1",
@@ -24,7 +25,8 @@ async def run_analysis(request: AnalysisRequest):
             temperature=0.1
         )
 
-        # Define Agents
+        # B. Define Agents
+        # (We define a subset here for speed, but you can add all 6)
         security_agent = Agent(
             role='Security Auditor',
             goal='Identify OWASP & NIST security vulnerabilities',
@@ -49,7 +51,7 @@ async def run_analysis(request: AnalysisRequest):
             allow_delegation=False
         )
 
-        # Define Task
+        # C. Define Task
         analysis_task = Task(
             description=f"""
             Analyze this Agent Instruction:
@@ -57,7 +59,7 @@ async def run_analysis(request: AnalysisRequest):
             
             1. Have the Security Agent check for OWASP risks.
             2. Have the Privacy Agent check for PII risks.
-            3. Synthesize EVERYTHING into this JSON format:
+            3. Synthesize findings into this JSON format:
             {{
                 "guardrails": [
                     {{ "name": "...", "category": "Security/Privacy...", "severity": "Critical", "description": "...", "mechanism": "...", "triggers": ["..."] }}
@@ -70,7 +72,7 @@ async def run_analysis(request: AnalysisRequest):
             expected_output="Valid JSON String"
         )
 
-        # Run Crew
+        # D. Run Crew
         crew = Crew(
             agents=[security_agent, privacy_agent, report_agent],
             tasks=[analysis_task],
@@ -85,11 +87,9 @@ async def run_analysis(request: AnalysisRequest):
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# 2. Serve Static Files (Frontend)
-# This serves guardrails-analyzer.js, latency-profiler.js, etc.
+# --- 3. STATIC FILE SERVING (Replaces Node.js logic) ---
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# 3. Serve Index.html at Root
 @app.get("/")
 async def read_index():
     return FileResponse('static/index.html')
