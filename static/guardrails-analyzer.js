@@ -18,9 +18,6 @@
 
     // --- CONFIG: Flat UI Colors ---
     const categoryStyles = {
-        "responsible ai": { gradient: "bg-gradient-to-r from-purple-600 to-purple-700", badge: "bg-purple-50 text-purple-700 border-purple-200" },
-        "scope control": { gradient: "bg-gradient-to-r from-blue-600 to-blue-700", badge: "bg-blue-50 text-blue-700 border-blue-200" },
-      
         "security": { gradient: "bg-gradient-to-r from-red-600 to-red-700", badge: "bg-red-50 text-red-700 border-red-200" },
         "security & compliance": { gradient: "bg-gradient-to-r from-red-600 to-red-700", badge: "bg-red-50 text-red-700 border-red-200" },
         "compliance": { gradient: "bg-gradient-to-r from-red-600 to-red-700", badge: "bg-red-50 text-red-700 border-red-200" },
@@ -200,84 +197,50 @@
         }
     }
 
-    function performGapAnalysis(foundGuardrails) {
-        // 1. Define the buckets we want to measure
-        // We map 'backendCategories' (from main.py) to these buckets explicitly.
-        const scoringBuckets = [
-            { 
-                id: "security", 
-                label: "Critical Security Controls", 
-                backendCategories: ["Security"], // Exact match from main.py
-                keywords: ["security", "auth", "access", "compliance", "encryption", "redact"], 
-                weight: 2 
-            },
-            { 
-                id: "privacy", 
-                label: "Privacy & Data Handling", 
-                backendCategories: ["Privacy"], 
-                keywords: ["privacy", "pii", "gdpr", "data", "confidential"], 
-                weight: 2 
-            },
-            { 
-                id: "ai_safety", 
-                label: "AI Safety & Ethics", 
-                backendCategories: ["Responsible AI"], 
-                keywords: ["ethic", "bias", "fairness", "harm", "responsible", "toxicity"], 
-                weight: 1.5 
-            },
-            { 
-                id: "scope", 
-                label: "Scope & Boundaries", 
-                backendCategories: ["Scope Control"], 
-                keywords: ["scope", "limit", "boundar", "capability", "gatekeeping"], 
-                weight: 1.5 
-            },
-            { 
-                id: "validation", 
-                label: "Input/Output Validation", 
-                backendCategories: ["Input Validation", "Output Control", "QA"], 
-                keywords: ["input", "output", "validate", "sanitize", "format", "structure", "quality"], 
-                weight: 1.5 
-            },
-            { 
-                id: "oversight", 
-                label: "Accountability & Oversight", 
-                backendCategories: [], // No direct backend equivalent, relies on keywords or specific names
-                keywords: ["human", "oversight", "audit", "log", "monitor", "escalat", "attribution", "confidence"], 
-                weight: 1 
-            }
+    // --- REVISED: WEIGHTED HEALTH SCORE ---
+    function performGapAnalysis(activeGuardrails, missingGuardrails) {
+        // 1. Calculate weighted Health Score (Active vs Risk)
+        const getWeight = (g) => {
+            const s = (g.severity || 'medium').toLowerCase();
+            if (s === 'critical') return 10;
+            if (s === 'high') return 5;
+            if (s === 'medium') return 2;
+            return 1;
+        };
+
+        const activeScore = activeGuardrails.reduce((acc, g) => acc + getWeight(g), 0);
+        const missingScore = missingGuardrails.reduce((acc, g) => acc + getWeight(g), 0);
+        
+        const totalPotential = activeScore + missingScore;
+        // The score represents "Percentage of Total Risk Mitigated"
+        const finalScore = totalPotential === 0 ? 0 : Math.round((activeScore / totalPotential) * 100);
+
+        // 2. Generate Breakdown Checklist (Existing Logic)
+        const requiredCategories = [
+            { id: "security", keywords: ["security", "compliance", "auth", "access"], label: "Critical Security Controls" },
+            { id: "privacy", keywords: ["privacy", "data", "pii", "gdpr", "handling"], label: "Privacy & Data Handling" },
+            { id: "scope", keywords: ["scope", "boundar", "limit", "capability"], label: "Scope Boundaries" },
+            { id: "input", keywords: ["input", "validation", "sanitize", "injection"], label: "Input Validation" },
+            { id: "output", keywords: ["output", "response", "format"], label: "Output Sanitization" },
+            { id: "ethical", keywords: ["ethic", "bias", "fairness", "harm"], label: "Ethical Guidelines" },
+            { id: "accountability", keywords: ["accountab", "audit", "log", "monitor", "escalat"], label: "Accountability & Logs" }
         ];
-    
-        let totalWeight = 0;
-        let earnedScore = 0;
+
+        const activeStrings = activeGuardrails.map(g => g.category.toLowerCase() + " " + g.name.toLowerCase());
         const breakdown = [];
-    
-        scoringBuckets.forEach(bucket => {
-            totalWeight += bucket.weight;
-            
-            // CHECK 1: Look for explicit Backend Category match
-            // If the AI tagged it as "Responsible AI", it counts for the "AI Safety" bucket.
-            const hasCategoryMatch = foundGuardrails.some(g => 
-                bucket.backendCategories.includes(g.category)
+
+        requiredCategories.forEach(req => {
+            const isPresent = activeStrings.some(str => 
+                req.keywords.some(keyword => str.includes(keyword))
             );
-    
-            // CHECK 2: Fallback to Keyword Search (in Name or Description)
-            // Helpful if the AI miscategorized it but the text is clear.
-            const hasKeywordMatch = foundGuardrails.some(g => {
-                const text = (g.name + " " + g.description + " " + g.mechanism).toLowerCase();
-                return bucket.keywords.some(k => text.includes(k));
-            });
-    
-            if (hasCategoryMatch || hasKeywordMatch) {
-                earnedScore += bucket.weight;
-                breakdown.push({ label: `Has ${bucket.label}`, status: 'pass' });
+
+            if (isPresent) {
+                breakdown.push({ label: `Has ${req.label}`, status: 'pass' });
             } else {
-                breakdown.push({ label: `Missing ${bucket.label}`, status: 'fail' });
+                breakdown.push({ label: `Missing ${req.label}`, status: 'fail' });
             }
         });
-    
-        // Calculate Percentage
-        const finalScore = totalWeight === 0 ? 0 : Math.round((earnedScore / totalWeight) * 100);
+
         return { score: finalScore, breakdown: breakdown };
     }
 
@@ -567,59 +530,17 @@
         </div>`;
 
         const recsHTML = `
-        <div class="flex items-center justify-between mb-4 p-2 bg-purple-50 rounded-lg border border-purple-100">
-            <h4 class="font-bold text-purple-900 uppercase text-xs tracking-wider flex items-center gap-2">
-                AI Suggestions
-                <span class="bg-white text-purple-700 px-2 py-0.5 rounded-full text-[10px] border border-purple-100 shadow-sm">
-                    ${analysisResults.recommendations.length}
-                </span>
-            </h4>
-            
-            <button id="toggleRecsBtn" class="group flex items-center gap-2 text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-4 py-1.5 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span id="toggleRecsText">Show Magic Fixes</span>
-            </button>
-        </div>
-
-        <div id="recsContent" class="hidden transition-all duration-300 ease-in-out origin-top">
-            <ul class="space-y-3 bg-white/40 p-4 rounded-xl border border-purple-100">
-                ${analysisResults.recommendations.map((rec, i) => `
-                    <li class="flex items-start gap-3 p-2 hover:bg-white rounded-lg transition-colors fade-in" style="animation-delay: ${i * 0.05}s">
-                        <span class="text-purple-600 mt-0.5 text-lg">⚡</span>
-                        <span class="text-gray-700 text-sm leading-relaxed">${escapeHtml(rec)}</span>
-                    </li>
-                `).join('')}
-            </ul>
-        </div>`;
+        <h4 class="font-bold text-purple-900 mb-3 uppercase text-xs tracking-wider">AI Suggestions</h4>
+        <ul class="space-y-3">
+            ${analysisResults.recommendations.map(rec => `
+                <li class="flex items-start gap-3">
+                    <span class="text-purple-600 mt-0.5">⚡</span>
+                    <span class="text-gray-700 text-sm leading-relaxed">${escapeHtml(rec)}</span>
+                </li>
+            `).join('')}
+        </ul>`;
         
         breakdownContainer.innerHTML = checklistHTML + recsHTML;
-
-        // New: Event Listener for the Magic Button
-        const toggleBtn = document.getElementById('toggleRecsBtn');
-        const content = document.getElementById('recsContent');
-        const btnText = document.getElementById('toggleRecsText');
-
-        if (toggleBtn && content) {
-            toggleBtn.addEventListener('click', () => {
-                const isHidden = content.classList.contains('hidden');
-                
-                if (isHidden) {
-                    content.classList.remove('hidden');
-                    btnText.textContent = "Minimize Suggestions";
-                    // Update button style to look "active" (optional: simpler style when open)
-                    toggleBtn.classList.remove('from-purple-600', 'to-indigo-600', 'text-white');
-                    toggleBtn.classList.add('bg-purple-100', 'text-purple-700', 'border', 'border-purple-200');
-                } else {
-                    content.classList.add('hidden');
-                    btnText.textContent = "Show Magic Fixes";
-                    // Revert button style
-                    toggleBtn.classList.add('from-purple-600', 'to-indigo-600', 'text-white');
-                    toggleBtn.classList.remove('bg-purple-100', 'text-purple-700', 'border', 'border-purple-200');
-                }
-            });
-        }
 
         // 5. Initial Render - Default to Active
         resetFilters();
@@ -632,114 +553,100 @@
     }
 
     function renderGuardrails(guardrails) {
-    const container = document.getElementById('guardrailsDisplay');
-    
-    if (guardrails.length === 0) {
-        container.innerHTML = '<div class="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-100"><p class="text-gray-500 text-lg">No guardrails found matching current filters.</p></div>';
-        return;
-    }
-
-    container.innerHTML = guardrails.map((g, idx) => {
-        const sevStyle = severityStyles[g.severity] || severityStyles["Medium"];
+        const container = document.getElementById('guardrailsDisplay');
         
-        // 1. Determine Category Style (for Badges)
-        const catKey = g.category.toLowerCase();
-        let styleToUse = categoryStyles["default"];
-        for (const key in categoryStyles) {
-            if (catKey.includes(key)) {
-                styleToUse = categoryStyles[key];
-                break;
-            }
-        }
-        
-        // --- FIX APPLIED HERE ---
-        // Check if the guardrail is ACTIVE (Present) based on location
-        const isActive = g.location && g.location.trim().length > 0;
-
-        // Visual Logic:
-        // - Active (Safe) = Professional Slate/Blue Gradient
-        // - Missing (Risk) = Category Default (e.g., Red for Security)
-        const headerGradient = isActive 
-            ? "bg-gradient-to-r from-slate-700 to-slate-800" 
-            : styleToUse.gradient;
-        // ------------------------
-
-        const actionKey = (g.enforcement || "default").toLowerCase();
-        let actionClass = actionStyles["default"];
-        for (const key in actionStyles) {
-            if (actionKey.includes(key)) {
-                actionClass = actionStyles[key];
-                break;
-            }
+        if (guardrails.length === 0) {
+            container.innerHTML = '<div class="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-100"><p class="text-gray-500 text-lg">No guardrails found matching current filters.</p></div>';
+            return;
         }
 
-        return `
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden fade-in" style="animation-delay: ${idx * 0.05}s">
-            <div class="${headerGradient} p-5 text-white">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <h3 class="text-xl font-bold mb-1">${escapeHtml(g.name)}</h3>
-                        <p class="text-white text-opacity-90 text-sm">${escapeHtml(g.description)}</p>
-                    </div>
-                    <div class="flex flex-col items-end gap-2 ml-4">
-                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${sevStyle.badge}">
-                            ${escapeHtml(g.severity)}
-                        </span>
-                        <span class="px-2 py-0.5 rounded text-[10px] uppercase font-medium bg-white/20 text-white border border-white/30">
-                            ${escapeHtml(g.category)}
-                        </span>
-                    </div>
-                </div>
-            </div>
+        container.innerHTML = guardrails.map((g, idx) => {
+            const sevStyle = severityStyles[g.severity] || severityStyles["Medium"];
+            const catKey = g.category.toLowerCase();
+            let styleToUse = categoryStyles["default"];
+            for (const key in categoryStyles) {
+                if (catKey.includes(key)) {
+                    styleToUse = categoryStyles[key];
+                    break;
+                }
+            }
+            
+            const actionKey = (g.enforcement || "default").toLowerCase();
+            let actionClass = actionStyles["default"];
+            for (const key in actionStyles) {
+                if (actionKey.includes(key)) {
+                    actionClass = actionStyles[key];
+                    break;
+                }
+            }
 
-            <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Action</h4>
+            return `
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden fade-in" style="animation-delay: ${idx * 0.05}s">
+                <div class="${styleToUse.gradient} p-5 text-white">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold mb-1">${escapeHtml(g.name)}</h3>
+                            <p class="text-white text-opacity-90 text-sm">${escapeHtml(g.description)}</p>
                         </div>
-                        <span class="inline-block px-3 py-1 rounded text-xs font-bold border uppercase tracking-wide ${actionClass}">
-                            ${escapeHtml(g.enforcement)}
-                        </span>
-                    </div>
-
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Mechanism</h4>
-                        <div class="pl-3 border-l-4 border-blue-400">
-                            <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(g.mechanism)}</p>
+                        <div class="flex flex-col items-end gap-2 ml-4">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${sevStyle.badge}">
+                                ${escapeHtml(g.severity)}
+                            </span>
+                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-medium bg-white/20 text-white border border-white/30">
+                                ${escapeHtml(g.category)}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    ${g.location ? `
+                <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
                         <div>
-                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Detected In Context</h4>
-                            <div class="bg-slate-50 border border-slate-200 rounded p-3 text-xs font-mono text-slate-600 italic">
-                                "${escapeHtml(g.location)}"
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Action</h4>
+                            </div>
+                            <span class="inline-block px-3 py-1 rounded text-xs font-bold border uppercase tracking-wide ${actionClass}">
+                                ${escapeHtml(g.enforcement)}
+                            </span>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Mechanism</h4>
+                            <div class="pl-3 border-l-4 border-blue-400">
+                                <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(g.mechanism)}</p>
                             </div>
                         </div>
-                    ` : ''}
+                    </div>
 
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Triggers</h4>
-                        <ul class="space-y-2">
-                            ${g.triggers.map(t => `
-                                <li class="flex items-start gap-2.5">
-                                    <svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                    <span class="text-sm text-gray-700 leading-relaxed">${escapeHtml(t)}</span>
-                                </li>
-                            `).join('')}
-                        </ul>
+                    <div class="space-y-4">
+                        ${g.location ? `
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Detected In Context</h4>
+                                <div class="bg-slate-50 border border-slate-200 rounded p-3 text-xs font-mono text-slate-600 italic">
+                                    "${escapeHtml(g.location)}"
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Triggers</h4>
+                            <ul class="space-y-2">
+                                ${g.triggers.map(t => `
+                                    <li class="flex items-start gap-2.5">
+                                        <svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        <span class="text-sm text-gray-700 leading-relaxed">${escapeHtml(t)}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        `;
-    }).join('');
-}
+            `;
+        }).join('');
+    }
 
     // Export PDF Helper
     function exportPdf() {
