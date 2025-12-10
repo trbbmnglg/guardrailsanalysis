@@ -329,15 +329,37 @@
     function displayResults() {
         if (!analysisResults) return;
 
-        const critical = analysisResults.guardrails.filter(g => g.severity?.toLowerCase() === 'critical').length;
-        const high = analysisResults.guardrails.filter(g => g.severity?.toLowerCase() === 'high').length;
-        const total = analysisResults.guardrails.length;
+        // 1. Separate Present vs Missing Guardrails
+        // Logic: Checks if name starts with "MISSING" OR if location is empty
+        const presentGuardrails = analysisResults.guardrails.filter(g => 
+            !g.name.toUpperCase().startsWith('MISSING') && g.location !== ""
+        );
+        
+        const missingGuardrails = analysisResults.guardrails.filter(g => 
+            g.name.toUpperCase().startsWith('MISSING') || g.location === ""
+        );
 
-        document.getElementById('totalGuardrails').textContent = total;
-        document.getElementById('criticalCount').textContent = critical;
-        document.getElementById('highCount').textContent = high;
+        // 2. Calculate Stats for Missing Section
+        const missingCritical = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'critical').length;
+        const missingHigh = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'high').length;
 
-        const gapAnalysis = performGapAnalysis(analysisResults.guardrails);
+        // 3. Update DOM - Active Section
+        const activeCountEl = document.getElementById('activeCount');
+        if (activeCountEl) activeCountEl.textContent = presentGuardrails.length;
+
+        // 4. Update DOM - Missing Section
+        const missingTotalEl = document.getElementById('missingTotalCount');
+        if (missingTotalEl) missingTotalEl.textContent = missingGuardrails.length;
+
+        const missingCriticalEl = document.getElementById('missingCriticalCount');
+        if (missingCriticalEl) missingCriticalEl.textContent = missingCritical;
+
+        const missingHighEl = document.getElementById('missingHighCount');
+        if (missingHighEl) missingHighEl.textContent = missingHigh;
+
+        // 5. Update Coverage Score (Based on Present Guardrails only)
+        // We pass only presentGuardrails so the score accurately reflects what EXISTS
+        const gapAnalysis = performGapAnalysis(presentGuardrails);
         
         const scoreEl = document.getElementById('coverageScore');
         if (scoreEl) {
@@ -345,6 +367,7 @@
             scoreEl.innerHTML = renderScoreChart(gapAnalysis.score);
         }
 
+        // 6. Render Recommendations
         const breakdownContainer = document.getElementById('recommendations');
         const checklistHTML = `
         <div class="mb-6 bg-white bg-opacity-50 rounded-lg p-4">
@@ -376,6 +399,7 @@
 
         breakdownContainer.innerHTML = checklistHTML + recsHTML;
 
+        // 7. Render Lists
         const categories = ['all', ...new Set(analysisResults.guardrails.map(g => g.category))];
         renderCategoryFilters(categories);
         renderGuardrails(analysisResults.guardrails);
