@@ -268,12 +268,20 @@
         showLoading();
 
         try {
-            updateProgress(10, 'Sending to our agents...');
+            // 1. Get the Toggle State (Default to false if missing)
+            const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
 
+            updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
+
+            // 2. Send 'enable_profiling' in the body
             const response = await fetch('/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ instruction: instruction, api_key: apiKey })
+                body: JSON.stringify({ 
+                    instruction: instruction, 
+                    api_key: apiKey,
+                    enable_profiling: enableProfiling // <--- SENT HERE
+                })
             });
 
             if (!response.ok) {
@@ -281,17 +289,24 @@
                 throw new Error(errData.detail || `Backend Error: ${response.status}`);
             }
 
-            updateProgress(75, 'Agents are working...');
+            updateProgress(75, 'Generating Report...');
             const data = await response.json();
             
-            updateProgress(90, 'Formatting results...');
             if (!data.result) throw new Error("Backend returned empty result.");
-            
-            analysisResults = cleanAndParseJSON(data.result); 
-            analysisResults.aiProfilingEnabled = document.getElementById('aiProfilingToggle')?.checked;
+            let parsed = cleanAndParseJSON(data.result); 
 
-            updateProgress(100, 'Audit complete!');
+            // Normalization
+            if (parsed.guardrails) {
+                parsed.guardrails = parsed.guardrails.map(g => ({
+                    ...g,
+                    severity: g.risk_level || g.severity || "Medium",
+                    mechanism: g.recommendation || g.mechanism || "No recommendation provided.",
+                    triggers: g.triggers || []
+                }));
+            }
             
+            analysisResults = parsed;
+            updateProgress(100, 'Report Ready!');
             setTimeout(() => { hideLoading(); displayResults(); }, 500);
 
         } catch (error) {
