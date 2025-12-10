@@ -34,21 +34,21 @@ async def run_analysis(request: AnalysisRequest):
         security_agent = Agent(
             role='Security & Safety Engineer',
             goal='Enforce OWASP Top 10 & ISO 42001 Safety standards',
-            backstory="You validate the AI Agent instructions if it contains or handles Input Validation, Prompt Injection, and Safety Controls.",
+            backstory="You validate the AI Agent instructions if it contains proper Input Validation, handles Prompt Injection, and has Safety Controls.",
             llm=llm, allow_delegation=False, verbose=True
         )
 
         privacy_ops_agent = Agent(
             role='Privacy & Operations Controller',
             goal='Enforce NIST AI RMF 1.0 standards',
-            backstory="You check the AI Agent instructions for handling Privacy (PII), Scope Control, and Operational Limits.",
+            backstory="You validate the AI Agent instructions for properly handling Privacy (PII), has Scope Control, and Operational Limits.",
             llm=llm, allow_delegation=False, verbose=True
         )
 
         rai_agent = Agent(
             role='Accenture Responsible AI Specialist',
             goal='Enforce Ethical Conduct & Accountability',
-            backstory="You check the AI Agent instructions for handling bias, fairness, and accountability (human oversight).",
+            backstory="You validate the AI Agent instructions for handling bias, fairness, and accountability (human oversight).",
             llm=llm, allow_delegation=False, verbose=True
         )
 
@@ -60,10 +60,10 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         # 3. DEFINE TASKS
-        task_security = Task(description=f"Analyze for Security risks: '{request.instruction}'", agent=security_agent, expected_output="Security assessment.  Do not provide conclusion. Keep it 1-2 sentences only.")
-        task_privacy = Task(description=f"Analyze for Privacy risks: '{request.instruction}'", agent=privacy_ops_agent, expected_output="Privacy assessment.  Do not provide conclusion. Keep it 1-2 sentences only.")
-        task_rai = Task(description=f"Analyze for Ethical risks: '{request.instruction}'", agent=rai_agent, expected_output="RAI assessment.  Do not provide conclusion. Keep it 1-2 sentences only.")
-        task_qa = Task(description=f"Analyze for QA risks: '{request.instruction}'", agent=qa_agent, expected_output="QA assessment.  Do not provide conclusion. Keep it 1-2 sentences only.")
+        task_security = Task(description=f"Analyze for Security risks: '{request.instruction}'", agent=security_agent, expected_output="Professional security assessment. Do not provide conclusion. Keep it 1-2 sentences only.")
+        task_privacy = Task(description=f"Analyze for Privacy risks: '{request.instruction}'", agent=privacy_ops_agent, expected_output="Professional privacy assessment. Do not provide conclusion. Keep it 1-2 sentences only.")
+        task_rai = Task(description=f"Analyze for Ethical risks: '{request.instruction}'", agent=rai_agent, expected_output="Professional RAI assessment. Do not provide conclusion. Keep it 1-2 sentences only.")
+        task_qa = Task(description=f"Analyze for QA risks: '{request.instruction}'", agent=qa_agent, expected_output="Professional QA assessment. Do not provide conclusion. Keep it 1-2 sentences only.")
 
         # 4. PREPARE LISTS
         agents_list = [security_agent, privacy_ops_agent, rai_agent, qa_agent]
@@ -75,12 +75,12 @@ async def run_analysis(request: AnalysisRequest):
             tiering_agent = Agent(
                 role='Cost & Compute Architect',
                 goal='Determine Tier (1-4) based on risks',
-                backstory="You review findings and assign a compute tier (Tier 1=Regex, Tier 4=Reasoning).",
+                backstory="You review findings from Security & Safety Engineer, Privacy & Operations Controller, Accenture Responsible AI Specialist, Prompt QA Lead then assess and assign the right compute tier (Tier 1=Regex, Tier 4=Reasoning).",
                 llm=llm, allow_delegation=False, verbose=True
             )
             
             task_tiering = Task(
-                description="Review findings. Assign Tier (1-4). Output Model, Cost, Reason. Do not provide conclusion. Keep it 1-2 sentences only.",
+                description="Review findings from Security & Safety Engineer, Privacy & Operations Controller, Accenture Responsible AI Specialist, Prompt QA Lead. Assign Tier (1-4). Output Model, Cost, Reason. Do not provide conclusion. Keep it 1-2 sentences only.",
                 agent=tiering_agent,
                 context=[task_security, task_privacy, task_rai, task_qa],
                 expected_output="Tier recommendation."
