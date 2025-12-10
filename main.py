@@ -8,7 +8,6 @@ from langchain_openai import ChatOpenAI
 
 app = FastAPI()
 
-# Input Model
 class AnalysisRequest(BaseModel):
     instruction: str
     api_key: str
@@ -16,18 +15,19 @@ class AnalysisRequest(BaseModel):
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
     try:
-        # FIX 1: Set the Environment Variable temporarily
-        # CrewAI/LangChain sometimes looks for this globally
+        # --- FIX: CONFIGURE LITELLM ENVIRONMENT ---
+        # CrewAI/LiteLLM needs these to know "how" to call the model
         os.environ["OPENAI_API_KEY"] = request.api_key
         os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
 
-        # FIX 2: Initialize LLM with strict params
+        # --- FIX: INITIALIZE LLM WITH PROVIDER PREFIX ---
+        # We add 'openai/' so LiteLLM knows to use the OpenAI protocol
+        # for this custom Hugging Face endpoint.
         llm = ChatOpenAI(
-            model="meta-llama/Llama-3.3-70B-Instruct",
+            model="openai/meta-llama/Llama-3.3-70B-Instruct",
             base_url="https://router.huggingface.co/v1",
             api_key=request.api_key,
-            temperature=0.1,
-            max_tokens=3000
+            temperature=0.1
         )
 
         # Define Agents
@@ -59,7 +59,6 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         # Define Task
-        # We enforce JSON output strictly in the prompt
         analysis_task = Task(
             description=f"""
             Analyze this Agent Instruction:
@@ -70,15 +69,15 @@ async def run_analysis(request: AnalysisRequest):
             3. Synthesize EVERYTHING into this JSON format:
             {{
                 "guardrails": [
-                    {{ "name": "...", "category": "Security/Privacy...", "severity": "Critical", "description": "...", "mechanism": "...", "triggers": ["..."] }}
+                    {{ "name": "Name", "category": "Security/Privacy...", "severity": "Critical", "description": "Desc", "mechanism": "How", "triggers": ["Trigger"] }}
                 ],
-                "recommendations": ["..."]
+                "recommendations": ["Rec1"]
             }}
             
             CRITICAL: RETURN ONLY VALID JSON. NO MARKDOWN. NO CONVERSATION.
             """,
             agent=report_agent,
-            expected_output="A valid JSON string containing guardrails and recommendations."
+            expected_output="Valid JSON String"
         )
 
         # Run Crew
@@ -91,12 +90,10 @@ async def run_analysis(request: AnalysisRequest):
 
         result = crew.kickoff()
         
-        # CrewAI returns a CrewOutput object, we need the string
         return {"result": str(result)}
 
     except Exception as e:
         print(f"Error: {e}")
-        # Return the error details so you can see them in the UI
         raise HTTPException(status_code=500, detail=str(e))
 
 # Serve Static Files
