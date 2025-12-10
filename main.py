@@ -110,10 +110,44 @@ async def run_analysis(request: AnalysisRequest):
             2. Output ONLY raw JSON.
         """
 
+# ... inside run_analysis ...
+
+        # UPDATE THIS TASK DEFINITION
         task_report = Task(
-            description=report_prompt,
+            description="""
+            Synthesize the findings from ALL agents into a JSON response.
+            
+            You must strictly follow this JSON schema:
+            {
+                "guardrails": [
+                    {
+                        "name": "Short Name (e.g. Prompt Injection)",
+                        "category": "Security" | "Privacy" | "Responsible AI" | "Quality Assurance",
+                        "severity": "Critical" | "High" | "Medium" | "Low",
+                        "description": "Risk description.",
+                        "mechanism": "Specific fix for this risk.",
+                        "triggers": ["trigger word"]
+                    }
+                ],
+                "recommendations": [
+                    "General high-level suggestion 1",
+                    "General high-level suggestion 2"
+                ],
+                "tiering_strategy": {
+                    "selected_tier": "Tier 1" | "Tier 2" | "Tier 3" | "Tier 4",
+                    "model_class": "e.g. GPT-4",
+                    "estimated_cost": "$X.XX",
+                    "latency_impact": "~XXms",
+                    "justification": "Why this tier?"
+                }
+            }
+            
+            CRITICAL: 
+            1. If 'Cost & Compute Architect' findings are MISSING, set "tiering_strategy" to null.
+            2. Output ONLY raw JSON.
+            """,
             agent=report_agent,
-            context=report_context, # Dynamic Context
+            context=report_context, 
             expected_output="Valid JSON String"
         )
         
