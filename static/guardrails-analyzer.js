@@ -266,7 +266,6 @@
         hideError();
         hideResults();
         showLoading();
-        simulateLoadingSteps();
 
         try {
             updateProgress(10, 'Sending to our agents...');
