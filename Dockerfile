@@ -13,6 +13,7 @@ COPY --chown=user requirements.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # 4. Copy your app files
+# FIX: Added the second dot (.) to specify the destination directory
 COPY --chown=user . .
 
 # 5. Run the Python server
