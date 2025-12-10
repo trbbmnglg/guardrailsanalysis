@@ -448,6 +448,8 @@ async def run_analysis(request: AnalysisRequest):
             # Post-processing: Ensure all guardrails have enforcement and location
             if "guardrails" in parsed:
                 for gr in parsed["guardrails"]:
+                    if gr.get("name", "").upper().startswith("MISSING"):
+                        gr["location"] = ""
                     if "enforcement" not in gr or not gr["enforcement"]:
                         gr["enforcement"] = "Log"  # Default fallback
                     if "location" not in gr:
@@ -464,9 +466,6 @@ async def run_analysis(request: AnalysisRequest):
                             gr["complexity_tier"] = 3
                         else:
                             gr["complexity_tier"] = 2  # Default to tier 2
-                    if gr.get("name", "").upper().startswith("MISSING"):
-                        gr["location"] = ""
-                    if "enforcement" not in gr or not gr["enforcement"]:
                         
             cleaned_output = json.dumps(parsed)
         except json.JSONDecodeError as e:
