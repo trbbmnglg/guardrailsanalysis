@@ -15,30 +15,32 @@
     let progressBar, progressText;
 
     // --- CONFIG: Flat UI Colors ---
+    // Expanded map to catch common AI variations
     const categoryStyles = {
-        "Scope Control": { gradient: "bg-gradient-to-r from-blue-600 to-blue-700", badge: "bg-blue-50 text-blue-700 border-blue-200" },
-        "Ethical Conduct": { gradient: "bg-gradient-to-r from-purple-600 to-purple-700", badge: "bg-purple-50 text-purple-700 border-purple-200" },
-        "Security & Compliance": { gradient: "bg-gradient-to-r from-red-600 to-red-700", badge: "bg-red-50 text-red-700 border-red-200" },
-        "Safety Controls": { gradient: "bg-gradient-to-r from-orange-600 to-orange-700", badge: "bg-orange-50 text-orange-700 border-orange-200" },
-        "Privacy Protection": { gradient: "bg-gradient-to-r from-emerald-600 to-emerald-700", badge: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-        "Quality Assurance": { gradient: "bg-gradient-to-r from-indigo-600 to-indigo-700", badge: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-        "Accountability": { gradient: "bg-gradient-to-r from-gray-600 to-gray-700", badge: "bg-gray-50 text-gray-700 border-gray-200" },
-        "Input Validation": { gradient: "bg-gradient-to-r from-cyan-600 to-cyan-700", badge: "bg-cyan-50 text-cyan-700 border-cyan-200" },
-        "Output Control": { gradient: "bg-gradient-to-r from-pink-600 to-pink-700", badge: "bg-pink-50 text-pink-700 border-pink-200" },
-        "Operational Limits": { gradient: "bg-gradient-to-r from-yellow-600 to-yellow-700", badge: "bg-yellow-50 text-yellow-700 border-yellow-200" }
+        "security": { gradient: "bg-gradient-to-r from-red-600 to-red-700", badge: "bg-red-50 text-red-700 border-red-200" },
+        "security & compliance": { gradient: "bg-gradient-to-r from-red-600 to-red-700", badge: "bg-red-50 text-red-700 border-red-200" },
+        "compliance": { gradient: "bg-gradient-to-r from-red-600 to-red-700", badge: "bg-red-50 text-red-700 border-red-200" },
+        
+        "privacy": { gradient: "bg-gradient-to-r from-emerald-600 to-emerald-700", badge: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+        "privacy protection": { gradient: "bg-gradient-to-r from-emerald-600 to-emerald-700", badge: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+        
+        "scope": { gradient: "bg-gradient-to-r from-blue-600 to-blue-700", badge: "bg-blue-50 text-blue-700 border-blue-200" },
+        "scope control": { gradient: "bg-gradient-to-r from-blue-600 to-blue-700", badge: "bg-blue-50 text-blue-700 border-blue-200" },
+        
+        "ethical": { gradient: "bg-gradient-to-r from-purple-600 to-purple-700", badge: "bg-purple-50 text-purple-700 border-purple-200" },
+        "ethical conduct": { gradient: "bg-gradient-to-r from-purple-600 to-purple-700", badge: "bg-purple-50 text-purple-700 border-purple-200" },
+        
+        "input validation": { gradient: "bg-gradient-to-r from-cyan-600 to-cyan-700", badge: "bg-cyan-50 text-cyan-700 border-cyan-200" },
+        "output control": { gradient: "bg-gradient-to-r from-pink-600 to-pink-700", badge: "bg-pink-50 text-pink-700 border-pink-200" },
+        
+        "default": { gradient: "bg-gradient-to-r from-gray-600 to-gray-700", badge: "bg-gray-50 text-gray-700 border-gray-200" }
     };
-
-    const defaultStyle = { gradient: "bg-gradient-to-r from-gray-600 to-gray-700", badge: "bg-gray-50 text-gray-700 border-gray-200" };
 
     const severityStyles = {
         "Critical": { badge: "bg-red-50 text-red-700 border border-red-200 ring-1 ring-red-600/10" },
         "High": { badge: "bg-orange-50 text-orange-700 border border-orange-200 ring-1 ring-orange-600/10" },
         "Medium": { badge: "bg-yellow-50 text-yellow-700 border border-yellow-200 ring-1 ring-yellow-600/10" },
         "Low": { badge: "bg-blue-50 text-blue-700 border border-blue-200 ring-1 ring-blue-600/10" }
-    };
-
-    const defaultSeverity = { 
-        badge: "bg-gray-50 text-gray-700 border border-gray-200 ring-1 ring-gray-600/10" 
     };
 
     function escapeHtml(text) {
@@ -59,6 +61,7 @@
         progressBar = document.getElementById('progressBar');
         progressText = document.getElementById('progressText');
 
+        // Toggle logic for AI profiling (if button exists)
         if (analyzeBtn) {
             const btnContainer = analyzeBtn.parentElement; 
             if (btnContainer && btnContainer.parentElement && !document.getElementById('aiProfilingToggle')) {
@@ -106,7 +109,6 @@
                     showError('Please enter an agent instruction to analyze.');
                     return;
                 }
-                // DoS Prevention
                 if (instruction.length > 50000) {
                     showError('Input exceeds safety limits (50k characters). Please shorten your instruction.');
                     return;
@@ -114,33 +116,13 @@
                 await analyzeInstruction(apiKey, instruction);
             });
         }
-
-        const exportPdfBtn = document.getElementById('exportPdfBtn');
-        if (exportPdfBtn) {
-            exportPdfBtn.addEventListener('click', () => {
-                const element = document.getElementById('resultsSection');
-                if (!element || element.classList.contains('hidden')) {
-                    alert("No results to export yet.");
-                    return;
-                }
-                const opt = {
-                    margin: [0.5, 0.5],
-                    filename: 'Guardrail_Analysis_Report.pdf',
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true },
-                    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-                };
-                const originalBtnText = exportPdfBtn.innerHTML;
-                exportPdfBtn.innerHTML = '⏳ Generating...';
-                exportPdfBtn.disabled = true;
-                window.html2pdf().set(opt).from(element).save().then(() => {
-                    exportPdfBtn.innerHTML = originalBtnText;
-                    exportPdfBtn.disabled = false;
-                });
-            });
-        }
-
+        
+        // Export Buttons
+        document.getElementById('exportPdfBtn')?.addEventListener('click', exportPdf);
+        document.getElementById('exportJson')?.addEventListener('click', exportJson);
+        document.getElementById('exportCsv')?.addEventListener('click', exportCsv);
+        
+        // Key management
         const clearKeyBtn = document.getElementById('clearApiKey');
         if (clearKeyBtn) {
             clearKeyBtn.addEventListener('click', () => {
@@ -161,49 +143,32 @@
                 }
             });
         }
-
-        document.getElementById('exportJson')?.addEventListener('click', exportJson);
-        document.getElementById('exportCsv')?.addEventListener('click', exportCsv);
     }
 
     function setupToggleButtons() {
-        const toggleApiKey = document.getElementById('toggleApiKey');
-        const apiKeyContent = document.getElementById('apiKeyContent');
-        const apiKeyMinusIcon = document.getElementById('apiKeyMinusIcon');
-        const apiKeyPlusIcon = document.getElementById('apiKeyPlusIcon');
-
-        if (toggleApiKey && apiKeyContent) {
-            toggleApiKey.addEventListener('click', () => {
-                apiKeyContent.classList.toggle('hidden');
-                const isHidden = apiKeyContent.classList.contains('hidden');
-                if (isHidden) {
-                    apiKeyPlusIcon?.classList.remove('hidden');
-                    apiKeyMinusIcon?.classList.add('hidden');
-                } else {
-                    apiKeyPlusIcon?.classList.add('hidden');
-                    apiKeyMinusIcon?.classList.remove('hidden');
-                }
-            });
-        }
-
-        const toggleHowItWorks = document.getElementById('toggleHowItWorks');
-        const howItWorksContent = document.getElementById('howItWorksContent');
-        const howItWorksMinusIcon = document.getElementById('howItWorksMinusIcon');
-        const howItWorksPlusIcon = document.getElementById('howItWorksPlusIcon');
-
-        if (toggleHowItWorks && howItWorksContent) {
-            toggleHowItWorks.addEventListener('click', () => {
-                howItWorksContent.classList.toggle('hidden');
-                const isHidden = howItWorksContent.classList.contains('hidden');
-                if (isHidden) {
-                    howItWorksPlusIcon?.classList.remove('hidden');
-                    howItWorksMinusIcon?.classList.add('hidden');
-                } else {
-                    howItWorksPlusIcon?.classList.add('hidden');
-                    howItWorksMinusIcon?.classList.remove('hidden');
-                }
-            });
-        }
+        // Toggles for API Key section and How it Works section
+        const bindToggle = (btnId, contentId, minusId, plusId) => {
+            const btn = document.getElementById(btnId);
+            const content = document.getElementById(contentId);
+            const minus = document.getElementById(minusId);
+            const plus = document.getElementById(plusId);
+            
+            if (btn && content) {
+                btn.addEventListener('click', () => {
+                    content.classList.toggle('hidden');
+                    if (content.classList.contains('hidden')) {
+                        plus?.classList.remove('hidden');
+                        minus?.classList.add('hidden');
+                    } else {
+                        plus?.classList.add('hidden');
+                        minus?.classList.remove('hidden');
+                    }
+                });
+            }
+        };
+        
+        bindToggle('toggleApiKey', 'apiKeyContent', 'apiKeyMinusIcon', 'apiKeyPlusIcon');
+        bindToggle('toggleHowItWorks', 'howItWorksContent', 'howItWorksMinusIcon', 'howItWorksPlusIcon');
     }
 
     function loadCachedApiKey() {
@@ -211,131 +176,48 @@
         if (cachedKey && apiKeyInput) apiKeyInput.value = cachedKey;
     }
 
-    // --- NEW: Robust JSON Parser ---
     function cleanAndParseJSON(rawText) {
-        // 1. Try stripping markdown code blocks
         let clean = rawText.replace(/```json\s*|\s*```/g, '').trim();
-        // 2. Try stripping generic code blocks
         clean = clean.replace(/```\s*|\s*```/g, '').trim();
-        
         try {
             return JSON.parse(clean);
         } catch (e) {
-            // 3. Fallback: Try identifying the JSON object with regex
             const match = rawText.match(/\{[\s\S]*\}/);
             if (match) {
-                try {
-                    return JSON.parse(match[0]);
-                } catch (e2) {
-                    throw new Error("Could not extract valid JSON from response.");
-                }
+                try { return JSON.parse(match[0]); } catch (e2) {}
             }
-            throw new Error("Model response was not valid JSON.");
-        }
-    }
-    // -------------------------------
-
-    // --- CrewAI Loading Visualization ---
-    function simulateLoadingSteps() {
-        const steps = [
-            "🕵️ [Agent: Security Auditor] Scanning for OWASP/NIST vulnerabilities...",
-            "🔒 [Agent: Privacy Validator] Checking for PII & Data Residency risks...",
-            "🛡️ [Agent: Controls Specialist] Verifying Scope & Input boundaries...",
-            "⚖️ [Agent: Ethics Auditor] Analyzing Fairness & Accountability...",
-            "🧪 [Agent: QA Engineer] Running logical consistency checks...",
-            "⚡ [Agent: Ops Checker] Simulating infinite loops & token limits...",
-            "📝 [Crew Manager] Synthesizing final Guardrail Report..."
-        ];
-        let stepIndex = 0;
-        
-        // Clear any existing interval to prevent duplicates
-        if (window.loadingInterval) clearInterval(window.loadingInterval);
-        
-        window.loadingInterval = setInterval(() => {
-            const loadingElement = document.getElementById('loadingState');
-            if (!loadingElement || loadingElement.classList.contains('hidden')) {
-                clearInterval(window.loadingInterval);
-                return;
-            }
-            const progressText = document.getElementById('progressText');
-            if (progressText) progressText.textContent = steps[stepIndex];
-            stepIndex = (stepIndex + 1) % steps.length;
-        }, 1500);
-    }
-  
-    // --- MAIN ANALYSIS FUNCTION (Connects to Python Backend) ---
-    async function analyzeInstruction(apiKey, instruction, retries = 2) {
-        hideError();
-        hideResults();
-        showLoading();
-        simulateLoadingSteps();
-
-        try {
-            updateProgress(10, 'Sending to Python CrewAI Backend...');
-
-            // Fetch from your local FastAPI backend (relative path for Docker/HF Spaces)
-            const response = await fetch('/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    instruction: instruction,
-                    api_key: apiKey
-                })
-            });
-
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.detail || `Backend Error: ${response.status}`);
-            }
-
-            updateProgress(75, 'CrewAI Agents are processing...');
-            
-            const data = await response.json();
-            
-            updateProgress(90, 'Formatting results...');
-            
-            // The result from CrewAI comes in the 'result' field (stringified JSON)
-            // We use our robust parser to handle it
-            if (!data.result) throw new Error("Backend returned empty result.");
-            
-            analysisResults = cleanAndParseJSON(data.result); 
-            
-            // Pass profiling flag if needed (logic can be handled here or in python)
-            const useAiProfiling = document.getElementById('aiProfilingToggle')?.checked;
-            analysisResults.aiProfilingEnabled = useAiProfiling;
-
-            updateProgress(100, 'Audit complete!');
-            
-            if (window.loadingInterval) clearInterval(window.loadingInterval);
-            setTimeout(() => { hideLoading(); displayResults(); }, 500);
-
-        } catch (error) {
-            console.error("Analysis failed:", error);
-            if (window.loadingInterval) clearInterval(window.loadingInterval);
-            hideLoading();
-            showError(error.message || 'Connection to Python backend failed.');
+            throw new Error("Could not extract valid JSON from response.");
         }
     }
 
+    // --- GAP ANALYSIS (FIXED) ---
     function performGapAnalysis(foundGuardrails) {
+        // We look for these "Concepts", allowing for loose matching on names
         const requiredCategories = [
-            { key: "Security & Compliance", label: "Critical Security Controls", weight: 2 },
-            { key: "Privacy Protection", label: "Privacy & Data Handling", weight: 2 },
-            { key: "Scope Control", label: "Scope Boundaries", weight: 1.5 },
-            { key: "Input Validation", label: "Input Validation", weight: 1.5 },
-            { key: "Output Control", label: "Output Sanitization", weight: 1 },
-            { key: "Ethical Conduct", label: "Ethical Guidelines", weight: 1 },
-            { key: "Accountability", label: "Escalation Protocols", weight: 1 }
+            { id: "security", keywords: ["security", "compliance", "auth", "access"], label: "Critical Security Controls", weight: 2 },
+            { id: "privacy", keywords: ["privacy", "data", "pii", "gdpr", "handling"], label: "Privacy & Data Handling", weight: 2 },
+            { id: "scope", keywords: ["scope", "boundar", "limit", "capability"], label: "Scope Boundaries", weight: 1.5 },
+            { id: "input", keywords: ["input", "validation", "sanitize", "injection"], label: "Input Validation", weight: 1.5 },
+            { id: "output", keywords: ["output", "response", "format"], label: "Output Sanitization", weight: 1 },
+            { id: "ethical", keywords: ["ethic", "bias", "fairness", "harm"], label: "Ethical Guidelines", weight: 1 },
+            { id: "accountability", keywords: ["accountab", "audit", "log", "monitor", "escalat"], label: "Accountability & Logs", weight: 1 }
         ];
 
-        const foundCategories = new Set(foundGuardrails.map(g => g.category.toLowerCase().trim()));
+        const foundStrings = foundGuardrails.map(g => g.category.toLowerCase() + " " + g.name.toLowerCase());
+        
         let totalWeight = 0;
         let currentScore = 0;
         const breakdown = [];
 
         requiredCategories.forEach(req => {
             totalWeight += req.weight;
-            if (foundCategories.has(req.key.toLowerCase())) {
+            
+            // Check if ANY found guardrail matches ANY keyword for this requirement
+            const isPresent = foundStrings.some(str => 
+                req.keywords.some(keyword => str.includes(keyword))
+            );
+
+            if (isPresent) {
                 currentScore += req.weight;
                 breakdown.push({ label: `Has ${req.label}`, status: 'pass' });
             } else {
@@ -347,7 +229,6 @@
         return { score: finalScore, breakdown: breakdown };
     }
 
-    // Helper to Generate BIG Donut Chart
     function renderScoreChart(score) {
         let color = '#dc2626'; // Red
         let textColor = 'text-red-700';
@@ -381,6 +262,45 @@
         `;
     }
 
+    async function analyzeInstruction(apiKey, instruction) {
+        hideError();
+        hideResults();
+        showLoading();
+
+        try {
+            updateProgress(10, 'Sending to Python CrewAI Backend...');
+
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instruction: instruction, api_key: apiKey })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.detail || `Backend Error: ${response.status}`);
+            }
+
+            updateProgress(75, 'CrewAI Agents are processing...');
+            const data = await response.json();
+            
+            updateProgress(90, 'Formatting results...');
+            if (!data.result) throw new Error("Backend returned empty result.");
+            
+            analysisResults = cleanAndParseJSON(data.result); 
+            analysisResults.aiProfilingEnabled = document.getElementById('aiProfilingToggle')?.checked;
+
+            updateProgress(100, 'Audit complete!');
+            
+            setTimeout(() => { hideLoading(); displayResults(); }, 500);
+
+        } catch (error) {
+            console.error("Analysis failed:", error);
+            hideLoading();
+            showError(error.message || 'Connection to Python backend failed.');
+        }
+    }
+
     function displayResults() {
         if (!analysisResults) return;
 
@@ -392,10 +312,9 @@
         document.getElementById('criticalCount').textContent = critical;
         document.getElementById('highCount').textContent = high;
 
-        // Gap Analysis
+        // Run Fixed Gap Analysis
         const gapAnalysis = performGapAnalysis(analysisResults.guardrails);
         
-        // FIX: Better alignment for Score Card (Flexbox Fix)
         const scoreEl = document.getElementById('coverageScore');
         if (scoreEl) {
             scoreEl.className = 'flex flex-col items-center justify-center py-2 h-full'; 
@@ -490,12 +409,21 @@
         }
 
         container.innerHTML = guardrails.map((g, idx) => {
-            const sevStyle = severityStyles[g.severity] || defaultSeverity;
-            const catStyle = categoryStyles[g.category] || defaultStyle;
-            
+            const sevStyle = severityStyles[g.severity] || severityStyles["Medium"];
+            // Look up style using lowercase key, fallback to default
+            const catKey = g.category.toLowerCase();
+            // Fuzzy match for styling if exact key missing
+            let styleToUse = categoryStyles["default"];
+            for (const key in categoryStyles) {
+                if (catKey.includes(key)) {
+                    styleToUse = categoryStyles[key];
+                    break;
+                }
+            }
+
             return `
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden fade-in" style="animation-delay: ${idx * 0.05}s">
-                <div class="${catStyle.gradient} p-5 text-white">
+                <div class="${styleToUse.gradient} p-5 text-white">
                     <div class="flex items-start justify-between">
                         <div class="flex-1">
                             <h3 class="text-xl font-bold mb-1">${escapeHtml(g.name)}</h3>
@@ -520,32 +448,19 @@
                                 <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(g.mechanism)}</p>
                             </div>
                         </div>
-                        <div>
-                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Enforcement</h4>
-                            <div class="pl-3 border-l-4 border-purple-400">
-                                <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(g.enforcement)}</p>
-                            </div>
-                        </div>
                     </div>
-
-                    <div class="flex flex-col h-full justify-between">
-                        <div>
-                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Triggers</h4>
-                            <ul class="space-y-2">
-                                ${g.triggers.map(t => `
-                                    <li class="flex items-start gap-2.5">
-                                        <svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        <span class="text-sm text-gray-700 leading-relaxed">${escapeHtml(t)}</span>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                        
-                        <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end text-xs text-gray-400 gap-1">
-                            <span class="font-mono truncate max-w-[200px]" title="${escapeHtml(g.location)}">Line: ${escapeHtml(g.location)}</span>
-                        </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Triggers</h4>
+                        <ul class="space-y-2">
+                            ${g.triggers.map(t => `
+                                <li class="flex items-start gap-2.5">
+                                    <svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    <span class="text-sm text-gray-700 leading-relaxed">${escapeHtml(t)}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -553,56 +468,66 @@
         }).join('');
     }
 
-    // ... (Keep Export & UI Helper functions)
+    // Export PDF Helper
+    function exportPdf() {
+        const element = document.getElementById('resultsSection');
+        if (!element || element.classList.contains('hidden')) {
+            alert("No results to export yet.");
+            return;
+        }
+        const btn = document.getElementById('exportPdfBtn');
+        const oldText = btn.innerHTML;
+        btn.innerHTML = 'Generating...';
+        btn.disabled = true;
+
+        const opt = {
+            margin: [0.5, 0.5],
+            filename: 'Guardrail_Analysis_Report.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        
+        window.html2pdf().set(opt).from(element).save().then(() => {
+            btn.innerHTML = oldText;
+            btn.disabled = false;
+        });
+    }
+
     function exportJson() {
         if (!analysisResults) return;
         const blob = new Blob([JSON.stringify(analysisResults, null, 2)], { type: 'application/json' });
-        downloadFile(blob, 'guardrail-analysis.json');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'guardrail-analysis.json';
+        a.click();
     }
 
     function exportCsv() {
         if (!analysisResults) return;
-        const headers = ['Name', 'Category', 'Severity', 'Description', 'Mechanism', 'Triggers', 'Enforcement', 'Location'];
-        const rows = analysisResults.guardrails.map(g => [
-            g.name, g.category, g.severity, g.description, g.mechanism,
-            g.triggers.join('; '), g.enforcement, g.location
-        ]);
-        
-        const escapeCsvField = (field) => {
-            if (field.includes(',') || field.includes('"') || field.includes('\n')) {
-                return `"${field.replace(/"/g, '""')}"`;
-            }
-            return field;
-        };
-        
-        const csv = [
-            headers.join(','),
-            ...rows.map(row => row.map(escapeCsvField).join(','))
-        ].join('\n');
-        
-        const blob = new Blob([csv], { type: 'text/csv' });
-        downloadFile(blob, 'guardrail-analysis.csv');
-    }
-
-    function downloadFile(blob, filename) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Simple CSV export logic...
+        const rows = [
+            ["Name", "Category", "Severity", "Mechanism"],
+            ...analysisResults.guardrails.map(g => [g.name, g.category, g.severity, g.mechanism])
+        ];
+        const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "guardrail_analysis.csv");
+        document.body.appendChild(link);
+        link.click();
     }
 
     function showLoading() { loadingState.classList.remove('hidden'); analyzeBtn.disabled = true; }
     function hideLoading() { loadingState.classList.add('hidden'); analyzeBtn.disabled = false; progressBar.style.width = '0%'; }
     function updateProgress(percent, text) { progressBar.style.width = percent + '%'; progressText.textContent = text; }
-    function showError(message) { errorState.classList.remove('hidden'); document.getElementById('errorMessage').textContent = message; if (!message.includes('API key') && !message.includes('required')) { setTimeout(hideError, 5000); } }
+    function showError(message) { errorState.classList.remove('hidden'); document.getElementById('errorMessage').textContent = message; if (!message.includes('API key')) setTimeout(hideError, 5000); }
     function hideError() { errorState.classList.add('hidden'); }
     function hideResults() { resultsSection.classList.add('hidden'); }
 
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 
-    window.guardrailAnalyzer = { filterByCategory: filterByCategory, version: '3.3.0-enterprise-agent' };
+    window.guardrailAnalyzer = { filterByCategory: filterByCategory, version: '3.4.0-fuzzy-fix' };
 })();
