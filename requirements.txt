@@ -4,7 +4,5 @@ crewai
 langchain_openai
 python-multipart
 litellm
-litellm[proxy]
 apscheduler
-pydantic[email]
 fastapi-sso
