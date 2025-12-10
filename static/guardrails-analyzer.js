@@ -197,9 +197,7 @@
         }
     }
 
-    // --- REVERTED: REWARD-BASED SCORING ---
     function performGapAnalysis(foundGuardrails) {
-        // We look for these "Concepts", allowing for loose matching on names
         const requiredCategories = [
             { id: "security", keywords: ["security", "compliance", "auth", "access"], label: "Critical Security Controls", weight: 2 },
             { id: "privacy", keywords: ["privacy", "data", "pii", "gdpr", "handling"], label: "Privacy & Data Handling", weight: 2 },
@@ -218,8 +216,6 @@
 
         requiredCategories.forEach(req => {
             totalWeight += req.weight;
-            
-            // Check if ANY found guardrail matches ANY keyword for this requirement
             const isPresent = foundStrings.some(str => 
                 req.keywords.some(keyword => str.includes(keyword))
             );
@@ -269,7 +265,8 @@
         `;
     }
 
-  function applyFilters() {
+    // --- CORE FILTERING LOGIC ---
+    function applyFilters() {
         if (!analysisResults) return;
 
         let filtered = analysisResults.guardrails;
@@ -295,7 +292,6 @@
         updateFilterUI();
     }
 
-    // --- NEW: Handle Summary Card Clicks ---
     function filterBySummaryCard(type) {
         // Reset category to ensure user sees the relevant items across all categories first
         currentCategoryFilter = 'all'; 
@@ -310,11 +306,11 @@
                 currentSeverityFilter = 'all';
                 break;
             case 'critical':
-                currentStatusFilter = 'missing'; // Critical gaps are inherently 'missing'
+                currentStatusFilter = 'missing';
                 currentSeverityFilter = 'critical';
                 break;
             case 'high':
-                currentStatusFilter = 'missing'; // High gaps are inherently 'missing'
+                currentStatusFilter = 'missing';
                 currentSeverityFilter = 'high';
                 break;
         }
@@ -340,12 +336,11 @@
     }
 
     function updateFilterUI() {
-        // Update Status Buttons
+        // 1. Update Status Buttons
         const statuses = ['active', 'missing', 'all'];
         statuses.forEach(s => {
             const btn = document.getElementById(`btn-status-${s}`);
             if (btn) {
-                // If we are filtering by specific severity (e.g. Critical), we still want the 'missing' tab highlighted
                 const isActive = currentStatusFilter === s;
                 btn.className = isActive 
                     ? "px-4 py-1.5 rounded-md text-sm font-bold transition-all shadow-sm bg-white text-blue-700 ring-1 ring-black/5"
@@ -353,7 +348,7 @@
             }
         });
 
-        // Show/Hide Filter Badge
+        // 2. Show/Hide Filter Badge
         const badge = document.getElementById('activeFilterBadge');
         const badgeText = document.getElementById('activeFilterText');
         if (badge && badgeText) {
@@ -367,16 +362,15 @@
             }
         }
 
-        // Render Category Buttons based on current view context
+        // 3. Render Category Buttons based on current Status/Severity context
         let contextGuardrails = analysisResults.guardrails;
         
-        // Context depends on Status
+        // Filter context items by Status/Severity so category counts reflect what is currently viewable
         if (currentStatusFilter === 'active') {
             contextGuardrails = contextGuardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         } else if (currentStatusFilter === 'missing') {
             contextGuardrails = contextGuardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
         }
-        // Context depends on Severity (if set)
         if (currentSeverityFilter !== 'all') {
             contextGuardrails = contextGuardrails.filter(g => g.severity?.toLowerCase() === currentSeverityFilter.toLowerCase());
         }
@@ -442,14 +436,13 @@
             
             let parsed = cleanAndParseJSON(data.result); 
     
-            // Normalization
             if (parsed.guardrails) {
                 parsed.guardrails = parsed.guardrails.map(g => ({
                     ...g,
                     severity: g.risk_level || g.severity || "Medium", 
                     mechanism: g.recommendation || g.mechanism || "No recommendation provided.",
                     triggers: Array.isArray(g.triggers) ? g.triggers : [],
-                    enforcement: g.enforcement || "Review", // Fallback if missing
+                    enforcement: g.enforcement || "Review", 
                     location: g.location || "" 
                 }));
             }
@@ -469,7 +462,7 @@
         }
     }
   
-function displayResults() {
+    function displayResults() {
         if (!analysisResults) return;
 
         // 1. Calculate Stats
@@ -506,7 +499,6 @@ function displayResults() {
 
         // 4. Render Recommendations
         const breakdownContainer = document.getElementById('recommendations');
-        // ... [Keep recommendation HTML logic] ...
          const checklistHTML = `
         <div class="mb-6 bg-white bg-opacity-50 rounded-lg p-4">
             <h4 class="font-bold text-purple-900 mb-3 uppercase text-xs tracking-wider">Gap Analysis</h4>
@@ -547,48 +539,11 @@ function displayResults() {
         resultsSection.classList.remove('hidden');
     }
 
-    function renderCategoryFilters(categories) {
-        const container = document.getElementById('categoryFilters');
-        const counts = {};
-        analysisResults.guardrails.forEach(g => { counts[g.category] = (counts[g.category] || 0) + 1; });
-        const total = analysisResults.guardrails.length;
-
-        container.innerHTML = categories.map(cat => {
-            const count = cat === 'all' ? total : (counts[cat] || 0);
-            const isDisabled = count === 0;
-            const label = cat === 'all' ? `All Categories (${count})` : `${cat} (${count})`;
-            
-            return `
-            <button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" 
-                    ${isDisabled ? 'disabled' : ''}
-                    class="px-4 py-2 rounded-lg font-medium transition-all text-sm border ${
-                currentFilter === cat 
-                    ? 'bg-blue-600 text-white shadow-md border-blue-600' 
-                    : isDisabled 
-                        ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-transparent' 
-                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200 shadow-sm'
-            }">
-                ${escapeHtml(label)}
-            </button>
-        `;
-        }).join('');
-    }
-
-    function filterByCategory(category) {
-        currentFilter = category;
-        const filtered = category === 'all' 
-            ? analysisResults.guardrails 
-            : analysisResults.guardrails.filter(g => g.category === category);
-        const categories = ['all', ...new Set(analysisResults.guardrails.map(g => g.category))];
-        renderCategoryFilters(categories);
-        renderGuardrails(filtered);
-    }
-
     function renderGuardrails(guardrails) {
         const container = document.getElementById('guardrailsDisplay');
         
         if (guardrails.length === 0) {
-            container.innerHTML = '<div class="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-100"><p class="text-gray-500 text-lg">No guardrails found.</p></div>';
+            container.innerHTML = '<div class="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-100"><p class="text-gray-500 text-lg">No guardrails found matching current filters.</p></div>';
             return;
         }
 
@@ -603,7 +558,6 @@ function displayResults() {
                 }
             }
             
-            // Resolve Action Style
             const actionKey = (g.enforcement || "default").toLowerCase();
             let actionClass = actionStyles["default"];
             for (const key in actionStyles) {
@@ -744,8 +698,8 @@ function displayResults() {
     window.guardrailAnalyzer = { 
         filterByCategory: filterByCategory, 
         filterByStatus: filterByStatus,
-        filterBySummaryCard: filterBySummaryCard, // Export new function
-        resetFilters: resetFilters, // Export reset
-        version: '3.9.5-interactive-dashboard' 
+        filterBySummaryCard: filterBySummaryCard,
+        resetFilters: resetFilters, 
+        version: '3.9.5-fixed-filters' 
     };
 })();
