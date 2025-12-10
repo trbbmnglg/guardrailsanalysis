@@ -59,7 +59,7 @@ async def run_analysis(request: AnalysisRequest):
 
         # 2. DEFINE AGENTS - AUDITORS WHO CHECK FOR PRESENCE/ABSENCE OF CONTROLS
         security_agent = Agent(
-            role='Security & Compliance Auditor',
+            role='Deloitte Senior AI Risk Partner, Security & Compliance Auditor',
             goal='Audit the agent instruction to verify if proper security guardrails EXIST. Flag MISSING controls as risks.',
             backstory="""You are a security auditor specializing in OWASP Top 10 and ISO 42001. 
             Your job is to CHECK if the agent instruction contains proper guardrails for:
@@ -92,7 +92,7 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         privacy_ops_agent = Agent(
-            role='Privacy & Data Governance Auditor',
+            role='IAPP (International Association of Privacy Professionals) Privacy & Data Governance Auditor',
             goal='Audit for privacy controls. Flag MISSING privacy guardrails as risks.',
             backstory="""You are a privacy auditor following NIST AI RMF 1.0, GDPR, and CCPA.
             Your job is to CHECK if the agent instruction contains proper guardrails for:
@@ -119,7 +119,7 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         rai_agent = Agent(
-            role='Responsible AI & Ethics Auditor',
+            role='RAI (Responsible AI) Institute Ethics Auditor',
             goal='Audit for ethical controls. Flag MISSING fairness and accountability guardrails.',
             backstory="""You are an ethics auditor focusing on bias, fairness, and accountability.
             Your job is to CHECK if the agent instruction contains proper guardrails for:
@@ -146,7 +146,7 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         qa_agent = Agent(
-            role='Quality Assurance & Functional Auditor',
+            role='Qualitest AI Quality Assurance & Functional Auditor',
             goal='Audit for quality controls. Flag MISSING validation and testing guardrails.',
             backstory="""You evaluate prompt quality per ISO/IEC 25059.
             Your job is to CHECK if the agent instruction contains proper guardrails for:
@@ -263,7 +263,7 @@ async def run_analysis(request: AnalysisRequest):
         # 5. OPTIONAL: TIERING AGENT
         if request.enable_profiling:
             tiering_agent = Agent(
-                role='Cost & Compute Architect',
+                role='AI Cost & Compute Architect',
                 goal='Determine computational tier (1-4) needed to implement the identified guardrails',
                 backstory="""You review audit findings and determine what compute tier is needed:
                 - Tier 1: Simple regex/keyword checks (~2ms, $0.27/1M tokens)
@@ -298,9 +298,13 @@ async def run_analysis(request: AnalysisRequest):
 
         # 6. SYNTHESIS AGENT
         report_agent = Agent(
-            role='Chief Governance Officer',
+            role='Accenture AI Chief Governance Officer',
             goal='Synthesize audit findings into final JSON report of present and missing guardrails',
             backstory="""You are a governance expert who synthesizes audit findings.
+
+            You MUST:
+            1. REVIEW the audit findings.
+            2. REMOVE redundant guardrails.
             
             You MUST distinguish between:
             1. PRESENT GUARDRAILS: Controls that exist in the agent instruction
