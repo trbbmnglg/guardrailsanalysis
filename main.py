@@ -81,7 +81,6 @@ async def run_analysis(request: AnalysisRequest):
             verbose=True
         )
 
-        # UPDATED AGENT: Receives inputs from others to decide Tier
         tiering_agent = Agent(
             role='Cost & Compute Architect',
             goal='Determine the final Latency/Cost Tier (1-4) based on identified risks',
@@ -102,8 +101,8 @@ async def run_analysis(request: AnalysisRequest):
 
         report_agent = Agent(
             role='Chief Governance Officer',
-            goal='Synthesize all findings into a single JSON report',
-            backstory='You aggregate findings from all agents into the final compliance report.',
+            goal='Synthesize all findings into a strict JSON format',
+            backstory='You are a strict data formatter. You take unstructured findings and output ONLY valid JSON matching the schema.',
             llm=llm,
             allow_delegation=False,
             verbose=True
@@ -137,45 +136,48 @@ async def run_analysis(request: AnalysisRequest):
             expected_output="QA assessment."
         )
 
-        # UPDATED TASK: Uses Context from previous tasks
         task_tiering = Task(
             description="""
             Review the findings from the Security, Privacy, RAI, and QA agents.
-            
-            Based on the *identified risks* and *required mitigations*, assign a Complexity Tier:
-            
-            1. **Tier 1 (Low):** If only Regex/Keywords are needed. (e.g., Simple blocking).
-            2. **Tier 2 (Standard):** If PII was found or basic classification is needed.
-            3. **Tier 3 (High):** If RAG, Vector Search, or complex Legal Compliance is flagged.
-            4. **Tier 4 (Extreme):** If the agents found deep logic flaws requiring "Deep Thinking" or Agentic Planning.
-            
-            Output the Tier, Model, and Cost based on the collective findings.
+            Based on the *identified risks*, assign a Complexity Tier (1-4).
+            Output the Tier, Model, Cost, and Reason.
             """,
             agent=tiering_agent,
-            context=[task_security, task_privacy, task_rai, task_qa], # <--- CRITICAL INPUTS
-            expected_output="Tier recommendation based on agent findings."
+            context=[task_security, task_privacy, task_rai, task_qa],
+            expected_output="Tier recommendation."
         )
 
+        # --- UPDATED: STRICT JSON SCHEMA TASK ---
         task_report = Task(
             description="""
-            Synthesize findings from ALL agents into a JSON report.
+            Synthesize the findings from ALL agents into a JSON response.
             
-            Structure:
+            You must strictly follow this JSON schema:
             {
-                "guardrails": [ ... findings from security, privacy, rai, qa ... ],
+                "guardrails": [
+                    {
+                        "category": "Security" | "Privacy" | "Responsible AI" | "Quality Assurance",
+                        "risk_level": "Critical" | "High" | "Medium" | "Low",
+                        "description": "Short description of the specific risk found.",
+                        "recommendation": "Specific action to fix the risk."
+                    }
+                ],
                 "tiering_strategy": {
-                    "selected_tier": "Tier X",
-                    "reasoning": "e.g. 'Privacy Agent found PII, necessitating Tier 2 compute.'",
-                    "model_class": "Model Name",
-                    "estimated_cost": "$XX.XX"
+                    "selected_tier": "Tier 1" | "Tier 2" | "Tier 3" | "Tier 4",
+                    "model_class": "e.g. DeepSeek-V3, GPT-5",
+                    "estimated_cost": "e.g. $0.27",
+                    "latency_impact": "e.g. ~5ms",
+                    "justification": "Why this tier was selected based on the findings."
                 }
             }
             
-            CRITICAL: RETURN ONLY VALID JSON.
+            1. If no risks are found in a category, do not create an empty object; just omit it from the array.
+            2. Ensure "tiering_strategy" is populated based on the Tiering Agent's output.
+            3. CRITICAL: Output ONLY the raw JSON string. Do not use Markdown (```json). Do not add preamble.
             """,
             agent=report_agent,
             context=[task_security, task_privacy, task_rai, task_qa, task_tiering],
-            expected_output="Valid JSON String"
+            expected_output="A valid JSON string matching the schema."
         )
 
         # ---------------------------------------------------------
