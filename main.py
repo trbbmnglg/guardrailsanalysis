@@ -464,6 +464,9 @@ async def run_analysis(request: AnalysisRequest):
                             gr["complexity_tier"] = 3
                         else:
                             gr["complexity_tier"] = 2  # Default to tier 2
+                    if gr.get("name", "").upper().startswith("MISSING"):
+                        gr["location"] = ""
+                    if "enforcement" not in gr or not gr["enforcement"]:
                         
             cleaned_output = json.dumps(parsed)
         except json.JSONDecodeError as e:
