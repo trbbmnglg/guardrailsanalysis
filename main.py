@@ -147,7 +147,7 @@ async def run_analysis(request: AnalysisRequest):
             expected_output="Tier recommendation."
         )
 
-        # --- UPDATED: STRICT JSON SCHEMA TASK ---
+        # --- FIX: ADDED 'name' TO JSON SCHEMA ---
         task_report = Task(
             description="""
             Synthesize the findings from ALL agents into a JSON response.
@@ -156,6 +156,7 @@ async def run_analysis(request: AnalysisRequest):
             {
                 "guardrails": [
                     {
+                        "name": "Short Name of Risk (e.g. 'Prompt Injection', 'PII Leak')",
                         "category": "Security" | "Privacy" | "Responsible AI" | "Quality Assurance",
                         "risk_level": "Critical" | "High" | "Medium" | "Low",
                         "description": "Short description of the specific risk found.",
@@ -171,9 +172,9 @@ async def run_analysis(request: AnalysisRequest):
                 }
             }
             
-            1. If no risks are found in a category, do not create an empty object; just omit it from the array.
-            2. Ensure "tiering_strategy" is populated based on the Tiering Agent's output.
-            3. CRITICAL: Output ONLY the raw JSON string. Do not use Markdown (```json). Do not add preamble.
+            CRITICAL: 
+            1. Every object in "guardrails" MUST have a "name" and "category" field.
+            2. Output ONLY the raw JSON string. No Markdown.
             """,
             agent=report_agent,
             context=[task_security, task_privacy, task_rai, task_qa, task_tiering],
