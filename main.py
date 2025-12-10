@@ -56,7 +56,7 @@ async def run_analysis(request: AnalysisRequest):
             base_url="https://router.huggingface.co/v1",
             api_key=request.api_key,
             temperature=0.1,
-            max_tokens=3000
+            max_tokens=5000
         )
 
         # 2. DEFINE AGENTS
