@@ -18,6 +18,9 @@
 
     // --- CONFIG: Flat UI Colors ---
     const categoryStyles = {
+        "responsible ai": { gradient: "bg-gradient-to-r from-purple-600 to-purple-700", badge: "bg-purple-50 text-purple-700 border-purple-200" },
+        "scope control": { gradient: "bg-gradient-to-r from-blue-600 to-blue-700", badge: "bg-blue-50 text-blue-700 border-blue-200" },
+      
         "security": { gradient: "bg-gradient-to-r from-red-600 to-red-700", badge: "bg-red-50 text-red-700 border-red-200" },
         "security & compliance": { gradient: "bg-gradient-to-r from-red-600 to-red-700", badge: "bg-red-50 text-red-700 border-red-200" },
         "compliance": { gradient: "bg-gradient-to-r from-red-600 to-red-700", badge: "bg-red-50 text-red-700 border-red-200" },
@@ -197,50 +200,84 @@
         }
     }
 
-    // --- REVISED: WEIGHTED HEALTH SCORE ---
-    function performGapAnalysis(activeGuardrails, missingGuardrails) {
-        // 1. Calculate weighted Health Score (Active vs Risk)
-        const getWeight = (g) => {
-            const s = (g.severity || 'medium').toLowerCase();
-            if (s === 'critical') return 10;
-            if (s === 'high') return 5;
-            if (s === 'medium') return 2;
-            return 1;
-        };
-
-        const activeScore = activeGuardrails.reduce((acc, g) => acc + getWeight(g), 0);
-        const missingScore = missingGuardrails.reduce((acc, g) => acc + getWeight(g), 0);
-        
-        const totalPotential = activeScore + missingScore;
-        // The score represents "Percentage of Total Risk Mitigated"
-        const finalScore = totalPotential === 0 ? 0 : Math.round((activeScore / totalPotential) * 100);
-
-        // 2. Generate Breakdown Checklist (Existing Logic)
-        const requiredCategories = [
-            { id: "security", keywords: ["security", "compliance", "auth", "access"], label: "Critical Security Controls" },
-            { id: "privacy", keywords: ["privacy", "data", "pii", "gdpr", "handling"], label: "Privacy & Data Handling" },
-            { id: "scope", keywords: ["scope", "boundar", "limit", "capability"], label: "Scope Boundaries" },
-            { id: "input", keywords: ["input", "validation", "sanitize", "injection"], label: "Input Validation" },
-            { id: "output", keywords: ["output", "response", "format"], label: "Output Sanitization" },
-            { id: "ethical", keywords: ["ethic", "bias", "fairness", "harm"], label: "Ethical Guidelines" },
-            { id: "accountability", keywords: ["accountab", "audit", "log", "monitor", "escalat"], label: "Accountability & Logs" }
+    function performGapAnalysis(foundGuardrails) {
+        // 1. Define the buckets we want to measure
+        // We map 'backendCategories' (from main.py) to these buckets explicitly.
+        const scoringBuckets = [
+            { 
+                id: "security", 
+                label: "Critical Security Controls", 
+                backendCategories: ["Security"], // Exact match from main.py
+                keywords: ["security", "auth", "access", "compliance", "encryption", "redact"], 
+                weight: 2 
+            },
+            { 
+                id: "privacy", 
+                label: "Privacy & Data Handling", 
+                backendCategories: ["Privacy"], 
+                keywords: ["privacy", "pii", "gdpr", "data", "confidential"], 
+                weight: 2 
+            },
+            { 
+                id: "ai_safety", 
+                label: "AI Safety & Ethics", 
+                backendCategories: ["Responsible AI"], 
+                keywords: ["ethic", "bias", "fairness", "harm", "responsible", "toxicity"], 
+                weight: 1.5 
+            },
+            { 
+                id: "scope", 
+                label: "Scope & Boundaries", 
+                backendCategories: ["Scope Control"], 
+                keywords: ["scope", "limit", "boundar", "capability", "gatekeeping"], 
+                weight: 1.5 
+            },
+            { 
+                id: "validation", 
+                label: "Input/Output Validation", 
+                backendCategories: ["Input Validation", "Output Control", "QA"], 
+                keywords: ["input", "output", "validate", "sanitize", "format", "structure", "quality"], 
+                weight: 1.5 
+            },
+            { 
+                id: "oversight", 
+                label: "Accountability & Oversight", 
+                backendCategories: [], // No direct backend equivalent, relies on keywords or specific names
+                keywords: ["human", "oversight", "audit", "log", "monitor", "escalat", "attribution", "confidence"], 
+                weight: 1 
+            }
         ];
-
-        const activeStrings = activeGuardrails.map(g => g.category.toLowerCase() + " " + g.name.toLowerCase());
+    
+        let totalWeight = 0;
+        let earnedScore = 0;
         const breakdown = [];
-
-        requiredCategories.forEach(req => {
-            const isPresent = activeStrings.some(str => 
-                req.keywords.some(keyword => str.includes(keyword))
+    
+        scoringBuckets.forEach(bucket => {
+            totalWeight += bucket.weight;
+            
+            // CHECK 1: Look for explicit Backend Category match
+            // If the AI tagged it as "Responsible AI", it counts for the "AI Safety" bucket.
+            const hasCategoryMatch = foundGuardrails.some(g => 
+                bucket.backendCategories.includes(g.category)
             );
-
-            if (isPresent) {
-                breakdown.push({ label: `Has ${req.label}`, status: 'pass' });
+    
+            // CHECK 2: Fallback to Keyword Search (in Name or Description)
+            // Helpful if the AI miscategorized it but the text is clear.
+            const hasKeywordMatch = foundGuardrails.some(g => {
+                const text = (g.name + " " + g.description + " " + g.mechanism).toLowerCase();
+                return bucket.keywords.some(k => text.includes(k));
+            });
+    
+            if (hasCategoryMatch || hasKeywordMatch) {
+                earnedScore += bucket.weight;
+                breakdown.push({ label: `Has ${bucket.label}`, status: 'pass' });
             } else {
-                breakdown.push({ label: `Missing ${req.label}`, status: 'fail' });
+                breakdown.push({ label: `Missing ${bucket.label}`, status: 'fail' });
             }
         });
-
+    
+        // Calculate Percentage
+        const finalScore = totalWeight === 0 ? 0 : Math.round((earnedScore / totalWeight) * 100);
         return { score: finalScore, breakdown: breakdown };
     }
 
