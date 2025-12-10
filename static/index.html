@@ -287,22 +287,32 @@ Mission: Provide customer support...
             
             <!-- Summary Stats -->
             <div class="bg-white rounded-xl shadow-lg p-8 mb-8 fade-in">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">Analysis Summary</h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Analysis Summary (Active)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
-                        <div class="text-4xl font-bold text-blue-700" id="totalGuardrails">0</div>
-                        <div class="text-sm text-gray-700 font-medium mt-1">Total Guardrails</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg border border-red-200">
-                        <div class="text-4xl font-bold text-red-700" id="criticalCount">0</div>
-                        <div class="text-sm text-gray-700 font-medium mt-1">Critical Controls</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg border border-orange-200">
-                        <div class="text-4xl font-bold text-orange-700" id="highCount">0</div>
-                        <div class="text-sm text-gray-700 font-medium mt-1">High Priority</div>
+                        <div class="text-4xl font-bold text-blue-700" id="activeCount">0</div>
+                        <div class="text-sm text-gray-700 font-medium mt-1">Active Guardrails</div>
                     </div>
                     <div class="bg-gradient-to-br from-green-50 to-green-100 p-2 rounded-lg border border-green-200 flex flex-col items-center justify-center">
                         <div id="coverageScore" class="w-full h-full flex items-center justify-center"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-8 fade-in">
+                <h2 class="text-2xl font-bold text-red-900 mb-6">Analysis Summary (Missing Guardrails)</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-lg border border-gray-200">
+                        <div class="text-4xl font-bold text-gray-700" id="missingTotalCount">0</div>
+                        <div class="text-sm text-gray-700 font-medium mt-1">Total Missing</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg border border-red-200">
+                        <div class="text-4xl font-bold text-red-700" id="missingCriticalCount">0</div>
+                        <div class="text-sm text-gray-700 font-medium mt-1">Critical Gaps</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg border border-orange-200">
+                        <div class="text-4xl font-bold text-orange-700" id="missingHighCount">0</div>
+                        <div class="text-sm text-gray-700 font-medium mt-1">High Priority Gaps</div>
                     </div>
                 </div>
             </div>
