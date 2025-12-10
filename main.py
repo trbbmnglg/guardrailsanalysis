@@ -8,18 +8,18 @@ from langchain_openai import ChatOpenAI
 
 app = FastAPI()
 
+# --- UPDATED REQUEST MODEL ---
 class AnalysisRequest(BaseModel):
     instruction: str
     api_key: str
+    enable_profiling: bool = False  # New Flag, default to False
 
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
     try:
-        # --- CONFIG: LITELLM / OPENAI ENVIRONMENT ---
         os.environ["OPENAI_API_KEY"] = request.api_key
         os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
 
-        # --- LLM CONFIGURATION ---
         llm = ChatOpenAI(
             model="openai/meta-llama/Llama-3.3-70B-Instruct",
             base_url="https://router.huggingface.co/v1",
@@ -27,180 +27,114 @@ async def run_analysis(request: AnalysisRequest):
             temperature=0.1
         )
 
-        # ---------------------------------------------------------
-        # 1. DEFINE AGENTS
-        # ---------------------------------------------------------
-
+        # 1. CORE AGENTS (Always Run)
         security_agent = Agent(
             role='Security & Safety Engineer',
-            goal='Enforce OWASP Top 10, MITRE ATLAS, and ISO 42001 Safety standards',
-            backstory="""
-                You are responsible for the 'Red Team' defense. 
-                You validate Input Validation (MITRE AML.T0051), check for Prompt Injection (LLM01), 
-                and verify Safety Controls (ISO 42001 A.8).
-            """,
-            llm=llm,
-            allow_delegation=False,
-            verbose=True
+            goal='Enforce OWASP Top 10 & ISO 42001 Safety standards',
+            backstory="You validate Input Validation, Prompt Injection, and Safety Controls.",
+            llm=llm, allow_delegation=False, verbose=True
         )
 
         privacy_ops_agent = Agent(
             role='Privacy & Operations Controller',
-            goal='Enforce NIST AI RMF 1.0 standards for Privacy, Scope, and Limits',
-            backstory="""
-                You focus on operational boundaries. 
-                You check for Privacy (NIST Map 1.5 - PII/Redaction), Scope Control (NIST Map 1.1), 
-                and Operational Limits (NIST Manage 2.4).
-            """,
-            llm=llm,
-            allow_delegation=False,
-            verbose=True
+            goal='Enforce NIST AI RMF 1.0 standards',
+            backstory="You check for Privacy (PII), Scope Control, and Operational Limits.",
+            llm=llm, allow_delegation=False, verbose=True
         )
 
         rai_agent = Agent(
             role='Accenture Responsible AI Specialist',
-            goal='Enforce Ethical Conduct and Accountability (Google SAIF & ISO 42001)',
-            backstory="""
-                You represent the Accenture Responsible AI framework.
-                You check for bias and fairness (Google SAIF) and ensure Accountability (ISO 42001 A.6.1).
-            """,
-            llm=llm,
-            allow_delegation=False,
-            verbose=True
+            goal='Enforce Ethical Conduct & Accountability',
+            backstory="You check for bias, fairness, and accountability (human oversight).",
+            llm=llm, allow_delegation=False, verbose=True
         )
 
         qa_agent = Agent(
             role='Prompt QA Lead',
             goal='Ensure Functional Suitability (ISO/IEC 25059)',
-            backstory="""
-                You are the Quality Assurance lead. 
-                You evaluate the prompt against ISO/IEC 25059 for Functional Suitability.
-            """,
-            llm=llm,
-            allow_delegation=False,
-            verbose=True
+            backstory="You evaluate prompt logic, clarity, and robustness.",
+            llm=llm, allow_delegation=False, verbose=True
         )
 
-        tiering_agent = Agent(
-            role='Cost & Compute Architect',
-            goal='Determine the final Latency/Cost Tier (1-4) based on identified risks',
-            backstory="""
-                You are the resource architect. You do NOT analyze the raw prompt alone.
-                Instead, you review the findings from the Security, Privacy, RAI, and QA agents.
-                
-                Your logic:
-                - If they found PII risks -> Require Tier 2 (PII Scrubbing).
-                - If they found complex injection risks -> Require Tier 3 (Deep inspection).
-                - If they found logic gaps requiring deep thought -> Require Tier 4 (Agentic Planning).
-                - If all is safe and simple -> Tier 1 (Regex).
-            """,
-            llm=llm,
-            allow_delegation=False,
-            verbose=True
-        )
+        # 2. CORE TASKS
+        task_security = Task(description=f"Analyze for Security risks: '{request.instruction}'", agent=security_agent, expected_output="Security assessment.")
+        task_privacy = Task(description=f"Analyze for Privacy risks: '{request.instruction}'", agent=privacy_ops_agent, expected_output="Privacy assessment.")
+        task_rai = Task(description=f"Analyze for Ethical risks: '{request.instruction}'", agent=rai_agent, expected_output="RAI assessment.")
+        task_qa = Task(description=f"Analyze for QA risks: '{request.instruction}'", agent=qa_agent, expected_output="QA assessment.")
 
+        # 3. DYNAMIC CREW CONSTRUCTION
+        agents_list = [security_agent, privacy_ops_agent, rai_agent, qa_agent]
+        tasks_list = [task_security, task_privacy, task_rai, task_qa]
+        report_context = [task_security, task_privacy, task_rai, task_qa]
+
+        # --- OPTIONAL: TIERING AGENT ---
+        if request.enable_profiling:
+            tiering_agent = Agent(
+                role='Cost & Compute Architect',
+                goal='Determine Tier (1-4) based on risks',
+                backstory="You review findings and assign a compute tier (Tier 1=Regex, Tier 4=Reasoning).",
+                llm=llm, allow_delegation=False, verbose=True
+            )
+            
+            task_tiering = Task(
+                description="Review findings. Assign Tier (1-4). Output Model, Cost, Reason.",
+                agent=tiering_agent,
+                context=[task_security, task_privacy, task_rai, task_qa],
+                expected_output="Tier recommendation."
+            )
+            
+            # Add to lists
+            agents_list.append(tiering_agent)
+            tasks_list.append(task_tiering)
+            report_context.append(task_tiering)
+
+        # 4. REPORT AGENT
         report_agent = Agent(
             role='Chief Governance Officer',
-            goal='Synthesize all findings into a strict JSON format',
-            backstory='You are a strict data formatter. You take unstructured findings and output ONLY valid JSON matching the schema.',
-            llm=llm,
-            allow_delegation=False,
-            verbose=True
+            goal='Synthesize findings into JSON',
+            backstory='You output ONLY valid JSON.',
+            llm=llm, allow_delegation=False, verbose=True
         )
 
-        # ---------------------------------------------------------
-        # 2. DEFINE TASKS
-        # ---------------------------------------------------------
-
-        task_security = Task(
-            description=f"Analyze for Security/Safety risks: '{request.instruction}'",
-            agent=security_agent,
-            expected_output="Security risk assessment."
-        )
-
-        task_privacy = Task(
-            description=f"Analyze for Privacy/Ops risks: '{request.instruction}'",
-            agent=privacy_ops_agent,
-            expected_output="Privacy and Ops assessment."
-        )
-
-        task_rai = Task(
-            description=f"Analyze for Ethical/Accountability risks: '{request.instruction}'",
-            agent=rai_agent,
-            expected_output="RAI assessment."
-        )
-
-        task_qa = Task(
-            description=f"Analyze for Prompt Quality: '{request.instruction}'",
-            agent=qa_agent,
-            expected_output="QA assessment."
-        )
-
-        task_tiering = Task(
-            description="""
-            Review the findings from the Security, Privacy, RAI, and QA agents.
-            Based on the *identified risks*, assign a Complexity Tier (1-4).
-            Output the Tier, Model, Cost, and Reason.
-            """,
-            agent=tiering_agent,
-            context=[task_security, task_privacy, task_rai, task_qa],
-            expected_output="Tier recommendation."
-        )
-
-        # --- FIX: ADDED 'name' TO JSON SCHEMA ---
-        task_report = Task(
-            description="""
-            Synthesize the findings from ALL agents into a JSON response.
-            
-            You must strictly follow this JSON schema:
+        # Update prompt to handle missing tiering data gracefully
+        report_prompt = """
+            Synthesize findings into JSON.
+            Strict Schema:
             {
-                "guardrails": [
-                    {
-                        "name": "Short Name of Risk (e.g. 'Prompt Injection', 'PII Leak')",
-                        "category": "Security" | "Privacy" | "Responsible AI" | "Quality Assurance",
-                        "risk_level": "Critical" | "High" | "Medium" | "Low",
-                        "description": "Short description of the specific risk found.",
-                        "recommendation": "Specific action to fix the risk."
-                    }
-                ],
-                "tiering_strategy": {
-                    "selected_tier": "Tier 1" | "Tier 2" | "Tier 3" | "Tier 4",
-                    "model_class": "e.g. DeepSeek-V3, GPT-5",
-                    "estimated_cost": "e.g. $0.27",
-                    "latency_impact": "e.g. ~5ms",
-                    "justification": "Why this tier was selected based on the findings."
-                }
+                "guardrails": [{ "name": "...", "category": "...", "severity": "...", "description": "...", "mechanism": "...", "triggers": [...] }],
+                "tiering_strategy": { "selected_tier": "...", "model_class": "...", "estimated_cost": "...", "latency_impact": "...", "justification": "..." }
             }
             
             CRITICAL: 
-            1. Every object in "guardrails" MUST have a "name" and "category" field.
-            2. Output ONLY the raw JSON string. No Markdown.
-            """,
-            agent=report_agent,
-            context=[task_security, task_privacy, task_rai, task_qa, task_tiering],
-            expected_output="A valid JSON string matching the schema."
-        )
+            1. If 'Cost & Compute Architect' findings are MISSING or empty, set "tiering_strategy" to null.
+            2. Output ONLY raw JSON.
+        """
 
-        # ---------------------------------------------------------
-        # 3. RUN CREW
-        # ---------------------------------------------------------
+        task_report = Task(
+            description=report_prompt,
+            agent=report_agent,
+            context=report_context, # Dynamic Context
+            expected_output="Valid JSON String"
+        )
         
+        agents_list.append(report_agent)
+        tasks_list.append(task_report)
+
+        # 5. RUN CREW
         crew = Crew(
-            agents=[security_agent, privacy_ops_agent, rai_agent, qa_agent, tiering_agent, report_agent],
-            tasks=[task_security, task_privacy, task_rai, task_qa, task_tiering, task_report],
+            agents=agents_list,
+            tasks=tasks_list,
             verbose=True,
             process=Process.sequential
         )
 
         result = crew.kickoff()
-        
         return {"result": str(result)}
 
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Serve Static Files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
