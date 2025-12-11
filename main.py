@@ -472,33 +472,22 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
             process=Process.sequential
         )
         
-        result = crew.kickoff()
+        # FIX 1: Only call kickoff ONCE.
+        result = crew.kickoff() 
 
-        # --- SUCCESS PATH ---
-        if isinstance(result, GuardrailAnalysis):
-            # Result is a validated Pydantic object (BEST CASE)
-            return {"result": result.model_dump_json(indent=2)}
-        
-        # --- FAILURE RECOVERY PATH ---
-        
-        result = crew.kickoff()
-
-        # 8. THE FINAL ROBUST RESULT HANDLING BLOCK
-        
         # --- SUCCESS PATH ---
         if isinstance(result, GuardrailAnalysis):
             return {"result": result.model_dump_json(indent=2)}
         
-        # --- FAILURE RECOVERY PATH (Hardened against Python object strings and Newlines) ---
+        # --- FAILURE RECOVERY PATH (Hardened against Python object strings, Newlines, and Quotes) ---
         
         # Step 1: Convert result to a string safely.
         raw_output = str(result)
         
-        # Step 2: NEWLINE FIX: Aggressively remove all newlines, tabs, and carriage returns.
-        # This addresses the observed JSON parser failure caused by unescaped newlines in values.
+        # Step 2: Aggressively clean up whitespace and formatting.
         raw_output_single_line = re.sub(r'[\r\n\t]', ' ', raw_output)
 
-        # Step 3: Check if the cleaned string is empty or 'None'
+        # Step 3: Check for empty output
         if not raw_output_single_line.strip() or raw_output_single_line == 'None':
              raise HTTPException(
                 status_code=500,
@@ -512,22 +501,24 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
             # 4a. Remove markdown blocks and simple leading keys (e.g., "Output: {")
             cleaned_result = re.sub(r"```json|```|^\w+:\s*", "", cleaned_result, flags=re.IGNORECASE).strip()
             
-            # 4b. AGGRESSIVE FIX for Python Object Formatting (e.g., "guardrails=[Guardrail(...)]")
-            # This targets the exact failure seen previously where the LLM returns Python object notation.
-            cleaned_result = cleaned_result.replace("Guardrail(", "").replace("TieringStrategy(", "")
-            cleaned_result = cleaned_result.replace('\'', '"') # Replace single quotes with double quotes (required for JSON)
+            # 4b. AGGRESSIVE FIX: Transform Python object notation to JSON
+            # This MUST be done first: Replace Python single quotes with JSON double quotes.
+            cleaned_result = cleaned_result.replace('\'', '"') 
             
-            # Now, attempt to extract the JSON object bounded by { and }
-            match = re.search(r'\{.*\}', cleaned_result, re.DOTALL)
+            # Replace Python class names with JSON start brace, and Python end parentheses with JSON end brace.
+            cleaned_result = cleaned_result.replace('Guardrail(', '{').replace(')', '}')
+            cleaned_result = cleaned_result.replace('TieringStrategy(', '{')
             
-            if match:
-                final_json_string = match.group(0)
-            else:
-                # If we cannot find a standard JSON object boundary, the structure is too corrupted.
-                raise ValueError("Could not locate a recognizable JSON object boundary ({...}) after cleanup.")
-
-
-            # 4c. Manually parse and validate the cleaned JSON string using Pydantic
+            # Remove redundant assignments like 'guardrails=' (Now likely 'guardrails=')
+            cleaned_result = re.sub(r'guardrails\s*=\s*', '', cleaned_result, flags=re.IGNORECASE)
+            
+            # Remove list markers if the LLM outputted: [...{...}, ...]
+            cleaned_result = cleaned_result.strip('[]')
+            
+            # Re-wrap the final result in the expected outermost dictionary structure
+            final_json_string = f"{{{cleaned_result}}}"
+            
+            # 4c. Manually parse and validate the final JSON string using Pydantic
             final_data = GuardrailAnalysis.model_validate_json(final_json_string)
             
             # If successful, return the valid JSON string
@@ -540,17 +531,17 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
             # Use the raw output in the error message for better debugging
             raise HTTPException(
                 status_code=500, 
-                detail=f"CrewAI output failed Pydantic re-validation (after newline/structure cleanup). "
+                detail=f"CrewAI output failed Pydantic re-validation (post-cleanup). "
                        f"Validation Error: {str(pydantic_error)}. "
                        f"Raw Output Snippet: {raw_output[:200]}"
             )
 
-    # 9. IMPROVED GENERAL ERROR HANDLING (Handles the 'pydantic_error' referenced error)
+    # 9. IMPROVED GENERAL ERROR HANDLING (FIX 2: Correctly scoped)
     except Exception as e:
         # Log the full traceback if needed, but return a clean error message
         print(f"Analysis Error: {e}")
-        # The next line is the correct way to handle a general failure in the entire try block.
-    raise HTTPException(status_code=500, detail=f"An error occurred during crew execution: {str(e)}")
+        # FIX 2: Indent the raise statement into the except block
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred during crew execution: {str(e)}")
 
 # Mount static files and index.html (remain the same)
 app.mount("/static", StaticFiles(directory="static"), name="static")
