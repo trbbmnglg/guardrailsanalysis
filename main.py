@@ -13,6 +13,35 @@ from langchain_core.output_parsers import PydanticOutputParser
 
 app = FastAPI()
 
+def repair_json(json_str: str) -> str:
+    """
+    Attempts to repair broken JSON strings using simple heuristics.
+    Handles unescaped quotes, trailing commas, and truncated structures.
+    """
+    # 1. Trim markdown
+    json_str = json_str.replace("```json", "").replace("```", "").strip()
+    
+    # 2. Fix common LLM mistake: Unescaped quotes inside string values
+    # This regex looks for quotes that are surrounded by word chars, which usually implies they are part of the text
+    # Note: This is a basic heuristic and might not catch everything.
+    # A safer bet is often to trust the model but handle truncation.
+    
+    # 3. Handle Truncation (The most likely cause of "Unterminated string")
+    # If the string ends abruptly, try to close the structures.
+    # Count open brackets
+    open_braces = json_str.count('{') - json_str.count('}')
+    open_brackets = json_str.count('[') - json_str.count(']')
+    
+    # If we are inside a string (odd number of quotes), close it
+    if json_str.count('"') % 2 != 0:
+        json_str += '"'
+    
+    # Close open arrays/objects
+    json_str += ']' * open_brackets
+    json_str += '}' * open_braces
+    
+    return json_str
+
 ALLOWED_ENFORCEMENT_ACTIONS = Literal[
     "Sanitize", "Maintain", "Block", "Mask", "Log", "Human Review", "Filter", 
     "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", 
@@ -571,26 +600,75 @@ Example structure:
             process=Process.sequential
         )
         
-        # 8. EXECUTE AND PARSE RESULTS
-        result = crew.kickoff()
+       result = crew.kickoff()
         
-        if isinstance(result, GuardrailAnalysis):
-            return {"result": result.model_dump_json(indent=2)}
+        # 8. CLEAN AND VALIDATE OUTPUT
         
-        # Fallback parsing
-        raw_output = str(result)
-        parsed_dict = safe_parse_llm_output(raw_output)
-        final_data = GuardrailAnalysis.model_validate(parsed_dict)
+        # Check for structured Pydantic output
+        if hasattr(result, 'pydantic') and result.pydantic:
+            try:
+                # Try Pydantic V2 method
+                cleaned_output = result.pydantic.model_dump_json()
+            except AttributeError:
+                # Fallback to Pydantic V1 method
+                cleaned_output = result.pydantic.json()
+        else:
+            # Fallback to raw string parsing
+            raw_output = str(result)
+            
+            # --- AGGRESSIVE CLEANING ---
+            # 1. Remove Markdown
+            cleaned_output = raw_output.replace("```json", "").replace("```", "").strip()
+            # 2. Sanitize Newlines (to prevent "bad control character" errors)
+            cleaned_output = cleaned_output.replace("\n", " ").replace("\r", "").replace("\t", " ")
+            # 3. Attempt Repair (to fix truncation or unescaped quotes)
+            cleaned_output = repair_json(cleaned_output)
         
-        return {"result": final_data.model_dump_json(indent=2)}
-                
+        # Attempt to parse and validate
+        parsed = None
+        try:
+            parsed = json.loads(cleaned_output)
+        except json.JSONDecodeError as e:
+            print(f"DEBUG: Direct JSON parse failed: {e}")
+            # Robust Fallback: Try to extract JSON object with Regex
+            try:
+                match = re.search(r'\{.*\}', cleaned_output, re.DOTALL)
+                if match:
+                    print("DEBUG: Extracted JSON via Regex")
+                    repaired_match = repair_json(match.group())
+                    parsed = json.loads(repaired_match)
+            except Exception as e2:
+                print(f"DEBUG: Regex extraction failed: {e2}")
+                print(f"DEBUG: FAILED STRING: {cleaned_output[:500]}...") 
+        
+        if parsed:
+            # Post-processing
+            if "guardrails" in parsed:
+                for gr in parsed["guardrails"]:
+                    if gr.get("name", "").upper().startswith("MISSING"):
+                        gr["location"] = ""
+                    if "enforcement" not in gr or not gr["enforcement"]:
+                        gr["enforcement"] = "Log" 
+                    if "location" not in gr:
+                        gr["location"] = "" 
+                    if "complexity_tier" not in gr:
+                        gr["complexity_tier"] = 2
+            
+            cleaned_output = json.dumps(parsed)
+        else:
+            print("ERROR: Could not parse output from LLM.")
+            # Return empty structure rather than crashing
+            cleaned_output = json.dumps({
+                "guardrails": [],
+                "recommendations": ["Error: Analysis timed out or output was malformed. Please try again with a shorter instruction."],
+                "tiering_strategy": None
+            })
+
+        return {"result": cleaned_output}
+
     except Exception as e:
-        # Log the full traceback if needed, but return a clean error message
-        print(f"Analysis Error: {e}")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"An unexpected error occurred during crew execution: {str(e)}"
-        )
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Mount static files and index.html
 app.mount("/static", StaticFiles(directory="static"), name="static")
