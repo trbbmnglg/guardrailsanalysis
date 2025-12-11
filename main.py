@@ -15,7 +15,7 @@ app = FastAPI()
 class Guardrail(BaseModel):
     """Structured model for a single guardrail - either present or missing"""
     name: str = Field(description="Short, descriptive name of the guardrail control")
-    category: Literal["Security", "Privacy", "Responsible AI", "QA", "Scope Control", "Input Validation", "Output Control"] = Field(description="Primary category")
+    category: Literal["Security", "Privacy", "Responsible AI", "QA", "Scope Control", "Input Validation", "Output Control","Ethics"] = Field(description="Primary category")
     severity: Literal["Critical", "High", "Medium", "Low"] = Field(description="Risk severity if this control is missing")
     complexity_tier: int = Field(default=1, ge=1, le=4, description="Computational complexity tier (1=regex, 4=reasoning)")
     description: str = Field(description="Description of what this guardrail should do or why it's missing")
