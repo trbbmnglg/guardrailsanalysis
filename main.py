@@ -107,6 +107,48 @@ LOCATION FIELD RULES:
 - Never use placeholder text like "Not specified" or "N/A"
 """
 
+def cleanse_guardrails_for_pydantic(raw_output: str) -> dict:
+    """
+    Cleans the raw LLM output by performing strict synonym replacement 
+    on the 'enforcement' field to meet Pydantic's Literal requirements.
+    """
+    try:
+        # 1. Attempt to load the JSON
+        # Clean up common markdown/code block wrappers first
+        cleaned_output = raw_output.strip().replace("```json", "").replace("```", "")
+        data = json.loads(cleaned_output)
+    except json.JSONDecodeError as e:
+        # Fallback to rough regex extraction if standard load fails
+        match = re.search(r'\{.*\}', raw_output, re.DOTALL)
+        if match:
+            try:
+                data = json.loads(match.group())
+            except Exception:
+                raise ValueError("Failed to extract or parse JSON from LLM output.")
+        else:
+            raise ValueError("LLM output is not valid JSON and cannot be extracted.")
+
+    # 2. Iterate and replace non-compliant enforcement actions
+    if "guardrails" in data and isinstance(data["guardrails"], list):
+        for guardrail in data["guardrails"]:
+            current_enforcement = guardrail.get("enforcement", "")
+            
+            # Use .get() and strip/title case for robust matching
+            if current_enforcement:
+                # Convert to Title case for dictionary lookup (e.g., 'restrict' -> 'Restrict')
+                key = current_enforcement.strip().title() 
+                
+                if key in ENFORCEMENT_SYNONYM_MAP:
+                    new_action = ENFORCEMENT_SYNONYM_MAP[key]
+                    guardrail["enforcement"] = new_action
+                    print(f"DEBUG: Mapped '{current_enforcement}' to '{new_action}'")
+                elif key and key not in ALLOWED_ENFORCEMENT_ACTIONS.__args__:
+                    # If it's still not in the allowed list after mapping, default to a safe value
+                    print(f"WARNING: Unmapped enforcement '{current_enforcement}'. Defaulting to 'Implement'.")
+                    guardrail["enforcement"] = "Implement" # Safe fallback
+    
+return data
+    
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
     try:
@@ -170,7 +212,8 @@ For EACH control:
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - ALWAYS use category "Security"
 - Provide 3-5 specific trigger examples
-- Set severity: Critical/High for auth & injection, Medium for rate limiting""",
+- Set severity: Critical/High for auth & injection, Medium for rate limiting
+- CRITICAL: Enforcement MUST be chosen from this EXACT list: {enforcement_list_str}""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -504,19 +547,21 @@ SCHEMA:
         )
         
         result = crew.kickoff()
+
+        cleaned_data = cleanse_guardrails_for_pydantic(str(result))
     
-        # 8. SIMPLIFIED OUTPUT VALIDATION AND RETURN (FIXED: Relies purely on Pydantic)
-        if isinstance(result, GuardrailAnalysis):
-            # The result is the validated Pydantic object
-            return {"result": result.model_dump_json(indent=2)}
-        else:
-            # Fallback for unexpected non-Pydantic output (should ideally not happen)
-            raise HTTPException(status_code=500, detail="CrewAI failed to return a valid GuardrailAnalysis structure.")
-        
+        try:
+            final_result = GuardrailAnalysis.model_validate(cleaned_data)
+            return {"result": final_result.model_dump_json(indent=2)}
+        except ValidationError as e:
+            # If it still fails, the error is likely structural and needs re-raising
+            print(f"DEBUG: Final Pydantic validation failed after cleansing: {e}")
+            raise HTTPException(status_code=500, detail=f"Final analysis failed due to structural validation errors: {e}")
+
     # 9. IMPROVED ERROR HANDLING
     except Exception as e:
-        # Log the full traceback if needed, but return a clean error message
         print(f"Analysis Error: {e}")
+        # Re-raise as HTTPException to prevent the entire server from crashing
         raise HTTPException(status_code=500, detail=f"An error occurred during crew execution: {str(e)}")
 
 # Mount static files and index.html (remain the same)
