@@ -16,7 +16,7 @@ app = FastAPI()
 ALLOWED_ENFORCEMENT_ACTIONS = Literal[
     "Sanitize", "Maintain", "Block", "Mask", "Log", "Human Review", "Filter", 
     "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", 
-    "Identify", "Enforce", "Limit", "Remove"
+    "Identify", "Enforce", "Limit", "Remove", "Test"
 ]
 
 # --- PYDANTIC MODELS FOR STRUCTURED OUTPUT ---
@@ -460,6 +460,13 @@ REQUIREMENTS:
 5. Ensure MISSING items have empty location field
 6. Generate 3-5 strategic recommendations
 7. The 'enforcement' field MUST be selected from the list: {enforcement_list_str}
+
+MANDATORY SYNONYM MAPPING RULE FOR 'enforcement':
+If any preceding agent used an unauthorized word like 'Prohibit', 'Remove', 'Decline', 'Halt', or 'Stop', you MUST replace it with the closest authorized synonym from {enforcement_list_str}
+'Prohibit' MUST be converted to 'Block' or 'Reject'
+'Remove' MUST be converted to 'Redact' or 'Sanitize'
+'Decline' MUST be converted to 'Refuse' or 'Reject'
+
 {tiering_note}
 
 OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
