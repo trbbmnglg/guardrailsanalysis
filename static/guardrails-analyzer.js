@@ -335,7 +335,7 @@ function performGapAnalysis(foundGuardrails) {
             // Dimension is covered
             earnedScore += dimension.weight;
             breakdown.push({ 
-                label: `✓ ${dimension.label}`,
+                label: `${dimension.label}`,
                 status: 'pass',
                 weight: dimension.weight,
                 count: presentInDimension.length,
@@ -344,7 +344,7 @@ function performGapAnalysis(foundGuardrails) {
         } else if (missingInDimension.length > 0) {
             // AI explicitly identified gaps in this dimension
             breakdown.push({ 
-                label: `✗ ${dimension.label}`,
+                label: `${dimension.label}`,
                 status: 'fail',
                 weight: dimension.weight,
                 count: missingInDimension.length,
@@ -353,7 +353,7 @@ function performGapAnalysis(foundGuardrails) {
         } else {
             // No evidence from AI analysis - assume expected but not found
             breakdown.push({ 
-                label: `○ ${dimension.label} (Not Assessed)`,
+                label: `${dimension.label} (Not Assessed)`,
                 status: 'neutral',
                 weight: dimension.weight,
                 count: 0,
