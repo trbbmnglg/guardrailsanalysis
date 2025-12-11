@@ -246,133 +246,224 @@
         }
     }
 
-    function performGapAnalysis(foundGuardrails) {
-        // 1. Define scoring buckets with weights
-        const scoringBuckets = [
-            { 
-                id: "security", 
-                label: "Critical Security Controls", 
-                backendCategories: ["Security"], 
-                keywords: ["security", "auth", "access", "compliance", "encryption", "redact"], 
-                weight: 2 
-            },
-            { 
-                id: "privacy", 
-                label: "Privacy & Data Handling", 
-                backendCategories: ["Privacy"], 
-                keywords: ["privacy", "pii", "gdpr", "data", "confidential"], 
-                weight: 2 
-            },
-            { 
-                id: "ai_safety", 
-                label: "AI Safety & Ethics", 
-                backendCategories: ["Responsible AI"], 
-                keywords: ["ethic", "bias", "fairness", "harm", "responsible", "toxicity"], 
-                weight: 1.5 
-            },
-            { 
-                id: "scope", 
-                label: "Scope & Boundaries", 
-                backendCategories: ["Scope Control"], 
-                keywords: ["scope", "limit", "boundar", "capability", "gatekeeping"], 
-                weight: 1.5 
-            },
-            { 
-                id: "validation", 
-                label: "Input/Output Validation", 
-                backendCategories: ["Input Validation", "Output Control", "QA"], 
-                keywords: ["input", "output", "validate", "sanitize", "format", "structure", "quality"], 
-                weight: 1.5 
-            },
-            { 
-                id: "oversight", 
-                label: "Accountability & Oversight", 
-                backendCategories: [], 
-                keywords: ["human", "oversight", "audit", "log", "monitor", "escalat", "attribution", "confidence"], 
-                weight: 1 
-            }
-        ];
+function performGapAnalysis(allGuardrails) {
+    // 1. Define expected categories and their weights
+    // These align with your backend agent roles
+    const expectedCategories = {
+        "Security": { 
+            weight: 2.0, 
+            label: "Security & Compliance",
+            agentSource: "Security Engineer"
+        },
+        "Privacy": { 
+            weight: 2.0, 
+            label: "Privacy & Data Protection",
+            agentSource: "Privacy Controller"
+        },
+        "Responsible AI": { 
+            weight: 1.5, 
+            label: "Responsible AI & Ethics",
+            agentSource: "Ethical Specialist"
+        },
+        "Ethics": { 
+            weight: 1.5, 
+            label: "Ethical Conduct",
+            agentSource: "Ethical Specialist"
+        },
+        "Scope Control": { 
+            weight: 1.5, 
+            label: "Scope & Boundaries",
+            agentSource: "Security Engineer"
+        },
+        "Input Validation": { 
+            weight: 1.5, 
+            label: "Input Validation",
+            agentSource: "QA Engineer"
+        },
+        "Output Control": { 
+            weight: 1.5, 
+            label: "Output Control",
+            agentSource: "QA Engineer"
+        },
+        "QA": { 
+            weight: 1.0, 
+            label: "Quality Assurance",
+            agentSource: "QA Engineer"
+        }
+    };
+
+    // 2. Separate present vs missing guardrails
+    const presentGuardrails = allGuardrails.filter(g => 
+        !g.name.toUpperCase().startsWith('MISSING') && 
+        g.location && 
+        g.location.trim().length > 0
+    );
     
-        // 2. Separate present vs missing guardrails
-        const presentGuardrails = foundGuardrails.filter(g => 
-            !g.name.toUpperCase().startsWith('MISSING') && g.location && g.location.trim().length > 0
-        );
-        const missingGuardrails = foundGuardrails.filter(g => 
-            g.name.toUpperCase().startsWith('MISSING') || !g.location || g.location.trim().length === 0
-        );
-    
-        // 3. Calculate coverage per bucket
-        let totalPossibleScore = 0;
-        let earnedScore = 0;
-        const breakdown = [];
-    
-        scoringBuckets.forEach(bucket => {
-            // Check if bucket is covered by PRESENT guardrails
-            const hasCategoryMatch = presentGuardrails.some(g => 
-                bucket.backendCategories.includes(g.category)
-            );
-            const hasKeywordMatch = presentGuardrails.some(g => {
-                const text = (g.name + " " + g.description + " " + g.mechanism).toLowerCase();
-                return bucket.keywords.some(k => text.includes(k));
-            });
-    
-            // Check if bucket has MISSING items
-            const hasMissingInCategory = missingGuardrails.some(g => 
-                bucket.backendCategories.includes(g.category)
-            );
-            const hasMissingByKeyword = missingGuardrails.some(g => {
-                const text = (g.name + " " + g.description + " " + g.mechanism).toLowerCase();
-                return bucket.keywords.some(k => text.includes(k));
-            });
-    
-            // Award points if present
-            if (hasCategoryMatch || hasKeywordMatch) {
-                earnedScore += bucket.weight;
-                breakdown.push({ 
-                    label: `Has ${bucket.label}`, 
-                    status: 'pass',
-                    weight: bucket.weight,
-                    present: true
-                });
-            } 
-            // Mark as gap if missing items exist in this category
-            else if (hasMissingInCategory || hasMissingByKeyword) {
-                breakdown.push({ 
-                    label: `Missing ${bucket.label}`, 
-                    status: 'fail',
-                    weight: bucket.weight,
-                    present: false
-                });
-            }
-            // Assume expected if no evidence either way (neutral)
-            else {
-                breakdown.push({ 
-                    label: `${bucket.label} (Not Assessed)`, 
-                    status: 'neutral',
-                    weight: bucket.weight,
-                    present: false
-                });
-            }
-    
-            // Always count towards total possible (even if not assessed)
-            totalPossibleScore += bucket.weight;
+    const missingGuardrails = allGuardrails.filter(g => 
+        g.name.toUpperCase().startsWith('MISSING') || 
+        !g.location || 
+        g.location.trim().length === 0
+    );
+
+    // 3. Calculate coverage by trusting AI categorization
+    let totalPossiblePoints = 0;
+    let earnedPoints = 0;
+    const breakdown = [];
+    const categoryDetails = {};
+
+    // Process each expected category
+    Object.entries(expectedCategories).forEach(([category, config]) => {
+        totalPossiblePoints += config.weight;
+
+        // Count present guardrails in this category
+        const presentCount = presentGuardrails.filter(g => 
+            g.category === category
+        ).length;
+
+        // Count missing guardrails in this category
+        const missingCount = missingGuardrails.filter(g => 
+            g.category === category
+        ).length;
+
+        // Determine status
+        let status, label, covered;
+        
+        if (presentCount > 0) {
+            // Category has at least one active guardrail
+            earnedPoints += config.weight;
+            status = 'pass';
+            label = `✓ ${config.label}`;
+            covered = true;
+        } else if (missingCount > 0) {
+            // Category identified as missing by agents
+            status = 'fail';
+            label = `✗ Missing ${config.label}`;
+            covered = false;
+        } else {
+            // Not assessed by agents (no present, no missing)
+            status = 'neutral';
+            label = `○ ${config.label} (Not Assessed)`;
+            covered = false;
+        }
+
+        breakdown.push({
+            category: category,
+            label: label,
+            status: status,
+            weight: config.weight,
+            covered: covered,
+            presentCount: presentCount,
+            missingCount: missingCount,
+            agentSource: config.agentSource
         });
-    
-        // 4. Calculate percentage: earned / total possible
-        const finalScore = totalPossibleScore === 0 ? 0 : Math.round((earnedScore / totalPossibleScore) * 100);
-    
-        // 5. Add metadata for debugging
-        return { 
-            score: finalScore, 
-            breakdown: breakdown,
-            stats: {
-                totalPresent: presentGuardrails.length,
-                totalMissing: missingGuardrails.length,
-                earnedPoints: earnedScore,
-                possiblePoints: totalPossibleScore
-            }
+
+        categoryDetails[category] = {
+            present: presentCount,
+            missing: missingCount,
+            covered: covered
         };
+    });
+
+    // 4. Calculate final score
+    const finalScore = totalPossiblePoints === 0 ? 0 : 
+        Math.round((earnedPoints / totalPossiblePoints) * 100);
+
+    // 5. Generate AI insights based on coverage
+    const insights = generateAIInsights(breakdown, presentGuardrails, missingGuardrails);
+
+    return {
+        score: finalScore,
+        breakdown: breakdown,
+        categoryDetails: categoryDetails,
+        stats: {
+            totalPresent: presentGuardrails.length,
+            totalMissing: missingGuardrails.length,
+            earnedPoints: earnedPoints,
+            possiblePoints: totalPossiblePoints,
+            categoriesCovered: breakdown.filter(b => b.covered).length,
+            categoriesTotal: Object.keys(expectedCategories).length
+        },
+        insights: insights
+    };
+}
+
+// Generate insights from AI-analyzed data
+function generateAIInsights(breakdown, present, missing) {
+    const insights = [];
+    
+    // Critical gaps
+    const criticalGaps = breakdown.filter(b => 
+        b.status === 'fail' && b.weight >= 2.0
+    );
+    if (criticalGaps.length > 0) {
+        insights.push({
+            type: 'critical',
+            message: `${criticalGaps.length} critical ${criticalGaps.length === 1 ? 'category is' : 'categories are'} missing: ${criticalGaps.map(g => g.category).join(', ')}`,
+            categories: criticalGaps.map(g => g.category)
+        });
     }
+
+    // Severity distribution
+    const criticalMissing = missing.filter(g => g.severity === 'Critical').length;
+    const highMissing = missing.filter(g => g.severity === 'High').length;
+    if (criticalMissing > 0 || highMissing > 0) {
+        insights.push({
+            type: 'severity',
+            message: `Found ${criticalMissing} Critical and ${highMissing} High severity gaps identified by AI agents`,
+            counts: { critical: criticalMissing, high: highMissing }
+        });
+    }
+
+    // Coverage strength
+    const coveragePercent = (present.length / (present.length + missing.length)) * 100;
+    if (coveragePercent >= 80) {
+        insights.push({
+            type: 'positive',
+            message: `Strong foundation: ${present.length} active guardrails detected across ${breakdown.filter(b => b.covered).length} categories`
+        });
+    }
+
+    return insights;
+}
+
+  // Generate insights from AI-analyzed data
+function generateAIInsights(breakdown, present, missing) {
+    const insights = [];
+    
+    // Critical gaps
+    const criticalGaps = breakdown.filter(b => 
+        b.status === 'fail' && b.weight >= 2.0
+    );
+    if (criticalGaps.length > 0) {
+        insights.push({
+            type: 'critical',
+            message: `${criticalGaps.length} critical ${criticalGaps.length === 1 ? 'category is' : 'categories are'} missing: ${criticalGaps.map(g => g.category).join(', ')}`,
+            categories: criticalGaps.map(g => g.category)
+        });
+    }
+
+    // Severity distribution
+    const criticalMissing = missing.filter(g => g.severity === 'Critical').length;
+    const highMissing = missing.filter(g => g.severity === 'High').length;
+    if (criticalMissing > 0 || highMissing > 0) {
+        insights.push({
+            type: 'severity',
+            message: `Found ${criticalMissing} Critical and ${highMissing} High severity gaps identified by AI agents`,
+            counts: { critical: criticalMissing, high: highMissing }
+        });
+    }
+
+    // Coverage strength
+    const coveragePercent = (present.length / (present.length + missing.length)) * 100;
+    if (coveragePercent >= 80) {
+        insights.push({
+            type: 'positive',
+            message: `Strong foundation: ${present.length} active guardrails detected across ${breakdown.filter(b => b.covered).length} categories`
+        });
+    }
+
+    return insights;
+}
 
     function renderScoreChart(score) {
         let color = '#dc2626'; // Red
@@ -608,112 +699,139 @@
         }
     }
   
-    function displayResults() {
-      if (!analysisResults) return;
-  
-      // 1. Calculate Stats
-      const presentGuardrails = analysisResults.guardrails.filter(g => 
-          !g.name.toUpperCase().startsWith('MISSING') && g.location !== ""
-      );
-      const missingGuardrails = analysisResults.guardrails.filter(g => 
-          g.name.toUpperCase().startsWith('MISSING') || g.location === ""
-      );
-  
-      const missingCritical = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'critical').length;
-      const missingHigh = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'high').length;
-  
-      // 2. Update UI Counts
-      const activeCount = document.getElementById('activeCount');
-      if(activeCount) activeCount.textContent = presentGuardrails.length;
-      
-      const missingTotal = document.getElementById('missingTotalCount');
-      if(missingTotal) missingTotal.textContent = missingGuardrails.length;
-  
-      const missingCrit = document.getElementById('missingCriticalCount');
-      if(missingCrit) missingCrit.textContent = missingCritical;
-  
-      const missingHi = document.getElementById('missingHighCount');
-      if(missingHi) missingHi.textContent = missingHigh;
-  
-      // 3. UPDATED: Pass ALL guardrails (present + missing) for accurate scoring
-      const gapAnalysis = performGapAnalysis(analysisResults.guardrails);
-      
-      const scoreEl = document.getElementById('coverageScore');
-      if (scoreEl) {
-          scoreEl.className = 'flex flex-col items-center justify-center py-2 h-full'; 
-          scoreEl.innerHTML = renderScoreChart(gapAnalysis.score);
-          
-          // Optional: Add debug info (remove in production)
-          console.log('Safety Score Calculation:', gapAnalysis.stats);
-      }
-  
-      // 4. Render Recommendations with updated breakdown
-      const breakdownContainer = document.getElementById('recommendations');
-      const checklistHTML = `
-          <div class="mb-6 bg-white bg-opacity-50 rounded-lg p-4">
-              <div class="flex items-center justify-between mb-3">
-                  <h4 class="font-bold text-purple-900 uppercase text-xs tracking-wider">Gap Analysis</h4>
-                  <span class="text-xs text-gray-500 font-mono">
-                      ${gapAnalysis.stats.earnedPoints}/${gapAnalysis.stats.possiblePoints} pts
-                  </span>
-              </div>
-              <ul class="space-y-2">
-                  ${gapAnalysis.breakdown.map(item => {
-                      let icon, textClass;
-                      if (item.status === 'pass') {
-                          icon = '✅';
-                          textClass = 'text-gray-800 font-medium';
-                      } else if (item.status === 'fail') {
-                          icon = '❌';
-                          textClass = 'text-red-600 font-semibold';
-                      } else {
-                          icon = '⚪';
-                          textClass = 'text-gray-400 italic';
-                      }
-                      
-                      return `
-                          <li class="flex items-center gap-3">
-                              <span class="text-lg font-bold">${icon}</span>
-                              <span class="${textClass}">
-                                  ${escapeHtml(item.label)}
-                              </span>
-                              <span class="ml-auto text-xs text-gray-400 font-mono">
-                                  ${item.status === 'pass' ? '+' : ''}${item.weight}
-                              </span>
-                          </li>
-                      `;
-                  }).join('')}
-              </ul>
-          </div>
-      `;
+function displayResults() {
+    if (!analysisResults) return;
 
-        const recsHTML = `
-        <div class="flex items-center justify-between mb-4 p-2 bg-purple-50 rounded-lg border border-purple-100">
-            <h4 class="font-bold text-purple-900 uppercase text-xs tracking-wider flex items-center gap-2">
-                AI Suggestions
-                <span class="bg-white text-purple-700 px-2 py-0.5 rounded-full text-[10px] border border-purple-100 shadow-sm">
-                    ${analysisResults.recommendations.length}
-                </span>
-            </h4>
-            
-            <button id="toggleRecsBtn" class="group flex items-center gap-2 text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-4 py-1.5 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span id="toggleRecsText">Show Magic Fixes</span>
-            </button>
-        </div>
+    // Separate guardrails
+    const presentGuardrails = analysisResults.guardrails.filter(g => 
+        !g.name.toUpperCase().startsWith('MISSING') && g.location !== ""
+    );
+    const missingGuardrails = analysisResults.guardrails.filter(g => 
+        g.name.toUpperCase().startsWith('MISSING') || g.location === ""
+    );
 
-        <div id="recsContent" class="hidden transition-all duration-300 ease-in-out origin-top">
-            <ul class="space-y-3 bg-white/40 p-4 rounded-xl border border-purple-100">
-                ${analysisResults.recommendations.map((rec, i) => `
-                    <li class="flex items-start gap-3 p-2 hover:bg-white rounded-lg transition-colors fade-in" style="animation-delay: ${i * 0.05}s">
-                        <span class="text-purple-600 mt-0.5 text-lg">⚡</span>
-                        <span class="text-gray-700 text-sm leading-relaxed">${escapeHtml(rec)}</span>
-                    </li>
-                `).join('')}
+    const missingCritical = missingGuardrails.filter(g => 
+        g.severity?.toLowerCase() === 'critical'
+    ).length;
+    const missingHigh = missingGuardrails.filter(g => 
+        g.severity?.toLowerCase() === 'high'
+    ).length;
+
+    // Update summary cards
+    const activeCount = document.getElementById('activeCount');
+    if(activeCount) activeCount.textContent = presentGuardrails.length;
+    
+    const missingTotal = document.getElementById('missingTotalCount');
+    if(missingTotal) missingTotal.textContent = missingGuardrails.length;
+
+    const missingCrit = document.getElementById('missingCriticalCount');
+    if(missingCrit) missingCrit.textContent = missingCritical;
+
+    const missingHi = document.getElementById('missingHighCount');
+    if(missingHi) missingHi.textContent = missingHigh;
+
+    // AI-GOVERNED SCORE CALCULATION (no keywords!)
+    const gapAnalysis = performGapAnalysis(analysisResults.guardrails);
+    
+    // Render score chart
+    const scoreEl = document.getElementById('coverageScore');
+    if (scoreEl) {
+        scoreEl.className = 'flex flex-col items-center justify-center py-2 h-full'; 
+        scoreEl.innerHTML = renderScoreChart(gapAnalysis.score);
+        
+        console.log('🤖 AI-Governed Score:', gapAnalysis.stats);
+        console.log('📊 Category Breakdown:', gapAnalysis.categoryDetails);
+    }
+
+    // Render gap analysis with AI insights
+    const breakdownContainer = document.getElementById('recommendations');
+    const checklistHTML = `
+        <div class="mb-6 bg-white bg-opacity-50 rounded-lg p-4 border-2 border-purple-200">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-purple-100">
+                <div class="flex items-center gap-2">
+                    <span class="text-purple-600 text-xl">🤖</span>
+                    <h4 class="font-bold text-purple-900 uppercase text-xs tracking-wider">
+                        AI Agent Coverage Analysis
+                    </h4>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-500 font-mono">
+                        ${gapAnalysis.stats.categoriesCovered}/${gapAnalysis.stats.categoriesTotal} Categories
+                    </span>
+                    <span class="text-xs font-bold text-purple-700 bg-purple-100 px-2 py-1 rounded">
+                        ${gapAnalysis.stats.earnedPoints}/${gapAnalysis.stats.possiblePoints} pts
+                    </span>
+                </div>
+            </div>
+
+            <!-- AI Insights -->
+            ${gapAnalysis.insights.length > 0 ? `
+                <div class="mb-4 space-y-2">
+                    ${gapAnalysis.insights.map(insight => {
+                        let bgClass, icon;
+                        if (insight.type === 'critical') {
+                            bgClass = 'bg-red-50 border-red-200 text-red-800';
+                            icon = '⚠️';
+                        } else if (insight.type === 'severity') {
+                            bgClass = 'bg-orange-50 border-orange-200 text-orange-800';
+                            icon = '🔍';
+                        } else {
+                            bgClass = 'bg-green-50 border-green-200 text-green-800';
+                            icon = '✅';
+                        }
+                        return `
+                            <div class="text-xs ${bgClass} border rounded px-3 py-2 flex items-start gap-2">
+                                <span>${icon}</span>
+                                <span class="flex-1">${escapeHtml(insight.message)}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            ` : ''}
+
+            <!-- Category Breakdown -->
+            <ul class="space-y-2">
+                ${gapAnalysis.breakdown.map(item => {
+                    let icon, textClass, dotColor;
+                    
+                    if (item.status === 'pass') {
+                        icon = '✅';
+                        textClass = 'text-gray-800 font-semibold';
+                        dotColor = 'bg-green-500';
+                    } else if (item.status === 'fail') {
+                        icon = '❌';
+                        textClass = 'text-red-700 font-semibold';
+                        dotColor = 'bg-red-500';
+                    } else {
+                        icon = '⚪';
+                        textClass = 'text-gray-400 italic';
+                        dotColor = 'bg-gray-300';
+                    }
+                    
+                    return `
+                        <li class="flex items-center gap-3 group hover:bg-white/50 p-2 rounded transition-colors">
+                            <span class="text-lg font-bold flex-shrink-0">${icon}</span>
+                            <div class="flex-1">
+                                <span class="${textClass}">${escapeHtml(item.label)}</span>
+                                <div class="text-[10px] text-gray-500 mt-0.5">
+                                    ${item.presentCount > 0 ? `${item.presentCount} active` : ''}
+                                    ${item.missingCount > 0 ? `${item.presentCount > 0 ? ' • ' : ''}${item.missingCount} missing` : ''}
+                                    ${item.agentSource ? ` • by ${item.agentSource}` : ''}
+                                </div>
+                            </div>
+                            <span class="ml-auto text-xs text-gray-400 font-mono font-bold">
+                                ${item.status === 'pass' ? '+' : ''}${item.weight}
+                            </span>
+                        </li>
+                    `;
+                }).join('')}
             </ul>
-        </div>`;
+
+            <div class="mt-4 pt-3 border-t border-purple-100 text-[10px] text-gray-500 text-center italic">
+                Categories determined by CrewAI agent analysis • No keyword matching used
+            </div>
+        </div>
+    `;
         
         breakdownContainer.innerHTML = checklistHTML + recsHTML;
 
