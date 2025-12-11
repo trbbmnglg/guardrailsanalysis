@@ -16,7 +16,7 @@ app = FastAPI()
 ALLOWED_ENFORCEMENT_ACTIONS = Literal[
     "Sanitize", "Maintain", "Block", "Mask", "Log", "Human Review", "Filter", 
     "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", 
-    "Identify", "Enforce", "Limit"
+    "Identify", "Enforce", "Limit", "Remove"
 ]
 
 # --- PYDANTIC MODELS FOR STRUCTURED OUTPUT ---
@@ -433,7 +433,7 @@ CRITICAL VALIDATION RULES:
 7. ABSOLUTELY ENSURE the 'enforcement' action for every single guardrail is chosen from this EXACT, LIMITED LIST ONLY: {enforcement_list_str}
 
 MANDATORY SYNONYM MAPPING RULE FOR 'enforcement':
-If any preceding agent used an unauthorized word like 'Prohibit', 'Remove', 'Decline', 'Halt', or 'Stop', you MUST replace it with the closest authorized synonym from the list above:
+If any preceding agent used an unauthorized word like 'Prohibit', 'Remove', 'Decline', 'Halt', or 'Stop', you MUST replace it with the closest authorized synonym from {enforcement_list_str}
 'Prohibit' MUST be converted to 'Block' or 'Reject'
 'Remove' MUST be converted to 'Redact' or 'Sanitize'
 'Decline' MUST be converted to 'Refuse' or 'Reject'
@@ -475,7 +475,7 @@ SCHEMA:
             "description": "detailed description (30+ chars)",
             "mechanism": "implementation suggestion",
             "triggers": ["trigger1", "trigger2", "trigger3"],
-            "enforcement": "Sanitize| Maintain| Block| Mask| Log| Human Review| Filter| Reject| Refuse| Redact| Implement| Validate| Detect| Identify| Enforce| Limit",
+            "enforcement": "Sanitize| Maintain| Block| Mask| Log| Human Review| Filter| Reject| Refuse| Redact| Implement| Validate| Detect| Identify| Enforce| Limit| Remove",
             "location": "exact quote or empty string"
         }}
     ],
