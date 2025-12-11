@@ -110,7 +110,7 @@ async def run_analysis(request: AnalysisRequest):
 
         llm = ChatOpenAI(
             #model="openai/meta-llama/Llama-3.3-70B-Instruct",
-            model="openai/Qwen2.5-Coder-32B-Instruct",
+            model="Qwen/Qwen2.5-Coder-32B-Instruct:scaleway",
             base_url="https://router.huggingface.co/v1",
             api_key=request.api_key,
             temperature=0.1,
