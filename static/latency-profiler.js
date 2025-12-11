@@ -45,6 +45,8 @@
     }
 
     function analyzeProfile(guardrails) {
+        console.log('📊 analyzeProfile: Input count:', guardrails.length);
+        
         let totalBaseLatency = 30; 
         let highestTier = 1; 
         let breakdown = [];
