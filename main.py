@@ -146,8 +146,7 @@ def cleanse_guardrails_for_pydantic(raw_output: str) -> dict:
                     # If it's still not in the allowed list after mapping, default to a safe value
                     print(f"WARNING: Unmapped enforcement '{current_enforcement}'. Defaulting to 'Implement'.")
                     guardrail["enforcement"] = "Implement" # Safe fallback
-    
-return data
+    return data
     
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
