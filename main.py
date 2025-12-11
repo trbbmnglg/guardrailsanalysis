@@ -575,11 +575,11 @@ Example of CORRECT output:
                        f"Raw output snippet: {raw_output[:200]}"
             )
 
-# 9. IMPROVED GENERAL ERROR HANDLING (Correctly scoped)
-except Exception as e:
-    # Log the full traceback if needed, but return a clean error message
-    print(f"Analysis Error: {e}")
-    raise HTTPException(status_code=500, detail=f"An unexpected error occurred during crew execution: {str(e)}")
+    # 9. IMPROVED GENERAL ERROR HANDLING (Correctly scoped)
+    except Exception as e:
+        # Log the full traceback if needed, but return a clean error message
+        print(f"Analysis Error: {e}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred during crew execution: {str(e)}")
 
 # Mount static files and index.html (remain the same)
 app.mount("/static", StaticFiles(directory="static"), name="static")
