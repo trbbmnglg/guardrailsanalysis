@@ -241,10 +241,17 @@ async def run_analysis(request: AnalysisRequest):
             description=f"""Synthesize ALL audit findings into a comprehensive JSON report.
             Output ONLY raw JSON (no markdown, no ```json blocks).
             Include BOTH present and missing guardrails.
+            
+            FOR EACH GUARDRAIL: Assign a 'complexity_tier' (1-4) based on implementation complexity:
+            - Tier 1: Regex, keyword matching (2ms)
+            - Tier 2: ML classifiers, NER (80ms) 
+            - Tier 3: LLM reasoning checks (800ms)
+            - Tier 4: Chain-of-thought, deep reasoning (2500ms)
+            
             {tiering_note}""",
             agent=report_agent,
             context=report_context,
-            expected_output="Valid JSON report with present and missing guardrails",
+            expected_output="Valid JSON report with complexity_tier for each guardrail",
             output_pydantic=GuardrailAnalysis if request.enable_profiling else None
         )
         
