@@ -491,8 +491,8 @@ SCHEMA:
             # Fallback for unexpected non-Pydantic output (should ideally not happen)
             raise HTTPException(status_code=500, detail="CrewAI failed to return a valid GuardrailAnalysis structure.")
         
-        # 9. IMPROVED ERROR HANDLING
-        except Exception as e:
+    # 9. IMPROVED ERROR HANDLING
+    except Exception as e:
         # Log the full traceback if needed, but return a clean error message
         print(f"Analysis Error: {e}")
         raise HTTPException(status_code=500, detail=f"An error occurred during crew execution: {str(e)}")
