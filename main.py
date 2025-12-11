@@ -532,7 +532,7 @@ Example structure:
             process=Process.sequential
         )
         
-       def safe_parse_llm_output(raw_output: str) -> dict:
+    def safe_parse_llm_output(raw_output: str) -> dict:
         import json
         import re
         
