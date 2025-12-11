@@ -321,7 +321,7 @@ OUTPUT REQUIREMENTS:
 6. Set appropriate severity
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
-Expected output: 5-10 guardrails covering OWASP Top 10 areas""",
+Expected output: 1-5 guardrails covering OWASP Top 10 areas""",
             agent=security_agent,
             expected_output="Structured list of security guardrails (present and missing) with exact location quotes"
         )
@@ -341,7 +341,7 @@ OUTPUT REQUIREMENTS:
 6. Set severity (Critical for PII leakage risks)
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
-Expected output: 5-8 guardrails covering GDPR/CCPA requirements""",
+Expected output: 1-5 guardrails covering GDPR/CCPA requirements""",
             agent=privacy_ops_agent,
             expected_output="Structured list of privacy guardrails with location proofs"
         )
@@ -360,7 +360,7 @@ OUTPUT REQUIREMENTS:
 5. List 1-3 harmful content types as triggers
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
-Expected output: 5-8 guardrails covering bias, toxicity, harm prevention""",
+Expected output: 1-5 guardrails covering bias, toxicity, harm prevention""",
             agent=rai_agent,
             expected_output="Structured list of ethical guardrails with location proofs"
         )
@@ -379,7 +379,7 @@ OUTPUT REQUIREMENTS:
 5. List 1-3 validation examples as triggers
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
-Expected output: 6-10 guardrails covering input/output validation, scope, and error handling""",
+Expected output: 1-5 guardrails covering input/output validation, scope, and error handling""",
             agent=qa_agent,
             expected_output="Structured list of quality guardrails with proper categorization"
         )
@@ -500,9 +500,17 @@ SCHEMA:
         
         result = crew.kickoff()
 
+        if isinstance(result, GuardrailAnalysis):
+            # The result is the validated Pydantic object
+            return {"result": result.model_dump_json(indent=2)}
+        else:
+            # Fallback for unexpected non-Pydantic output (should ideally not happen)
+            raise HTTPException(status_code=500, detail="CrewAI failed to return a valid GuardrailAnalysis structure.")
+
+    # 9. IMPROVED ERROR HANDLING
     except Exception as e:
+        # Log the full traceback if needed, but return a clean error message
         print(f"Analysis Error: {e}")
-        # Re-raise as HTTPException to prevent the entire server from crashing
         raise HTTPException(status_code=500, detail=f"An error occurred during crew execution: {str(e)}")
 
 # Mount static files and index.html (remain the same)
