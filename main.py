@@ -104,7 +104,7 @@ NAMING RULES FOR MISSING GUARDRAILS:
 - Example: "MISSING: PII Redaction for Email Addresses"
 
 LOCATION FIELD RULES:
-- If guardrail EXISTS: Provide 5 words exact quote from instruction
+- If guardrail EXISTS: Provide max 5 words exact quote from instruction
 - If guardrail is MISSING: Set location to empty string ""
 - Never use placeholder text like "Not specified" or "N/A"
 """
@@ -296,6 +296,10 @@ OUTPUT REQUIREMENTS:
 5. List 1-2 specific triggers per control
 6. Set appropriate severity
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+8. CRITICAL OUTPUT FORMATTING RULES:
+   - Remove any special characters from response except for period (.).
+   - Remove any emojis.
+   - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
 Expected output: 1-5 guardrails covering OWASP Top 10 areas""",
             agent=security_agent,
@@ -316,6 +320,10 @@ OUTPUT REQUIREMENTS:
 5. List 1-3 PII types as triggers
 6. Set severity (Critical for PII leakage risks)
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+8. CRITICAL OUTPUT FORMATTING RULES:
+   - Remove any special characters from response except for period (.).
+   - Remove any emojis.
+   - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
 Expected output: 1-5 guardrails covering GDPR/CCPA requirements""",
             agent=privacy_ops_agent,
@@ -336,6 +344,10 @@ OUTPUT REQUIREMENTS:
 5. List 1-3 harmful content types as triggers
 6. Set appropriate severity
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+8. CRITICAL OUTPUT FORMATTING RULES:
+   - Remove any special characters from response except for period (.).
+   - Remove any emojis.
+   - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
 Expected output: 1-5 guardrails covering bias, toxicity, harm prevention""",
             agent=rai_agent,
@@ -356,6 +368,10 @@ OUTPUT REQUIREMENTS:
 5. List 1-3 validation examples as triggers
 6. Set appropriate severity
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+8. CRITICAL OUTPUT FORMATTING RULES:
+   - Remove any special characters from response except for period (.).
+   - Remove any emojis.
+   - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
 Expected output: 1-5 guardrails covering input/output validation, scope, and error handling""",
             agent=qa_agent,
@@ -428,7 +444,11 @@ REQUIREMENTS:
 5. Ensure MISSING items have empty location field
 6. Validate severity levels are appropriate
 7. Generate 3-5 strategic recommendations
-7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+8. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+9. CRITICAL OUTPUT FORMATTING RULES:
+   - Remove any special characters from response except for period (.).
+   - Remove any emojis.
+   - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
 {tiering_note}
 
@@ -471,11 +491,26 @@ SCHEMA:
         result = crew.kickoff()
 
         if isinstance(result, GuardrailAnalysis):
-            # The result is the validated Pydantic object
-            return {"result": result.model_dump_json(indent=2)}
+        # 1. SUCCESS PATH: Result is a validated Pydantic object
+        return {"result": result.model_dump_json(indent=2)}
         else:
-            # Fallback for unexpected non-Pydantic output (should ideally not happen)
-            raise HTTPException(status_code=500, detail="CrewAI failed to return a valid GuardrailAnalysis structure.")
+        # 2. FAILURE PATH: Result is a raw string, attempt to clean and parse it
+        try:
+            # Clean up the raw string result (e.g., remove markdown code blocks)
+            # This is a common failure point for LLMs returning JSON
+            cleaned_result = re.sub(r"```json|```", "", result, flags=re.IGNORECASE).strip()
+            
+            # Use Pydantic's parse_raw for explicit validation after cleaning
+            final_data = GuardrailAnalysis.model_validate_json(cleaned_result)
+            return {"result": final_data.model_dump_json(indent=2)}
+
+        except Exception as pydantic_error:
+            # If the cleaning and re-parsing fails, return a clear 500
+            print(f"Pydantic Re-Validation Error: {pydantic_error}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"CrewAI output was generated but failed Pydantic validation. Raw output may contain formatting errors: {str(pydantic_error)}"
+            )
 
     # 9. IMPROVED ERROR HANDLING
     except Exception as e:
