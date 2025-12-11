@@ -545,6 +545,10 @@
             analysisResults = parsed;
             updateProgress(100, 'Report Ready!');
             
+            console.log("Guardrails with tiers:", 
+              parsed.guardrails.map(g => ({name: g.name, tier: g.complexity_tier}))
+            );
+            
             setTimeout(() => { 
                 hideLoading(); 
                 displayResults(); 
