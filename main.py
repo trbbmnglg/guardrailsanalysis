@@ -39,7 +39,7 @@ class Guardrail(BaseModel):
         description="Detailed description of what this guardrail does (minimum 15 characters)"
     )
     mechanism: str = Field(
-        description="Technical implementation suggestion with specific examples"
+        description="Technical implementation suggestion with specific examples (min. 15 characters)"
     )
     triggers: List[str] = Field(
         description="List of 3-5 specific patterns, words, or conditions that trigger this guardrail"
@@ -66,7 +66,7 @@ class GuardrailAnalysis(BaseModel):
         description="List of ALL guardrails - both present and missing"
     )
     recommendations: List[str] = Field(
-        description="3-5 high-level strategic recommendations"
+        description="1-3 high-level strategic recommendations"
     )
     tiering_strategy: Optional[TieringStrategy] = Field(
         default=None, 
@@ -105,9 +105,6 @@ LOCATION FIELD RULES:
 async def run_analysis(request: AnalysisRequest):
     try:
         # 1. SETUP LLM
-        os.environ["OPENAI_API_KEY"] = request.api_key
-        os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
-
         llm = ChatOpenAI(
             model="openai/meta-llama/Llama-3.3-70B-Instruct",
             base_url="https://router.huggingface.co/v1",
@@ -198,7 +195,7 @@ For EACH control:
 - If PRESENT: Extract 8+ word exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - ALWAYS use category "Privacy"
-- List 3-5 PII types as triggers (email, SSN, credit card, etc.)
+- List 1-3 PII types as triggers (email, SSN, credit card, etc.)
 - Set severity: Critical for PII leakage, High for consent issues""",
             llm=llm, 
             allow_delegation=False, 
@@ -244,7 +241,7 @@ For EACH control:
 - If PRESENT: Extract 8+ word exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - ALWAYS use category "Responsible AI"
-- List 3-5 harmful content types as triggers
+- List 1-3 harmful content types as triggers
 - Set severity: Critical for harmful content, High for bias""",
             llm=llm, 
             allow_delegation=False, 
@@ -289,7 +286,7 @@ For EACH control:
 - If PRESENT: Extract 8+ word exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - Use appropriate category from: "Input Validation", "Output Control", "QA", "Scope Control"
-- Provide 3-5 specific validation examples as triggers
+- Provide 1-3 specific validation examples as triggers
 - Set severity based on impact (Critical for scope violations, Medium for format checks)""",
             llm=llm, 
             allow_delegation=False, 
@@ -327,7 +324,7 @@ OUTPUT REQUIREMENTS:
 2. For PRESENT controls: Extract 8+ word quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Privacy"
-5. List 3-5 PII types as triggers
+5. List 1-3 PII types as triggers
 6. Set severity (Critical for PII leakage risks)
 
 Expected output: 5-8 guardrails covering GDPR/CCPA requirements""",
@@ -346,7 +343,7 @@ OUTPUT REQUIREMENTS:
 2. For PRESENT controls: Extract 8+ word quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Responsible AI"
-5. List 3-5 harmful content types as triggers
+5. List 1-3 harmful content types as triggers
 
 Expected output: 5-8 guardrails covering bias, toxicity, harm prevention""",
             agent=rai_agent,
@@ -364,7 +361,7 @@ OUTPUT REQUIREMENTS:
 2. For PRESENT controls: Extract 10+ word quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. Use correct categories: "Input Validation", "Output Control", "QA", "Scope Control"
-5. List 3-5 validation examples as triggers
+5. List 1-3 validation examples as triggers
 
 Expected output: 6-10 guardrails covering input/output validation, scope, and error handling""",
             agent=qa_agent,
@@ -445,10 +442,10 @@ REQUIREMENTS:
 4. Ensure PRESENT items have location quotes (10+ words)
 5. Ensure MISSING items have empty location field
 6. Generate 3-5 strategic recommendations
-7. Identify correct enforcement
+7. Strictly identify correct enforcement
 {tiering_note}
 
-OUTPUT FORMAT: Raw JSON only (no markdown, no code blocks)
+OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
 
 SCHEMA:
 {{
@@ -470,7 +467,7 @@ SCHEMA:
             agent=report_agent,
             context=report_context,
             expected_output="Valid JSON report with categorized guardrails. No explanations, no markdown.",
-            output_pydantic=GuardrailAnalysis if not request.enable_profiling else None
+            output_pydantic=GuardrailAnalysis
         )
         
         agents_list.append(report_agent)
@@ -483,98 +480,24 @@ SCHEMA:
             verbose=True,
             process=Process.sequential
         )
-
+        
         result = crew.kickoff()
-
-        # This will now be a validated Pydantic object
-        if hasattr(result, 'pydantic') and result.pydantic:
-            final_result = result.pydantic
-            return {"result": final_result.model_dump_json(indent=2)}
+    
+        # 8. SIMPLIFIED OUTPUT VALIDATION AND RETURN (FIXED: Relies purely on Pydantic)
+        if isinstance(result, GuardrailAnalysis):
+            # The result is the validated Pydantic object
+            return {"result": result.model_dump_json(indent=2)}
         else:
-            # Fallback only if something went horribly wrong
-            raise HTTPException(status_code=500, detail="Failed to generate structured output")
+            # Fallback for unexpected non-Pydantic output (should ideally not happen)
+            raise HTTPException(status_code=500, detail="CrewAI failed to return a valid GuardrailAnalysis structure.")
         
-        # 8. CLEAN AND VALIDATE OUTPUT
-        if hasattr(result, 'pydantic') and result.pydantic:
-            try:
-                cleaned_output = result.pydantic.model_dump_json()
-            except AttributeError:
-                cleaned_output = result.pydantic.json()
-        else:
-            raw_output = str(result)
-            cleaned_output = raw_output.replace("```json", "").replace("```", "").strip()
-            cleaned_output = cleaned_output.replace("\n", " ").replace("\r", "").replace("\t", " ")
-        
-        # 9. POST-PROCESSING: Enforce Category Standards
-        parsed = None
-        try:
-            parsed = json.loads(cleaned_output)
-        except json.JSONDecodeError as e:
-            print(f"DEBUG: Direct JSON parse failed: {e}")
-            try:
-                match = re.search(r'\{.*\}', cleaned_output, re.DOTALL)
-                if match:
-                    print("DEBUG: Extracted JSON via Regex")
-                    parsed = json.loads(match.group())
-            except Exception as e2:
-                print(f"DEBUG: Regex extraction failed: {e2}")
-                print(f"DEBUG: FAILED STRING: {cleaned_output[:500]}...")
-        
-        if parsed and "guardrails" in parsed:
-            # STRICT CATEGORY VALIDATION
-            valid_categories = {
-                "Security", "Privacy", "Responsible AI", "QA", 
-                "Scope Control", "Input Validation", "Output Control"
-            }
-            
-            for gr in parsed["guardrails"]:
-                # Fix common category mistakes
-                if gr["category"] not in valid_categories:
-                    print(f"WARNING: Invalid category '{gr['category']}' for '{gr['name']}'")
-                    # Attempt auto-fix based on keywords
-                    name_lower = gr["name"].lower()
-                    if any(kw in name_lower for kw in ["pii", "gdpr", "privacy", "personal"]):
-                        gr["category"] = "Privacy"
-                    elif any(kw in name_lower for kw in ["injection", "auth", "security", "encrypt"]):
-                        gr["category"] = "Security"
-                    elif any(kw in name_lower for kw in ["bias", "toxic", "harm", "ethical"]):
-                        gr["category"] = "Responsible AI"
-                    elif any(kw in name_lower for kw in ["scope", "boundary", "limit"]):
-                        gr["category"] = "Scope Control"
-                    elif any(kw in name_lower for kw in ["input", "validate", "sanitize"]):
-                        gr["category"] = "Input Validation"
-                    elif any(kw in name_lower for kw in ["output", "response", "format"]):
-                        gr["category"] = "Output Control"
-                    else:
-                        gr["category"] = "QA"  # Default fallback
-                    print(f"  → Auto-corrected to: '{gr['category']}'")
-                
-                # Enforce location rules
-                if gr.get("name", "").upper().startswith("MISSING"):
-                    gr["location"] = ""
-                elif not gr.get("location") or len(gr.get("location", "")) < 10:
-                    print(f"WARNING: '{gr['name']}' marked as present but location too short")
-                
-                # Ensure triggers exist
-                if not gr.get("triggers") or len(gr.get("triggers", [])) == 0:
-                    gr["triggers"] = ["No specific triggers defined"]
-                
-                # Set defaults
-                if "enforcement" not in gr or not gr["enforcement"]:
-                    gr["enforcement"] = "Log"
-                if "complexity_tier" not in gr:
-                    gr["complexity_tier"] = 2
-            
-            cleaned_output = json.dumps(parsed)
-        else:
-            print("ERROR: Could not parse output from LLM.")
+        # 9. IMPROVED ERROR HANDLING
+        except Exception as e:
+        # Log the full traceback if needed, but return a clean error message
+        print(f"Analysis Error: {e}")
+        raise HTTPException(status_code=500, detail=f"An error occurred during crew execution: {str(e)}")
 
-        return {"result": cleaned_output}
-
-    except Exception as e:
-        print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+# Mount static files and index.html (remain the same)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
