@@ -96,7 +96,7 @@ NAMING RULES FOR MISSING GUARDRAILS:
 - Example: "MISSING: PII Redaction for Email Addresses"
 
 LOCATION FIELD RULES:
-- If guardrail EXISTS: Provide 10+ word exact quote from instruction
+- If guardrail EXISTS: Provide 8+ word exact quote from instruction
 - If guardrail is MISSING: Set location to empty string ""
 - Never use placeholder text like "Not specified" or "N/A"
 """
@@ -417,11 +417,12 @@ Expected output: 6-10 guardrails covering input/output validation, scope, and er
 
 CRITICAL VALIDATION RULES:
 1. Check every guardrail has a valid category from the allowed list
-2. Verify PRESENT items have 10+ word location quotes
+2. Verify PRESENT items have 8+ word location quotes
 3. Verify MISSING items have empty location field ""
 4. Remove exact duplicates (same name + category)
 5. Ensure 3-5 triggers per guardrail
 6. Validate severity levels are appropriate
+7. CORRECTLY IDENTIFY the right enforcement from this list only (Sanitize, Maintain, Block, Mask, Log, Human Review, Filter, Reject, Refuse, Redact, Implement, Validate, Detect, Identify, Enforce, Limit)
 
 OUTPUT ONLY VALID JSON matching the GuardrailAnalysis schema.
 NO markdown formatting, NO ```json blocks, just pure JSON.""",
@@ -444,8 +445,7 @@ REQUIREMENTS:
 4. Ensure PRESENT items have location quotes (10+ words)
 5. Ensure MISSING items have empty location field
 6. Generate 3-5 strategic recommendations
-7. CORRECTLY IDENTIFY the right enforcement from the following and nothing else:
-    Sanitize, Maintain, Block, Mask, Log, Human Review, Filter, Reject, Refuse, Redact, Implement, Validate, Detect, Identify, Enforce, Limit.
+7. Identify correct enforcement
 {tiering_note}
 
 OUTPUT FORMAT: Raw JSON only (no markdown, no code blocks)
