@@ -592,7 +592,6 @@ Example structure:
         agents_list.append(report_agent)
         tasks_list.append(task_report)
 
-        # 7. RUN CREW
         crew = Crew(
             agents=agents_list,
             tasks=tasks_list,
@@ -601,74 +600,6 @@ Example structure:
         )
         
        result = crew.kickoff()
-        
-        # 8. CLEAN AND VALIDATE OUTPUT
-        
-        # Check for structured Pydantic output
-        if hasattr(result, 'pydantic') and result.pydantic:
-            try:
-                # Try Pydantic V2 method
-                cleaned_output = result.pydantic.model_dump_json()
-            except AttributeError:
-                # Fallback to Pydantic V1 method
-                cleaned_output = result.pydantic.json()
-        else:
-            # Fallback to raw string parsing
-            raw_output = str(result)
-            
-            # --- AGGRESSIVE CLEANING ---
-            # 1. Remove Markdown
-            cleaned_output = raw_output.replace("```json", "").replace("```", "").strip()
-            # 2. Sanitize Newlines (to prevent "bad control character" errors)
-            cleaned_output = cleaned_output.replace("\n", " ").replace("\r", "").replace("\t", " ")
-            # 3. Attempt Repair (to fix truncation or unescaped quotes)
-            cleaned_output = repair_json(cleaned_output)
-        
-        # Attempt to parse and validate
-        parsed = None
-        try:
-            parsed = json.loads(cleaned_output)
-        except json.JSONDecodeError as e:
-            print(f"DEBUG: Direct JSON parse failed: {e}")
-            # Robust Fallback: Try to extract JSON object with Regex
-            try:
-                match = re.search(r'\{.*\}', cleaned_output, re.DOTALL)
-                if match:
-                    print("DEBUG: Extracted JSON via Regex")
-                    repaired_match = repair_json(match.group())
-                    parsed = json.loads(repaired_match)
-            except Exception as e2:
-                print(f"DEBUG: Regex extraction failed: {e2}")
-                print(f"DEBUG: FAILED STRING: {cleaned_output[:500]}...") 
-        
-        if parsed:
-            # Post-processing
-            if "guardrails" in parsed:
-                for gr in parsed["guardrails"]:
-                    if gr.get("name", "").upper().startswith("MISSING"):
-                        gr["location"] = ""
-                    if "enforcement" not in gr or not gr["enforcement"]:
-                        gr["enforcement"] = "Log" 
-                    if "location" not in gr:
-                        gr["location"] = "" 
-                    if "complexity_tier" not in gr:
-                        gr["complexity_tier"] = 2
-            
-            cleaned_output = json.dumps(parsed)
-        else:
-            print("ERROR: Could not parse output from LLM.")
-            # Return empty structure rather than crashing
-            cleaned_output = json.dumps({
-                "guardrails": [],
-                "recommendations": ["Error: Analysis timed out or output was malformed. Please try again with a shorter instruction."],
-                "tiering_strategy": None
-            })
-
-        return {"result": cleaned_output}
-
-    except Exception as e:
-        print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 # Mount static files and index.html
 app.mount("/static", StaticFiles(directory="static"), name="static")
