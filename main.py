@@ -487,66 +487,70 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
         
         # --- SUCCESS PATH ---
         if isinstance(result, GuardrailAnalysis):
-            # Result is a validated Pydantic object (BEST CASE)
             return {"result": result.model_dump_json(indent=2)}
         
-        # --- FAILURE RECOVERY PATH (Hardened against Python object strings) ---
+        # --- FAILURE RECOVERY PATH (Hardened against Python object strings and Newlines) ---
         
         # Step 1: Convert result to a string safely.
         raw_output = str(result)
         
-        # Step 2: Check if the string is empty or 'None'
-        if not raw_output.strip() or raw_output == 'None':
+        # Step 2: NEWLINE FIX: Aggressively remove all newlines, tabs, and carriage returns.
+        # This addresses the observed JSON parser failure caused by unescaped newlines in values.
+        raw_output_single_line = re.sub(r'[\r\n\t]', ' ', raw_output)
+
+        # Step 3: Check if the cleaned string is empty or 'None'
+        if not raw_output_single_line.strip() or raw_output_single_line == 'None':
              raise HTTPException(
                 status_code=500,
-                detail="CrewAI LLM output was empty or None. This indicates a failure in the underlying LLM call or API connection."
+                detail="CrewAI LLM output was empty or None after cleanup. LLM or API error suspected."
             )
             
-        # Step 3: Attempt aggressive cleanup and JSON loading
+        # Step 4: Attempt aggressive cleanup and JSON loading
         try:
-            cleaned_result = raw_output
+            cleaned_result = raw_output_single_line
             
+            # 4a. Remove markdown blocks and simple leading keys (e.g., "Output: {")
             cleaned_result = re.sub(r"```json|```|^\w+:\s*", "", cleaned_result, flags=re.IGNORECASE).strip()
             
-            cleaned_result = re.sub(r"^guardrails=", "", cleaned_result).strip()
-            
+            # 4b. AGGRESSIVE FIX for Python Object Formatting (e.g., "guardrails=[Guardrail(...)]")
+            # This targets the exact failure seen previously where the LLM returns Python object notation.
             cleaned_result = cleaned_result.replace("Guardrail(", "").replace("TieringStrategy(", "")
-            cleaned_result = cleaned_result.strip('[]') # Strip outer list brackets if present
-
-            match = re.search(r'\{.*\}', cleaned_result, re.DOTALL)
-            if match:
-                json_content = match.group(0)
-            else:
-                
-                # Let's revert to a simpler, safer method:
-                raise ValueError("LLM returned non-JSON Python object string. Automatic repair failed.")
-
-            final_cleaned = cleaned_result.replace("Guardrail(", "{").replace(")", "}").replace("[", "").replace("]", "").replace("'", "\"")
+            cleaned_result = cleaned_result.replace('\'', '"') # Replace single quotes with double quotes (required for JSON)
             
-            repaired_json = cleaned_result.replace("Guardrail(", "").replace("TieringStrategy(", "").replace('\'', '"')
+            # Now, attempt to extract the JSON object bounded by { and }
+            match = re.search(r'\{.*\}', cleaned_result, re.DOTALL)
+            
+            if match:
+                final_json_string = match.group(0)
+            else:
+                # If we cannot find a standard JSON object boundary, the structure is too corrupted.
+                raise ValueError("Could not locate a recognizable JSON object boundary ({...}) after cleanup.")
 
-            final_data = GuardrailAnalysis.model_validate_json(repaired_json)
+
+            # 4c. Manually parse and validate the cleaned JSON string using Pydantic
+            final_data = GuardrailAnalysis.model_validate_json(final_json_string)
             
             # If successful, return the valid JSON string
             return {"result": final_data.model_dump_json(indent=2)}
 
         except Exception as pydantic_error:
             # If the manual re-parsing fails, return a clear 500
-            print(f"Pydantic Re-Validation Error (Final Attempt Failed): {pydantic_error}")
-        
-        raise HTTPException(
-            status_code=500, 
-            detail=f"CrewAI output failed to be parsed as JSON even after aggressive cleanup. "
-                   f"The LLM returned a Python object string instead of pure JSON. "
-                   f"Validation Error: {str(pydantic_error)}. "
-                   f"Raw Output Snippet: {raw_output[:200]}"
-        )
+            print(f"Pydantic Re-Validation Error: {pydantic_error}")
+            
+            # Use the raw output in the error message for better debugging
+            raise HTTPException(
+                status_code=500, 
+                detail=f"CrewAI output failed Pydantic re-validation (after newline/structure cleanup). "
+                       f"Validation Error: {str(pydantic_error)}. "
+                       f"Raw Output Snippet: {raw_output[:200]}"
+            )
 
-    # 9. IMPROVED GENERAL ERROR HANDLING (No change)
+    # 9. IMPROVED GENERAL ERROR HANDLING (Handles the 'pydantic_error' referenced error)
     except Exception as e:
         # Log the full traceback if needed, but return a clean error message
         print(f"Analysis Error: {e}")
-        raise HTTPException(status_code=500, detail=f"An error occurred during crew execution: {str(e)}")
+        # The next line is the correct way to handle a general failure in the entire try block.
+    raise HTTPException(status_code=500, detail=f"An error occurred during crew execution: {str(e)}")
 
 # Mount static files and index.html (remain the same)
 app.mount("/static", StaticFiles(directory="static"), name="static")
