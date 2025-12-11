@@ -531,8 +531,8 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
             return {"result": final_data.model_dump_json(indent=2)}
 
         except Exception as pydantic_error:
-        # If the manual re-parsing fails, return a clear 500
-        print(f"Pydantic Re-Validation Error (Final Attempt Failed): {pydantic_error}")
+            # If the manual re-parsing fails, return a clear 500
+            print(f"Pydantic Re-Validation Error (Final Attempt Failed): {pydantic_error}")
         
         raise HTTPException(
             status_code=500, 
