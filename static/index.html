@@ -1,14 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Agent Guardrails Analyzer v2</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/static/disclaimer-modal.js"></script>
-    <script src="/static/latency-profiler.js"></script>
-    <script src="/static/guardrails-analyzer.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent Guardrails Analyzer v2</title>
+  <script>
+  // Global error handler to catch unhandled promise rejections
+  window.addEventListener('unhandledrejection', function(event) {
+      console.error('🚨 Unhandled Promise Rejection:', event.reason);
+      
+      // Prevent default browser error handling
+      event.preventDefault();
+      
+      // Show user-friendly error if it's not a browser extension issue
+      if (!event.reason?.message?.includes('message channel closed')) {
+          const errorState = document.getElementById('errorState');
+          const errorMessage = document.getElementById('errorMessage');
+          if (errorState && errorMessage) {
+              errorMessage.textContent = 'An unexpected error occurred. Please try again.';
+              errorState.classList.remove('hidden');
+          }
+      }
+  });
+  
+  // Catch synchronous errors too
+  window.addEventListener('error', function(event) {
+      // Ignore browser extension errors
+      if (event.message.includes('Extension context') || 
+          event.message.includes('message channel')) {
+          console.warn('Ignoring browser extension error');
+          event.preventDefault();
+          return;
+      }
+      
+      console.error('🚨 Global Error:', event.error);
+  });
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/static/disclaimer-modal.js"></script>
+  <script src="/static/latency-profiler.js"></script>
+  <script src="/static/guardrails-analyzer.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
