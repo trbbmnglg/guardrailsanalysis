@@ -802,6 +802,34 @@ function displayResults() {
             </div>
         </div>
     `;
+
+        const recsHTML = `
+        <div class="flex items-center justify-between mb-4 p-2 bg-purple-50 rounded-lg border border-purple-100">
+            <h4 class="font-bold text-purple-900 uppercase text-xs tracking-wider flex items-center gap-2">
+                AI Suggestions
+                <span class="bg-white text-purple-700 px-2 py-0.5 rounded-full text-[10px] border border-purple-100 shadow-sm">
+                    ${analysisResults.recommendations.length}
+                </span>
+            </h4>
+            
+            <button id="toggleRecsBtn" class="group flex items-center gap-2 text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-4 py-1.5 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span id="toggleRecsText">Show Magic Fixes</span>
+            </button>
+        </div>
+
+        <div id="recsContent" class="hidden transition-all duration-300 ease-in-out origin-top">
+            <ul class="space-y-3 bg-white/40 p-4 rounded-xl border border-purple-100">
+                ${analysisResults.recommendations.map((rec, i) => `
+                    <li class="flex items-start gap-3 p-2 hover:bg-white rounded-lg transition-colors fade-in" style="animation-delay: ${i * 0.05}s">
+                        <span class="text-purple-600 mt-0.5 text-lg">⚡</span>
+                        <span class="text-gray-700 text-sm leading-relaxed">${escapeHtml(rec)}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>`;
         
         breakdownContainer.innerHTML = checklistHTML + recsHTML;
         
