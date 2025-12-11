@@ -598,10 +598,11 @@ Example structure:
             verbose=True,
             process=Process.sequential
         )
+        
         result = crew.kickoff()
 
-# Mount static files and index.html
-app.mount("/static", StaticFiles(directory="static"), name="static")
+    # Mount static files and index.html
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 async def read_index():
