@@ -164,13 +164,7 @@ REQUIRED CHECKS (mark as PRESENT or MISSING):
    
 {CATEGORY_GUIDELINES}
 
-For EACH control:
-- If PRESENT: Extract 5 words exact quote in 'location' field
-- If MISSING: Name it "MISSING: [Control Name]", set location to ""
-- ALWAYS use category "Security"
-- Provide 1-2 specific trigger examples
-- Set severity: Critical/High for auth & injection, Medium for rate limiting
-- CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}""",
+""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -200,13 +194,7 @@ REQUIRED CHECKS (mark as PRESENT or MISSING):
    
 {CATEGORY_GUIDELINES}
 
-For EACH control:
-- If PRESENT: Extract 5 words exact quote in 'location' field
-- If MISSING: Name it "MISSING: [Control Name]", set location to ""
-- ALWAYS use category "Privacy"
-- List 1-2 PII types as triggers (email, SSN, credit card, etc.)
-- Set severity: Critical for PII leakage, High for consent issues
-- CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}""",
+""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -247,13 +235,7 @@ AUDIT PROTOCOL: SAFETY & ETHICAL ALIGNMENT GUARDRAILS VALIDATION (NIST/EU AI ACT
            
 {CATEGORY_GUIDELINES}
 
-For EACH control:
-- If PRESENT: Extract 5 words exact quote in 'location' field
-- If MISSING: Name it "MISSING: [Control Name]", set location to ""
-- ALWAYS use category "Responsible AI"
-- List 1-2 harmful content types as triggers
-- Set severity: Critical for harmful content, High for bias
-- CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}""",
+""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -293,13 +275,7 @@ COMPLIANCE PROTOCOL: PROMPT-LEVEL GUARDRAILS VALIDATION
 
 {CATEGORY_GUIDELINES}
 
-For EACH control:
-- If PRESENT: Extract 5 words exact quote in 'location' field
-- If MISSING: Name it "MISSING: [Control Name]", set location to ""
-- Use appropriate category from: "Input Validation", "Output Control", "QA", "Scope Control"
-- Provide 1-2 specific validation examples as triggers
-- Set severity based on impact (Critical for scope violations, Medium for format checks)
-- CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}""",
+""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -314,7 +290,7 @@ INSTRUCTION TO ANALYZE:
 
 OUTPUT REQUIREMENTS:
 1. Find ALL security controls (present and missing)
-2. For PRESENT controls: Name them clearly, extract 10+ word quote for 'location'
+2. For PRESENT controls: Name them clearly, extract 5 words quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Security"
 5. List 1-2 specific triggers per control
@@ -358,6 +334,7 @@ OUTPUT REQUIREMENTS:
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Responsible AI"
 5. List 1-3 harmful content types as triggers
+6. Set appropriate severity
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
 Expected output: 1-5 guardrails covering bias, toxicity, harm prevention""",
@@ -377,6 +354,7 @@ OUTPUT REQUIREMENTS:
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. Use correct categories: "Input Validation", "Output Control", "QA", "Scope Control"
 5. List 1-3 validation examples as triggers
+6. Set appropriate severity
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
 Expected output: 1-5 guardrails covering input/output validation, scope, and error handling""",
@@ -428,15 +406,6 @@ Expected output: 1-5 guardrails covering input/output validation, scope, and err
 
 {CATEGORY_GUIDELINES}
 
-CRITICAL VALIDATION RULES:
-1. Check every guardrail has a valid category from the allowed list
-2. Verify PRESENT items have 5 words location quotes
-3. Verify MISSING items have empty location field ""
-4. Remove exact duplicates (same name + category)
-5. Ensure 3-5 triggers per guardrail
-6. Validate severity levels are appropriate
-7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-
 OUTPUT ONLY VALID JSON matching the GuardrailAnalysis schema.
 NO markdown formatting, NO ```json blocks, just pure JSON.""",
             llm=llm, 
@@ -457,7 +426,8 @@ REQUIREMENTS:
 3. Validate all categories match allowed values exactly
 4. Ensure PRESENT items have location quotes (5 words)
 5. Ensure MISSING items have empty location field
-6. Generate 3-5 strategic recommendations
+6. Validate severity levels are appropriate
+7. Generate 3-5 strategic recommendations
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
 {tiering_note}
