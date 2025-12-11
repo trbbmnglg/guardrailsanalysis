@@ -532,77 +532,77 @@ Example structure:
             process=Process.sequential
         )
         
-def safe_parse_llm_output(raw_output: str) -> dict:
-    import json
-    import re
-    
-    # Strategy 1: Direct JSON parse
-    try:
-        return json.loads(raw_output)
-    except:
-        pass
-    
-    # Strategy 2: Extract JSON from markdown
-    json_match = re.search(r'```json\s*(\{.*\})\s*```', raw_output, re.DOTALL)
-    if json_match:
+    def safe_parse_llm_output(raw_output: str) -> dict:
+        import json
+        import re
+        
+        # Strategy 1: Direct JSON parse
         try:
-            return json.loads(json_match.group(1))
+            return json.loads(raw_output)
         except:
             pass
-    
-    # Strategy 3: Extract any JSON-like structure
-    json_match = re.search(r'\{.*\}', raw_output, re.DOTALL)
-    if json_match:
+        
+        # Strategy 2: Extract JSON from markdown
+        json_match = re.search(r'```json\s*(\{.*\})\s*```', raw_output, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(1))
+            except:
+                pass
+        
+        # Strategy 3: Extract any JSON-like structure
+        json_match = re.search(r'\{.*\}', raw_output, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(0))
+            except:
+                pass
+        
+        # Strategy 4: Python AST parsing (handles Python object notation)
         try:
-            return json.loads(json_match.group(0))
+            import ast
+            # Try to safely evaluate as Python literal
+            python_obj = ast.literal_eval(raw_output)
+            # Convert to JSON and back to ensure proper format
+            return json.loads(json.dumps(python_obj))
         except:
             pass
-    
-    # Strategy 4: Python AST parsing (handles Python object notation)
-    try:
-        import ast
-        # Try to safely evaluate as Python literal
-        python_obj = ast.literal_eval(raw_output)
-        # Convert to JSON and back to ensure proper format
-        return json.loads(json.dumps(python_obj))
-    except:
-        pass
-    
-    raise ValueError("Could not parse LLM output as JSON using any strategy")
-    
-    # Use in your endpoint:
-   crew = Crew(
-        agents=agents_list,
-        tasks=tasks_list,
-        verbose=True,
-        process=Process.sequential
-    )
-
-    try:
-        result = crew.kickoff()
         
-        if isinstance(result, GuardrailAnalysis):
-            return {"result": result.model_dump_json(indent=2)}
+        raise ValueError("Could not parse LLM output as JSON using any strategy")
         
-        # Fallback parsing
-        raw_output = str(result)
-        parsed_dict = safe_parse_llm_output(raw_output)
-        final_data = GuardrailAnalysis.model_validate(parsed_dict)
-        
-        return {"result": final_data.model_dump_json(indent=2)}
-            
-    except Exception as e:
-        print(f"Analysis Error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to process LLM output: {str(e)}"
+        # Use in your endpoint:
+       crew = Crew(
+            agents=agents_list,
+            tasks=tasks_list,
+            verbose=True,
+            process=Process.sequential
         )
-
-# 9. IMPROVED GENERAL ERROR HANDLING (Correctly scoped)
-except Exception as e:
-    # Log the full traceback if needed, but return a clean error message
-    print(f"Analysis Error: {e}")
-    raise HTTPException(status_code=500, detail=f"An unexpected error occurred during crew execution: {str(e)}")
+    
+        try:
+            result = crew.kickoff()
+            
+            if isinstance(result, GuardrailAnalysis):
+                return {"result": result.model_dump_json(indent=2)}
+            
+            # Fallback parsing
+            raw_output = str(result)
+            parsed_dict = safe_parse_llm_output(raw_output)
+            final_data = GuardrailAnalysis.model_validate(parsed_dict)
+            
+            return {"result": final_data.model_dump_json(indent=2)}
+                
+        except Exception as e:
+            print(f"Analysis Error: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to process LLM output: {str(e)}"
+            )
+    
+    # 9. IMPROVED GENERAL ERROR HANDLING (Correctly scoped)
+    except Exception as e:
+        # Log the full traceback if needed, but return a clean error message
+        print(f"Analysis Error: {e}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred during crew execution: {str(e)}")
 
 # Mount static files and index.html (remain the same)
 app.mount("/static", StaticFiles(directory="static"), name="static")
