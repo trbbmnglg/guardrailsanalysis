@@ -19,7 +19,7 @@ ALLOWED_ENFORCEMENT_ACTIONS = Literal[
     "Identify", "Enforce", "Limit", "Remove", "Test"
 ]
 
-global enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
+enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
 
 # --- PYDANTIC MODELS FOR STRUCTURED OUTPUT ---
 class Guardrail(BaseModel):
