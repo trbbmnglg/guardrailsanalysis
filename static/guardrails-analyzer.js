@@ -247,13 +247,12 @@
     }
 
     function performGapAnalysis(foundGuardrails) {
-        // 1. Define the buckets we want to measure
-        // We map 'backendCategories' (from main.py) to these buckets explicitly.
+        // 1. Define scoring buckets with weights
         const scoringBuckets = [
             { 
                 id: "security", 
                 label: "Critical Security Controls", 
-                backendCategories: ["Security"], // Exact match from main.py
+                backendCategories: ["Security"], 
                 keywords: ["security", "auth", "access", "compliance", "encryption", "redact"], 
                 weight: 2 
             },
@@ -288,43 +287,91 @@
             { 
                 id: "oversight", 
                 label: "Accountability & Oversight", 
-                backendCategories: [], // No direct backend equivalent, relies on keywords or specific names
+                backendCategories: [], 
                 keywords: ["human", "oversight", "audit", "log", "monitor", "escalat", "attribution", "confidence"], 
                 weight: 1 
             }
         ];
     
-        let totalWeight = 0;
+        // 2. Separate present vs missing guardrails
+        const presentGuardrails = foundGuardrails.filter(g => 
+            !g.name.toUpperCase().startsWith('MISSING') && g.location && g.location.trim().length > 0
+        );
+        const missingGuardrails = foundGuardrails.filter(g => 
+            g.name.toUpperCase().startsWith('MISSING') || !g.location || g.location.trim().length === 0
+        );
+    
+        // 3. Calculate coverage per bucket
+        let totalPossibleScore = 0;
         let earnedScore = 0;
         const breakdown = [];
     
         scoringBuckets.forEach(bucket => {
-            totalWeight += bucket.weight;
-            
-            // CHECK 1: Look for explicit Backend Category match
-            // If the AI tagged it as "Responsible AI", it counts for the "AI Safety" bucket.
-            const hasCategoryMatch = foundGuardrails.some(g => 
+            // Check if bucket is covered by PRESENT guardrails
+            const hasCategoryMatch = presentGuardrails.some(g => 
                 bucket.backendCategories.includes(g.category)
             );
-    
-            // CHECK 2: Fallback to Keyword Search (in Name or Description)
-            // Helpful if the AI miscategorized it but the text is clear.
-            const hasKeywordMatch = foundGuardrails.some(g => {
+            const hasKeywordMatch = presentGuardrails.some(g => {
                 const text = (g.name + " " + g.description + " " + g.mechanism).toLowerCase();
                 return bucket.keywords.some(k => text.includes(k));
             });
     
+            // Check if bucket has MISSING items
+            const hasMissingInCategory = missingGuardrails.some(g => 
+                bucket.backendCategories.includes(g.category)
+            );
+            const hasMissingByKeyword = missingGuardrails.some(g => {
+                const text = (g.name + " " + g.description + " " + g.mechanism).toLowerCase();
+                return bucket.keywords.some(k => text.includes(k));
+            });
+    
+            // Award points if present
             if (hasCategoryMatch || hasKeywordMatch) {
                 earnedScore += bucket.weight;
-                breakdown.push({ label: `Has ${bucket.label}`, status: 'pass' });
-            } else {
-                breakdown.push({ label: `Missing ${bucket.label}`, status: 'fail' });
+                breakdown.push({ 
+                    label: `Has ${bucket.label}`, 
+                    status: 'pass',
+                    weight: bucket.weight,
+                    present: true
+                });
+            } 
+            // Mark as gap if missing items exist in this category
+            else if (hasMissingInCategory || hasMissingByKeyword) {
+                breakdown.push({ 
+                    label: `Missing ${bucket.label}`, 
+                    status: 'fail',
+                    weight: bucket.weight,
+                    present: false
+                });
             }
+            // Assume expected if no evidence either way (neutral)
+            else {
+                breakdown.push({ 
+                    label: `${bucket.label} (Not Assessed)`, 
+                    status: 'neutral',
+                    weight: bucket.weight,
+                    present: false
+                });
+            }
+    
+            // Always count towards total possible (even if not assessed)
+            totalPossibleScore += bucket.weight;
         });
     
-        // Calculate Percentage
-        const finalScore = totalWeight === 0 ? 0 : Math.round((earnedScore / totalWeight) * 100);
-        return { score: finalScore, breakdown: breakdown };
+        // 4. Calculate percentage: earned / total possible
+        const finalScore = totalPossibleScore === 0 ? 0 : Math.round((earnedScore / totalPossibleScore) * 100);
+    
+        // 5. Add metadata for debugging
+        return { 
+            score: finalScore, 
+            breakdown: breakdown,
+            stats: {
+                totalPresent: presentGuardrails.length,
+                totalMissing: missingGuardrails.length,
+                earnedPoints: earnedScore,
+                possiblePoints: totalPossibleScore
+            }
+        };
     }
 
     function renderScoreChart(score) {
@@ -561,88 +608,84 @@
         }
     }
   
-    function displayResults() {
-        if (!analysisResults) return;
+function displayResults() {
+    if (!analysisResults) return;
 
-        // 1. Calculate Stats
-        const presentGuardrails = analysisResults.guardrails.filter(g => 
-            !g.name.toUpperCase().startsWith('MISSING') && g.location !== ""
-        );
-        const missingGuardrails = analysisResults.guardrails.filter(g => 
-            g.name.toUpperCase().startsWith('MISSING') || g.location === ""
-        );
+    // 1. Calculate Stats
+    const presentGuardrails = analysisResults.guardrails.filter(g => 
+        !g.name.toUpperCase().startsWith('MISSING') && g.location !== ""
+    );
+    const missingGuardrails = analysisResults.guardrails.filter(g => 
+        g.name.toUpperCase().startsWith('MISSING') || g.location === ""
+    );
 
-        const missingCritical = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'critical').length;
-        const missingHigh = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'high').length;
+    const missingCritical = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'critical').length;
+    const missingHigh = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'high').length;
 
-        // 2. Update UI Counts
-        const activeCount = document.getElementById('activeCount');
-        if(activeCount) activeCount.textContent = presentGuardrails.length;
+    // 2. Update UI Counts
+    const activeCount = document.getElementById('activeCount');
+    if(activeCount) activeCount.textContent = presentGuardrails.length;
+    
+    const missingTotal = document.getElementById('missingTotalCount');
+    if(missingTotal) missingTotal.textContent = missingGuardrails.length;
+
+    const missingCrit = document.getElementById('missingCriticalCount');
+    if(missingCrit) missingCrit.textContent = missingCritical;
+
+    const missingHi = document.getElementById('missingHighCount');
+    if(missingHi) missingHi.textContent = missingHigh;
+
+    // 3. UPDATED: Pass ALL guardrails (present + missing) for accurate scoring
+    const gapAnalysis = performGapAnalysis(analysisResults.guardrails);
+    
+    const scoreEl = document.getElementById('coverageScore');
+    if (scoreEl) {
+        scoreEl.className = 'flex flex-col items-center justify-center py-2 h-full'; 
+        scoreEl.innerHTML = renderScoreChart(gapAnalysis.score);
         
-        const missingTotal = document.getElementById('missingTotalCount');
-        if(missingTotal) missingTotal.textContent = missingGuardrails.length;
+        // Optional: Add debug info (remove in production)
+        console.log('Safety Score Calculation:', gapAnalysis.stats);
+    }
 
-        const missingCrit = document.getElementById('missingCriticalCount');
-        if(missingCrit) missingCrit.textContent = missingCritical;
-
-        const missingHi = document.getElementById('missingHighCount');
-        if(missingHi) missingHi.textContent = missingHigh;
-
-        // 3. Update Score (Updated Logic: Weighted Health Score)
-        // Passes BOTH present and missing to calculate "Active / (Active + Missing)"
-        const gapAnalysis = performGapAnalysis(presentGuardrails, missingGuardrails);
-        const scoreEl = document.getElementById('coverageScore');
-        if (scoreEl) {
-            scoreEl.className = 'flex flex-col items-center justify-center py-2 h-full'; 
-            scoreEl.innerHTML = renderScoreChart(gapAnalysis.score);
-        }
-
-        // 4. Render Recommendations
-        const breakdownContainer = document.getElementById('recommendations');
-         const checklistHTML = `
+    // 4. Render Recommendations with updated breakdown
+    const breakdownContainer = document.getElementById('recommendations');
+    const checklistHTML = `
         <div class="mb-6 bg-white bg-opacity-50 rounded-lg p-4">
-            <h4 class="font-bold text-purple-900 mb-3 uppercase text-xs tracking-wider">Gap Analysis</h4>
-            <ul class="space-y-2">
-                ${gapAnalysis.breakdown.map(item => `
-                    <li class="flex items-center gap-3">
-                        <span class="${item.status === 'pass' ? 'text-green-600' : 'text-red-500'} text-lg font-bold">
-                            ${item.status === 'pass' ? '✅' : '❌'}
-                        </span>
-                        <span class="text-gray-800 font-medium ${item.status === 'fail' ? 'opacity-75' : ''}">
-                            ${escapeHtml(item.label)}
-                        </span>
-                    </li>
-                `).join('')}
-            </ul>
-        </div>`;
-
-        const recsHTML = `
-        <div class="flex items-center justify-between mb-4 p-2 bg-purple-50 rounded-lg border border-purple-100">
-            <h4 class="font-bold text-purple-900 uppercase text-xs tracking-wider flex items-center gap-2">
-                AI Suggestions
-                <span class="bg-white text-purple-700 px-2 py-0.5 rounded-full text-[10px] border border-purple-100 shadow-sm">
-                    ${analysisResults.recommendations.length}
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="font-bold text-purple-900 uppercase text-xs tracking-wider">Gap Analysis</h4>
+                <span class="text-xs text-gray-500 font-mono">
+                    ${gapAnalysis.stats.earnedPoints}/${gapAnalysis.stats.possiblePoints} pts
                 </span>
-            </h4>
-            
-            <button id="toggleRecsBtn" class="group flex items-center gap-2 text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-4 py-1.5 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span id="toggleRecsText">Show Magic Fixes</span>
-            </button>
-        </div>
-
-        <div id="recsContent" class="hidden transition-all duration-300 ease-in-out origin-top">
-            <ul class="space-y-3 bg-white/40 p-4 rounded-xl border border-purple-100">
-                ${analysisResults.recommendations.map((rec, i) => `
-                    <li class="flex items-start gap-3 p-2 hover:bg-white rounded-lg transition-colors fade-in" style="animation-delay: ${i * 0.05}s">
-                        <span class="text-purple-600 mt-0.5 text-lg">⚡</span>
-                        <span class="text-gray-700 text-sm leading-relaxed">${escapeHtml(rec)}</span>
-                    </li>
-                `).join('')}
+            </div>
+            <ul class="space-y-2">
+                ${gapAnalysis.breakdown.map(item => {
+                    let icon, textClass;
+                    if (item.status === 'pass') {
+                        icon = '✅';
+                        textClass = 'text-gray-800 font-medium';
+                    } else if (item.status === 'fail') {
+                        icon = '❌';
+                        textClass = 'text-red-600 font-semibold';
+                    } else {
+                        icon = '⚪';
+                        textClass = 'text-gray-400 italic';
+                    }
+                    
+                    return `
+                        <li class="flex items-center gap-3">
+                            <span class="text-lg font-bold">${icon}</span>
+                            <span class="${textClass}">
+                                ${escapeHtml(item.label)}
+                            </span>
+                            <span class="ml-auto text-xs text-gray-400 font-mono">
+                                ${item.status === 'pass' ? '+' : ''}${item.weight}
+                            </span>
+                        </li>
+                    `;
+                }).join('')}
             </ul>
-        </div>`;
+        </div>
+    `;
         
         breakdownContainer.innerHTML = checklistHTML + recsHTML;
 
