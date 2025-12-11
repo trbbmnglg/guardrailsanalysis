@@ -124,6 +124,8 @@ async def run_analysis(request: AnalysisRequest):
             max_retries=2,
         )
 
+        enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
+
         # 2. DEFINE AGENTS WITH STRICT CATEGORIZATION INSTRUCTIONS
 
         security_agent = Agent(
