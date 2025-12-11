@@ -164,7 +164,16 @@ REQUIRED CHECKS (mark as PRESENT or MISSING):
    
 {CATEGORY_GUIDELINES}
 
-""",
+CRITICAL JSON RULES:
+1. Use double quotes for ALL strings: "key": "value"
+2. NO single quotes allowed
+3. NO Python syntax like Guardrail() or keyword=value
+4. NO trailing commas
+5. Escape special characters in strings: use \\" for quotes inside strings
+6. Boolean values: true/false (lowercase)
+7. Null values: null (lowercase)
+
+Your output must be parseable by json.loads() in Python.""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -194,7 +203,16 @@ REQUIRED CHECKS (mark as PRESENT or MISSING):
    
 {CATEGORY_GUIDELINES}
 
-""",
+CRITICAL JSON RULES:
+1. Use double quotes for ALL strings: "key": "value"
+2. NO single quotes allowed
+3. NO Python syntax like Guardrail() or keyword=value
+4. NO trailing commas
+5. Escape special characters in strings: use \\" for quotes inside strings
+6. Boolean values: true/false (lowercase)
+7. Null values: null (lowercase)
+
+Your output must be parseable by json.loads() in Python.""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -235,7 +253,16 @@ AUDIT PROTOCOL: SAFETY & ETHICAL ALIGNMENT GUARDRAILS VALIDATION (NIST/EU AI ACT
            
 {CATEGORY_GUIDELINES}
 
-""",
+CRITICAL JSON RULES:
+1. Use double quotes for ALL strings: "key": "value"
+2. NO single quotes allowed
+3. NO Python syntax like Guardrail() or keyword=value
+4. NO trailing commas
+5. Escape special characters in strings: use \\" for quotes inside strings
+6. Boolean values: true/false (lowercase)
+7. Null values: null (lowercase)
+
+Your output must be parseable by json.loads() in Python.""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -275,7 +302,16 @@ COMPLIANCE PROTOCOL: PROMPT-LEVEL GUARDRAILS VALIDATION
 
 {CATEGORY_GUIDELINES}
 
-""",
+CRITICAL JSON RULES:
+1. Use double quotes for ALL strings: "key": "value"
+2. NO single quotes allowed
+3. NO Python syntax like Guardrail() or keyword=value
+4. NO trailing commas
+5. Escape special characters in strings: use \\" for quotes inside strings
+6. Boolean values: true/false (lowercase)
+7. Null values: null (lowercase)
+
+Your output must be parseable by json.loads() in Python.""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -436,41 +472,52 @@ NO markdown formatting, NO ```json blocks, just pure JSON.""",
         task_report = Task(
             description=f"""Synthesize ALL audit findings into a comprehensive JSON report.
 
+CRITICAL: Your response must be VALID JSON that can be parsed by json.loads().
+
+BAD (Python syntax):
+Guardrail(name='Test', category='Security')
+
+GOOD (JSON syntax):
+{{"name": "Test", "category": "Security"}}
+
+STRING ESCAPING: If a description contains quotes, escape them:
+"description": "The system \\"must\\" validate inputs"
+
 REQUIREMENTS:
-1. Combine findings from all agents (Security, Privacy, RAI, QA, Compute)
-2. Remove duplicate guardrails (keep the one with the best location quote)
-3. Validate all categories match allowed values exactly
-4. Ensure PRESENT items have location quotes (max 5 words)
-5. Ensure MISSING items have empty location field
-6. Validate severity levels are appropriate
-7. Generate 3-5 strategic recommendations
+1. Combine findings from all agents
+2. Remove duplicates
+3. Validate categories match allowed values
+4. PRESENT items: include location quotes (max 5 words)
+5. MISSING items: empty location field ""
+6. Appropriate severity levels
+7. 3-5 strategic recommendations
 8. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-9. CRITICAL: OUTPUT FORMATTING RULES:
-   - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
-   - Remove any emojis.
-   - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
 {tiering_note}
 
-CRITICAL OUTPUT RULE: 
-Output ONLY raw JSON. Do NOT use Python syntax like Guardrail() or keyword=value.
-Use JSON format: {{"key": "value"}}
-Example of CORRECT output:
+RESPONSE FORMAT: Raw JSON only (no markdown, no ```json blocks, no explanations)
+
+Example structure:
 {{
   "guardrails": [
     {{
       "name": "Prompt Injection Resilience",
       "category": "Security",
       "severity": "High",
-      ...
+      "complexity_tier": 2,
+      "description": "Prevents malicious inputs",
+      "mechanism": "Input validation",
+      "triggers": ["injection", "override"],
+      "enforcement": "Reject",
+      "location": "Never request or disclose"
     }}
-  ]
+  ],
+  "recommendations": ["Implement X", "Add Y", "Review Z"]
 }}
-
 """,
             agent=report_agent,
             context=report_context,
-            expected_output="Valid JSON report with categorized guardrails. No explanations, no markdown.",
+            expected_output="Valid JSON matching GuardrailAnalysis schema",
             output_pydantic=GuardrailAnalysis
         )
         
@@ -485,94 +532,63 @@ Example of CORRECT output:
             process=Process.sequential
         )
         
-        # FIX 1: Only call kickoff ONCE.
-        result = crew.kickoff() 
-
-        # --- SUCCESS PATH ---
-        if isinstance(result, GuardrailAnalysis):
-            return {"result": result.model_dump_json(indent=2)}
+       def safe_parse_llm_output(raw_output: str) -> dict:
+        import json
+        import re
         
-        # --- FAILURE RECOVERY PATH (Definitive Fix for Python/JSON Mix) ---
-        
-        # Step 1: Convert result to a string safely.
-        raw_output = str(result)
-        
-        # Step 2: Aggressively clean up whitespace (newlines/tabs)
-        raw_output_single_line = re.sub(r'[\r\n\t]', ' ', raw_output)
-
-        # Step 3: Check for empty output
-        if not raw_output_single_line.strip() or raw_output_single_line == 'None':
-             raise HTTPException(
-                status_code=500,
-                detail="CrewAI LLM output was empty or None after cleanup. LLM or API error suspected."
-            )
-            
-        # Step 4: AGGRESSIVE CLEANUP AND RECONSTRUCTION
+        # Strategy 1: Direct JSON parse
         try:
-            cleaned_result = raw_output_single_line
+            return json.loads(raw_output)
+        except:
+            pass
+        
+        # Strategy 2: Extract JSON from markdown
+        json_match = re.search(r'```json\s*(\{.*\})\s*```', raw_output, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(1))
+            except:
+                pass
+        
+        # Strategy 3: Extract any JSON-like structure
+        json_match = re.search(r'\{.*\}', raw_output, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(0))
+            except:
+                pass
+        
+        # Strategy 4: Python AST parsing (handles Python object notation)
+        try:
+            import ast
+            # Try to safely evaluate as Python literal
+            python_obj = ast.literal_eval(raw_output)
+            # Convert to JSON and back to ensure proper format
+            return json.loads(json.dumps(python_obj))
+        except:
+            pass
+        
+        raise ValueError("Could not parse LLM output as JSON using any strategy")
+    
+        # Use in your endpoint:
+        try:
+            result = crew.kickoff()
             
-            # 4a. Remove markdown blocks
-            cleaned_result = re.sub(r"```json|```", "", cleaned_result, flags=re.IGNORECASE).strip()
+            if isinstance(result, GuardrailAnalysis):
+                return {"result": result.model_dump_json(indent=2)}
             
-            # 4b. CRITICAL FIX: Convert Python object notation to JSON
-            # First, handle the outermost wrapper if it exists
-            cleaned_result = re.sub(r'^GuardrailAnalysis\s*\(', '', cleaned_result)
-            cleaned_result = re.sub(r'\)$', '', cleaned_result)
-            
-            # Replace Python class constructors with JSON objects
-            cleaned_result = re.sub(r'Guardrail\s*\(', '{', cleaned_result)
-            cleaned_result = re.sub(r'TieringStrategy\s*\(', '{', cleaned_result)
-            
-            # Convert Python keyword arguments to JSON format
-            # Match pattern: word= followed by value (handles nested structures)
-            def convert_kwarg_to_json(match):
-                key = match.group(1)
-                return f'"{key}":'
-            
-            cleaned_result = re.sub(r'(\w+)\s*=\s*', convert_kwarg_to_json, cleaned_result)
-            
-            # Replace Python single quotes with JSON double quotes
-            # But be careful with quotes inside strings
-            cleaned_result = cleaned_result.replace("'", '"')
-            
-            # Fix Python booleans
-            cleaned_result = cleaned_result.replace('True', 'true').replace('False', 'false')
-            cleaned_result = cleaned_result.replace('None', 'null')
-            
-            # Fix closing parentheses that should be braces
-            # Count and replace closing parens that match our opening braces
-            cleaned_result = re.sub(r'\)\s*,', '},', cleaned_result)
-            cleaned_result = re.sub(r'\)\s*\]', '}]', cleaned_result)
-            cleaned_result = re.sub(r'\)(\s*)$', r'}\1', cleaned_result)
-            
-            # Wrap in outer braces if not present
-            cleaned_result = cleaned_result.strip()
-            if not cleaned_result.startswith('{'):
-                cleaned_result = '{' + cleaned_result
-            if not cleaned_result.endswith('}'):
-                cleaned_result = cleaned_result + '}'
-            
-            # 4c. Parse and validate
-            data_dict = json.loads(cleaned_result)
-            final_data = GuardrailAnalysis.model_validate(data_dict)
+            # Fallback parsing
+            raw_output = str(result)
+            parsed_dict = safe_parse_llm_output(raw_output)
+            final_data = GuardrailAnalysis.model_validate(parsed_dict)
             
             return {"result": final_data.model_dump_json(indent=2)}
-        
-        except json.JSONDecodeError as json_err:
-            print(f"JSON Decode Error: {json_err}")
-            print(f"Cleaned result preview: {cleaned_result[:500]}")
+            
+        except Exception as e:
+            print(f"Analysis Error: {e}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to parse LLM output as JSON. Error at position {json_err.pos}: {json_err.msg}. "
-                       f"Cleaned output preview: {cleaned_result[:200]}"
-            )
-        except Exception as pydantic_error:
-            print(f"Pydantic Validation Error: {pydantic_error}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"CrewAI output failed Pydantic validation. "
-                       f"Error: {str(pydantic_error)}. "
-                       f"Raw output snippet: {raw_output[:200]}"
+                detail=f"Failed to process LLM output: {str(e)}"
             )
 
     # 9. IMPROVED GENERAL ERROR HANDLING (Correctly scoped)
