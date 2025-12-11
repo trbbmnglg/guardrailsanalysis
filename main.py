@@ -430,7 +430,13 @@ CRITICAL VALIDATION RULES:
 4. Remove exact duplicates (same name + category)
 5. Ensure 3-5 triggers per guardrail
 6. Validate severity levels are appropriate
-7. **ABSOLUTELY ENSURE** the 'enforcement' action for every single guardrail is chosen from this **EXACT, LIMITED LIST ONLY**: {enforcement_list_str}
+7. ABSOLUTELY ENSURE the 'enforcement' action for every single guardrail is chosen from this EXACT, LIMITED LIST ONLY: {enforcement_list_str}
+
+MANDATORY SYNONYM MAPPING RULE FOR 'enforcement':
+If any preceding agent used an unauthorized word like 'Prohibit', 'Remove', 'Decline', 'Halt', or 'Stop', you MUST replace it with the closest authorized synonym from the list above:
+'Prohibit' MUST be converted to 'Block' or 'Reject'
+'Remove' MUST be converted to 'Redact' or 'Sanitize'
+'Decline' MUST be converted to 'Refuse' or 'Reject'
 
 OUTPUT ONLY VALID JSON matching the GuardrailAnalysis schema.
 NO markdown formatting, NO ```json blocks, just pure JSON.""",
