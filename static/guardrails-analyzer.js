@@ -674,8 +674,16 @@
         // 5. Initial Render - Default to Active
         resetFilters();
 
+        // ADD DEBUG HERE:
+        console.log('🚀 About to call latency profiler...');
+        console.log('Profiler exists?', !!window.latencyProfiler);
+        console.log('Guardrails count:', analysisResults.guardrails.length);
+
         if (window.latencyProfiler) {
+            console.log('✅ Calling latency profiler...');
             window.latencyProfiler.analyze(analysisResults.guardrails);
+        } else{
+            console.error('❌ Latency profiler not found!');
         }
 
         resultsSection.classList.remove('hidden');
