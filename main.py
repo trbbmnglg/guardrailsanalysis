@@ -452,7 +452,20 @@ REQUIREMENTS:
 
 {tiering_note}
 
-OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
+CRITICAL OUTPUT RULE: 
+Output ONLY raw JSON. Do NOT use Python syntax like Guardrail() or keyword=value.
+Use JSON format: {{"key": "value"}}
+Example of CORRECT output:
+{{
+  "guardrails": [
+    {{
+      "name": "Prompt Injection Resilience",
+      "category": "Security",
+      "severity": "High",
+      ...
+    }}
+  ]
+}}
 
 """,
             agent=report_agent,
@@ -498,64 +511,75 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
         try:
             cleaned_result = raw_output_single_line
             
-            # 4a. Remove markdown blocks, Python outer braces/quotes
-            cleaned_result = re.sub(r"```json|```|^\w+:\s*", "", cleaned_result, flags=re.IGNORECASE).strip()
+            # 4a. Remove markdown blocks
+            cleaned_result = re.sub(r"```json|```", "", cleaned_result, flags=re.IGNORECASE).strip()
             
-            # CRITICAL FIX: Replace Python single quotes with JSON double quotes
-            # And replace Python notation with JSON structure notation
-            cleaned_result = cleaned_result.replace('\'', '"') 
-            cleaned_result = cleaned_result.replace('True', 'true').replace('False', 'false') # Fix Python bools
+            # 4b. CRITICAL FIX: Convert Python object notation to JSON
+            # First, handle the outermost wrapper if it exists
+            cleaned_result = re.sub(r'^GuardrailAnalysis\s*\(', '', cleaned_result)
+            cleaned_result = re.sub(r'\)$', '', cleaned_result)
             
-            # Remove all Python class assignments and function calls, converting them to simple braces.
-            cleaned_result = cleaned_result.replace('Guardrail(', '{').replace(')', '}')
-            cleaned_result = cleaned_result.replace('TieringStrategy(', '{')
+            # Replace Python class constructors with JSON objects
+            cleaned_result = re.sub(r'Guardrail\s*\(', '{', cleaned_result)
+            cleaned_result = re.sub(r'TieringStrategy\s*\(', '{', cleaned_result)
             
-            # Remove leading assignment keys (e.g., 'guardrails=')
-            cleaned_result = re.sub(r'\w+\s*=\s*', '', cleaned_result, flags=re.IGNORECASE)
+            # Convert Python keyword arguments to JSON format
+            # Match pattern: word= followed by value (handles nested structures)
+            def convert_kwarg_to_json(match):
+                key = match.group(1)
+                return f'"{key}":'
             
-            # Remove any trailing Python list brackets
-            cleaned_result = cleaned_result.strip('[]').strip()
+            cleaned_result = re.sub(r'(\w+)\s*=\s*', convert_kwarg_to_json, cleaned_result)
             
-            # The LLM is inserting {{ which breaks the parser; we aggressively strip outer {{ and }}
-            cleaned_result = cleaned_result.strip('{}').strip()
+            # Replace Python single quotes with JSON double quotes
+            # But be careful with quotes inside strings
+            cleaned_result = cleaned_result.replace("'", '"')
             
-            # 4b. Manually reconstruct the outer object from the cleaned content, 
-            # assuming it is a comma-separated list of key-value pairs at this point.
+            # Fix Python booleans
+            cleaned_result = cleaned_result.replace('True', 'true').replace('False', 'false')
+            cleaned_result = cleaned_result.replace('None', 'null')
             
-            # Note: This step is the most fragile. We must assume the LLM outputted
-            # a string that *looks* like the content of the GuardrailAnalysis object.
+            # Fix closing parentheses that should be braces
+            # Count and replace closing parens that match our opening braces
+            cleaned_result = re.sub(r'\)\s*,', '},', cleaned_result)
+            cleaned_result = re.sub(r'\)\s*\]', '}]', cleaned_result)
+            cleaned_result = re.sub(r'\)(\s*)$', r'}\1', cleaned_result)
             
-            # Re-wrap the entire cleaned content into the outermost object.
-            final_json_string = f"{{{cleaned_result}}}"
-
-            # 4c. Use the standard JSON library for initial loading, then Pydantic validation
+            # Wrap in outer braces if not present
+            cleaned_result = cleaned_result.strip()
+            if not cleaned_result.startswith('{'):
+                cleaned_result = '{' + cleaned_result
+            if not cleaned_result.endswith('}'):
+                cleaned_result = cleaned_result + '}'
             
-            # Use json.loads to ensure basic parsing works and handle any final artifacts
-            data_dict = json.loads(final_json_string) 
-            
-            # Now, validate the fully loaded Python dictionary with Pydantic
+            # 4c. Parse and validate
+            data_dict = json.loads(cleaned_result)
             final_data = GuardrailAnalysis.model_validate(data_dict)
             
-            # If successful, return the valid JSON string
             return {"result": final_data.model_dump_json(indent=2)}
-
-        except Exception as pydantic_error:
-            # If the manual re-parsing fails, return a clear 500
-            print(f"Pydantic Re-Validation Error: {pydantic_error}")
-            
-            # Use the raw output in the error message for better debugging
+        
+        except json.JSONDecodeError as json_err:
+            print(f"JSON Decode Error: {json_err}")
+            print(f"Cleaned result preview: {cleaned_result[:500]}")
             raise HTTPException(
-                status_code=500, 
-                detail=f"CrewAI output failed Pydantic re-validation (post-cleanup). "
-                       f"Validation Error: {str(pydantic_error)}. "
-                       f"Raw Output Snippet: {raw_output[:200]}"
+                status_code=500,
+                detail=f"Failed to parse LLM output as JSON. Error at position {json_err.pos}: {json_err.msg}. "
+                       f"Cleaned output preview: {cleaned_result[:200]}"
+            )
+        except Exception as pydantic_error:
+            print(f"Pydantic Validation Error: {pydantic_error}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"CrewAI output failed Pydantic validation. "
+                       f"Error: {str(pydantic_error)}. "
+                       f"Raw output snippet: {raw_output[:200]}"
             )
 
-    # 9. IMPROVED GENERAL ERROR HANDLING (Correctly scoped)
-    except Exception as e:
-        # Log the full traceback if needed, but return a clean error message
-        print(f"Analysis Error: {e}")
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred during crew execution: {str(e)}")
+# 9. IMPROVED GENERAL ERROR HANDLING (Correctly scoped)
+except Exception as e:
+    # Log the full traceback if needed, but return a clean error message
+    print(f"Analysis Error: {e}")
+    raise HTTPException(status_code=500, detail=f"An unexpected error occurred during crew execution: {str(e)}")
 
 # Mount static files and index.html (remain the same)
 app.mount("/static", StaticFiles(directory="static"), name="static")
