@@ -44,16 +44,16 @@ class Guardrail(BaseModel):
         description="Computational complexity tier (1=regex, 2=classifier, 3=LLM, 4=reasoning)"
     )
     description: str = Field(
-        description="Detailed description of what this guardrail does (minimum 15 characters)"
+        description="Detailed description of what this guardrail does (minimum 15 characters). No special characters."
     )
     mechanism: str = Field(
-        description="Technical implementation suggestion with specific examples (min. 15 characters)"
+        description="Technical implementation suggestion with specific examples (min. 15 characters). No special characters."
     )
     triggers: List[str] = Field(
         description="List of 1-3 specific patterns, words, or conditions that trigger this guardrail"
     )
     enforcement: ALLOWED_ENFORCEMENT_ACTIONS = Field(
-        description="Recommended action when triggered"
+        description="Recommended action when triggered. Maximum 4-6 words. No special characters."
     )
     location: str = Field(
         default="", 
@@ -74,7 +74,7 @@ class GuardrailAnalysis(BaseModel):
         description="List of ALL guardrails - both present and missing"
     )
     recommendations: List[str] = Field(
-        description="1-2 high-level strategic recommendations"
+        description="1-3 high-level strategic recommendations"
     )
     tiering_strategy: Optional[TieringStrategy] = Field(
         default=None, 
@@ -481,41 +481,65 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
         
         # --- FAILURE RECOVERY PATH ---
         
-        # Step 1: Convert result to a string. 
+        result = crew.kickoff()
+
+        # 8. THE FINAL ROBUST RESULT HANDLING BLOCK
+        
+        # --- SUCCESS PATH ---
+        if isinstance(result, GuardrailAnalysis):
+            # Result is a validated Pydantic object (BEST CASE)
+            return {"result": result.model_dump_json(indent=2)}
+        
+        # --- FAILURE RECOVERY PATH (Hardened against Python object strings) ---
+        
+        # Step 1: Convert result to a string safely.
         raw_output = str(result)
         
         # Step 2: Check if the string is empty or 'None'
         if not raw_output.strip() or raw_output == 'None':
              raise HTTPException(
-                 status_code=500,
-                 detail="CrewAI LLM output was empty or None. This indicates a failure in the underlying LLM call or API connection."
-             )
+                status_code=500,
+                detail="CrewAI LLM output was empty or None. This indicates a failure in the underlying LLM call or API connection."
+            )
             
-        # Step 3: Attempt manual cleanup and Pydantic re-validation
+        # Step 3: Attempt aggressive cleanup and JSON loading
         try:
-            # 3a. Clean up the raw string: Remove markdown blocks and surrounding whitespace
-            cleaned_result = re.sub(r"```json|```", "", raw_output, flags=re.IGNORECASE).strip()
+            cleaned_result = raw_output
             
-            # 3b. NEW FIX: Aggressively remove any leading human-readable label that precedes the JSON object.
-            # This targets the common LLM failure of adding "Output:", "JSON:", or "Guardrails:" before {
-            # This regex looks for any word characters followed by a colon and whitespace before the JSON starts.
-            cleaned_result = re.sub(r'^\w+:\s*', '', cleaned_result, flags=re.IGNORECASE).strip()
+            cleaned_result = re.sub(r"```json|```|^\w+:\s*", "", cleaned_result, flags=re.IGNORECASE).strip()
             
-            # 3c. Manually parse and validate the cleaned string using Pydantic
-            final_data = GuardrailAnalysis.model_validate_json(cleaned_result)
+            cleaned_result = re.sub(r"^guardrails=", "", cleaned_result).strip()
+            
+            cleaned_result = cleaned_result.replace("Guardrail(", "").replace("TieringStrategy(", "")
+            cleaned_result = cleaned_result.strip('[]') # Strip outer list brackets if present
+
+            match = re.search(r'\{.*\}', cleaned_result, re.DOTALL)
+            if match:
+                json_content = match.group(0)
+            else:
+                
+                # Let's revert to a simpler, safer method:
+                raise ValueError("LLM returned non-JSON Python object string. Automatic repair failed.")
+
+            final_cleaned = cleaned_result.replace("Guardrail(", "{").replace(")", "}").replace("[", "").replace("]", "").replace("'", "\"")
+            
+            repaired_json = cleaned_result.replace("Guardrail(", "").replace("TieringStrategy(", "").replace('\'', '"')
+
+            final_data = GuardrailAnalysis.model_validate_json(repaired_json)
             
             # If successful, return the valid JSON string
             return {"result": final_data.model_dump_json(indent=2)}
 
-        except Exception as pydantic_error:
+            except Exception as pydantic_error:
             # If the manual re-parsing fails, return a clear 500
-            print(f"Pydantic Re-Validation Error: {pydantic_error}")
+            print(f"Pydantic Re-Validation Error (Final Attempt Failed): {pydantic_error}")
             
             raise HTTPException(
                 status_code=500, 
-                detail=f"CrewAI output was generated but failed Pydantic re-validation. "
+                detail=f"CrewAI output failed to be parsed as JSON even after aggressive cleanup. "
+                       f"The LLM returned a Python object string instead of pure JSON. "
                        f"Validation Error: {str(pydantic_error)}. "
-                       f"Raw Output Snippet: {raw_output[:200]}" # Show the start of the failing output
+                       f"Raw Output Snippet: {raw_output[:200]}"
             )
 
     # 9. IMPROVED GENERAL ERROR HANDLING (No change)
