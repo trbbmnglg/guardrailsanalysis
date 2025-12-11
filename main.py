@@ -293,11 +293,11 @@ OUTPUT REQUIREMENTS:
 2. For PRESENT controls: Name them clearly, extract 5 words quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Security"
-5. List 1-2 specific triggers per control
+5. List 1-5 specific triggers per control
 6. Set appropriate severity
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-8. CRITICAL OUTPUT FORMATTING RULES:
-   - Remove any special characters from response except for period (.).
+8. CRITICAL: OUTPUT FORMATTING RULES:
+   - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
    - Remove any emojis.
    - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
@@ -317,11 +317,11 @@ OUTPUT REQUIREMENTS:
 2. For PRESENT controls: Extract 5 words quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Privacy"
-5. List 1-3 PII types as triggers
+5. List 1-5 PII types as triggers
 6. Set severity (Critical for PII leakage risks)
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-8. CRITICAL OUTPUT FORMATTING RULES:
-   - Remove any special characters from response except for period (.).
+8. CRITICAL: OUTPUT FORMATTING RULES:
+   - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
    - Remove any emojis.
    - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
@@ -341,11 +341,11 @@ OUTPUT REQUIREMENTS:
 2. For PRESENT controls: Extract 5 words quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Responsible AI"
-5. List 1-3 harmful content types as triggers
+5. List 1-5 harmful content types as triggers
 6. Set appropriate severity
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-8. CRITICAL OUTPUT FORMATTING RULES:
-   - Remove any special characters from response except for period (.).
+8. CRITICAL: OUTPUT FORMATTING RULES:
+   - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
    - Remove any emojis.
    - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
@@ -365,11 +365,11 @@ OUTPUT REQUIREMENTS:
 2. For PRESENT controls: Extract 5 words quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. Use correct categories: "Input Validation", "Output Control", "QA", "Scope Control"
-5. List 1-3 validation examples as triggers
+5. List 1-5 validation examples as triggers
 6. Set appropriate severity
 7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-8. CRITICAL OUTPUT FORMATTING RULES:
-   - Remove any special characters from response except for period (.).
+8. CRITICAL: OUTPUT FORMATTING RULES:
+   - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
    - Remove any emojis.
    - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
@@ -440,13 +440,13 @@ REQUIREMENTS:
 1. Combine findings from all agents (Security, Privacy, RAI, QA, Compute)
 2. Remove duplicate guardrails (keep the one with the best location quote)
 3. Validate all categories match allowed values exactly
-4. Ensure PRESENT items have location quotes (5 words)
+4. Ensure PRESENT items have location quotes (max 5 words)
 5. Ensure MISSING items have empty location field
 6. Validate severity levels are appropriate
 7. Generate 3-5 strategic recommendations
 8. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-9. CRITICAL OUTPUT FORMATTING RULES:
-   - Remove any special characters from response except for period (.).
+9. CRITICAL: OUTPUT FORMATTING RULES:
+   - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
    - Remove any emojis.
    - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
 
@@ -490,29 +490,47 @@ SCHEMA:
         
         result = crew.kickoff()
 
+        # --- SUCCESS PATH ---
         if isinstance(result, GuardrailAnalysis):
-            # 1. SUCCESS PATH: Result is a validated Pydantic object
+            # Result is a validated Pydantic object (BEST CASE)
             return {"result": result.model_dump_json(indent=2)}
-        else:
-            # 2. FAILURE PATH: Result is a raw string, attempt to clean and parse it
-            try:
-                # Clean up the raw string result (e.g., remove markdown code blocks)
-                # This is a common failure point for LLMs returning JSON
-                cleaned_result = re.sub(r"```json|```", "", result, flags=re.IGNORECASE).strip()
-                
-                # Use Pydantic's parse_raw for explicit validation after cleaning
-                final_data = GuardrailAnalysis.model_validate_json(cleaned_result)
-                return {"result": final_data.model_dump_json(indent=2)}
-    
-            except Exception as pydantic_error:
-                # If the cleaning and re-parsing fails, return a clear 500
-                print(f"Pydantic Re-Validation Error: {pydantic_error}")
-                raise HTTPException(
-                    status_code=500, 
-                    detail=f"CrewAI output was generated but failed Pydantic validation. Raw output may contain formatting errors: {str(pydantic_error)}"
-                )
+        
+        # --- FAILURE RECOVERY PATH (This is where the prior error occurred) ---
+        
+        # Step 1: Convert result to a string. This is crucial if it's None or an unexpected object.
+        raw_output = str(result)
+        
+        # Step 2: Check if the string is empty (meaning the LLM likely returned None or '')
+        if not raw_output.strip() or raw_output == 'None':
+             raise HTTPException(
+                status_code=500,
+                detail="CrewAI LLM output was empty or None. This indicates a failure in the underlying LLM call or API connection."
+            )
+            
+        # Step 3: Attempt manual cleanup and Pydantic re-validation
+        try:
+            # Clean up the raw string (remove markdown code blocks and strip whitespace)
+            cleaned_result = re.sub(r"```json|```", "", raw_output, flags=re.IGNORECASE).strip()
+            
+            # Manually parse and validate the cleaned string using Pydantic
+            final_data = GuardrailAnalysis.model_validate_json(cleaned_result)
+            
+            # If successful, return the valid JSON string
+            return {"result": final_data.model_dump_json(indent=2)}
 
-    # 9. IMPROVED ERROR HANDLING
+        except Exception as pydantic_error:
+            # If the manual re-parsing fails, return a clear 500
+            print(f"Pydantic Re-Validation Error: {pydantic_error}")
+            
+            # Use the raw output in the error message for better debugging
+            raise HTTPException(
+                status_code=500, 
+                detail=f"CrewAI output was generated but failed Pydantic re-validation. "
+                       f"Validation Error: {str(pydantic_error)}. "
+                       f"Raw Output Snippet: {raw_output[:200]}" # Show the start of the failing output
+            )
+
+    # 9. IMPROVED GENERAL ERROR HANDLING (No change)
     except Exception as e:
         # Log the full traceback if needed, but return a clean error message
         print(f"Analysis Error: {e}")
