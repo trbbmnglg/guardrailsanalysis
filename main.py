@@ -8,6 +8,8 @@ from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
+from crewai import LLM
+from langchain_core.output_parsers import PydanticOutputParser
 
 app = FastAPI()
 
@@ -108,11 +110,13 @@ async def run_analysis(request: AnalysisRequest):
 
         llm = ChatOpenAI(
             #model="openai/meta-llama/Llama-3.3-70B-Instruct",
-            model="Qwen/Qwen2.5-Coder-32B-Instruct:scaleway",
+            model="openai/Qwen2.5-Coder-32B-Instruct",
             base_url="https://router.huggingface.co/v1",
             api_key=request.api_key,
             temperature=0.1,
             max_tokens=5000
+            timeout=300,
+            max_retries=2,
         )
 
         # 2. DEFINE AGENTS WITH STRICT CATEGORIZATION INSTRUCTIONS
@@ -463,7 +467,7 @@ SCHEMA:
 }}""",
             agent=report_agent,
             context=report_context,
-            expected_output="Valid JSON report with categorized guardrails",
+            expected_output="Valid JSON report with categorized guardrails. No explanations, no markdown.",
             output_pydantic=GuardrailAnalysis if not request.enable_profiling else None
         )
         
@@ -479,6 +483,14 @@ SCHEMA:
         )
 
         result = crew.kickoff()
+
+        # This will now be a validated Pydantic object
+        if hasattr(result, 'pydantic') and result.pydantic:
+            final_result = result.pydantic
+            return {"result": final_result.model_dump_json(indent=2)}
+        else:
+            # Fallback only if something went horribly wrong
+            raise HTTPException(status_code=500, detail="Failed to generate structured output")
         
         # 8. CLEAN AND VALIDATE OUTPUT
         if hasattr(result, 'pydantic') and result.pydantic:
