@@ -532,10 +532,10 @@ Example structure:
             process=Process.sequential
         )
         
-def safe_parse_llm_output(raw_output: str) -> dict:
-    import json
-    import re
-    
+    def safe_parse_llm_output(raw_output: str) -> dict:
+        import json
+        import re
+        
     # Strategy 1: Direct JSON parse
     try:
         return json.loads(raw_output)
@@ -569,27 +569,26 @@ def safe_parse_llm_output(raw_output: str) -> dict:
         pass
     
     raise ValueError("Could not parse LLM output as JSON using any strategy")
-
-# Use in your endpoint:
-try:
-    result = crew.kickoff()
-    
-    if isinstance(result, GuardrailAnalysis):
-        return {"result": result.model_dump_json(indent=2)}
-    
-    # Fallback parsing
-    raw_output = str(result)
-    parsed_dict = safe_parse_llm_output(raw_output)
-    final_data = GuardrailAnalysis.model_validate(parsed_dict)
-    
-    return {"result": final_data.model_dump_json(indent=2)}
+    # Use in your endpoint:
+    try:
+        result = crew.kickoff()
         
-except Exception as e:
-    print(f"Analysis Error: {e}")
-    raise HTTPException(
-        status_code=500,
-        detail=f"Failed to process LLM output: {str(e)}"
-    )
+        if isinstance(result, GuardrailAnalysis):
+            return {"result": result.model_dump_json(indent=2)}
+        
+        # Fallback parsing
+        raw_output = str(result)
+        parsed_dict = safe_parse_llm_output(raw_output)
+        final_data = GuardrailAnalysis.model_validate(parsed_dict)
+        
+        return {"result": final_data.model_dump_json(indent=2)}
+            
+    except Exception as e:
+        print(f"Analysis Error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to process LLM output: {str(e)}"
+        )
 
 # 9. IMPROVED GENERAL ERROR HANDLING (Correctly scoped)
 except Exception as e:
