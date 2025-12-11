@@ -13,6 +13,12 @@ from langchain_core.output_parsers import PydanticOutputParser
 
 app = FastAPI()
 
+ALLOWED_ENFORCEMENT_ACTIONS = Literal[
+    "Sanitize", "Maintain", "Block", "Mask", "Log", "Human Review", "Filter", 
+    "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", 
+    "Identify", "Enforce", "Limit"
+]
+
 # --- PYDANTIC MODELS FOR STRUCTURED OUTPUT ---
 class Guardrail(BaseModel):
     """Structured model for a single guardrail - either present or missing"""
@@ -44,7 +50,7 @@ class Guardrail(BaseModel):
     triggers: List[str] = Field(
         description="List of 3-5 specific patterns, words, or conditions that trigger this guardrail"
     )
-    enforcement: Literal["Sanitize","Maintain","Block", "Mask", "Log", "Human Review", "Filter", "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", "Identify", "Enforce", "Limit"] = Field(
+    enforcement: ALLOWED_ENFORCEMENT_ACTIONS = Field(
         description="Recommended action when triggered"
     )
     location: str = Field(
@@ -422,7 +428,7 @@ CRITICAL VALIDATION RULES:
 4. Remove exact duplicates (same name + category)
 5. Ensure 3-5 triggers per guardrail
 6. Validate severity levels are appropriate
-7. CORRECTLY IDENTIFY the right enforcement from this list only (Sanitize, Maintain, Block, Mask, Log, Human Review, Filter, Reject, Refuse, Redact, Implement, Validate, Detect, Identify, Enforce, Limit)
+7. **ABSOLUTELY ENSURE** the 'enforcement' action for every single guardrail is chosen from this **EXACT, LIMITED LIST ONLY**: {enforcement_list_str}
 
 OUTPUT ONLY VALID JSON matching the GuardrailAnalysis schema.
 NO markdown formatting, NO ```json blocks, just pure JSON.""",
@@ -445,7 +451,7 @@ REQUIREMENTS:
 4. Ensure PRESENT items have location quotes (10+ words)
 5. Ensure MISSING items have empty location field
 6. Generate 3-5 strategic recommendations
-7. Strictly identify correct enforcement
+7. The 'enforcement' field MUST be selected from the list: {enforcement_list_str}
 {tiering_note}
 
 OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
