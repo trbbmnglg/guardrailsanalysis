@@ -122,10 +122,25 @@
     const formatNum = (num) => new Intl.NumberFormat('en-US').format(num);
 
     function renderReport(guardrails) {
+      
+        console.log('🔍 Latency Profiler: renderReport called');
+        console.log('📊 Guardrails received:', guardrails.length);
+  
         const container = document.getElementById('latencyReportSection');
-        if (!container) return;
+        if (!container) {
+            console.error('❌ latencyReportSection container not found!');
+            return;
+        }
 
+        console.log('✅ Container found, analyzing...');
         const data = analyzeProfile(guardrails);
+
+        console.log('📈 Analysis complete:', {
+          tierLevel: data.tierLevel,
+          totalLatency: data.totalLatency,
+          breakdownCount: data.breakdown.length,
+          tipsCount: data.tips.length
+        });
         const isTier4 = data.tierLevel === 4;
         const isTier3 = data.tierLevel === 3;
         
@@ -243,6 +258,8 @@
 
         container.innerHTML = html;
         container.classList.remove('hidden');
+        console.log('✅ Profiler rendered successfully!');
+
         
         // Calculator Logic
         const slider = document.getElementById('volumeSlider');
