@@ -479,12 +479,12 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
         if isinstance(result, GuardrailAnalysis):
             return {"result": result.model_dump_json(indent=2)}
         
-        # --- FAILURE RECOVERY PATH (Hardened against Python object strings, Newlines, and Quotes) ---
+        # --- FAILURE RECOVERY PATH (Definitive Fix for Python/JSON Mix) ---
         
         # Step 1: Convert result to a string safely.
         raw_output = str(result)
         
-        # Step 2: Aggressively clean up whitespace and formatting.
+        # Step 2: Aggressively clean up whitespace (newlines/tabs)
         raw_output_single_line = re.sub(r'[\r\n\t]', ' ', raw_output)
 
         # Step 3: Check for empty output
@@ -494,32 +494,47 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
                 detail="CrewAI LLM output was empty or None after cleanup. LLM or API error suspected."
             )
             
-        # Step 4: Attempt aggressive cleanup and JSON loading
+        # Step 4: AGGRESSIVE CLEANUP AND RECONSTRUCTION
         try:
             cleaned_result = raw_output_single_line
             
-            # 4a. Remove markdown blocks and simple leading keys (e.g., "Output: {")
+            # 4a. Remove markdown blocks, Python outer braces/quotes
             cleaned_result = re.sub(r"```json|```|^\w+:\s*", "", cleaned_result, flags=re.IGNORECASE).strip()
             
-            # 4b. AGGRESSIVE FIX: Transform Python object notation to JSON
-            # This MUST be done first: Replace Python single quotes with JSON double quotes.
+            # CRITICAL FIX: Replace Python single quotes with JSON double quotes
+            # And replace Python notation with JSON structure notation
             cleaned_result = cleaned_result.replace('\'', '"') 
+            cleaned_result = cleaned_result.replace('True', 'true').replace('False', 'false') # Fix Python bools
             
-            # Replace Python class names with JSON start brace, and Python end parentheses with JSON end brace.
+            # Remove all Python class assignments and function calls, converting them to simple braces.
             cleaned_result = cleaned_result.replace('Guardrail(', '{').replace(')', '}')
             cleaned_result = cleaned_result.replace('TieringStrategy(', '{')
             
-            # Remove redundant assignments like 'guardrails=' (Now likely 'guardrails=')
-            cleaned_result = re.sub(r'guardrails\s*=\s*', '', cleaned_result, flags=re.IGNORECASE)
+            # Remove leading assignment keys (e.g., 'guardrails=')
+            cleaned_result = re.sub(r'\w+\s*=\s*', '', cleaned_result, flags=re.IGNORECASE)
             
-            # Remove list markers if the LLM outputted: [...{...}, ...]
-            cleaned_result = cleaned_result.strip('[]')
+            # Remove any trailing Python list brackets
+            cleaned_result = cleaned_result.strip('[]').strip()
             
-            # Re-wrap the final result in the expected outermost dictionary structure
+            # The LLM is inserting {{ which breaks the parser; we aggressively strip outer {{ and }}
+            cleaned_result = cleaned_result.strip('{}').strip()
+            
+            # 4b. Manually reconstruct the outer object from the cleaned content, 
+            # assuming it is a comma-separated list of key-value pairs at this point.
+            
+            # Note: This step is the most fragile. We must assume the LLM outputted
+            # a string that *looks* like the content of the GuardrailAnalysis object.
+            
+            # Re-wrap the entire cleaned content into the outermost object.
             final_json_string = f"{{{cleaned_result}}}"
+
+            # 4c. Use the standard JSON library for initial loading, then Pydantic validation
             
-            # 4c. Manually parse and validate the final JSON string using Pydantic
-            final_data = GuardrailAnalysis.model_validate_json(final_json_string)
+            # Use json.loads to ensure basic parsing works and handle any final artifacts
+            data_dict = json.loads(final_json_string) 
+            
+            # Now, validate the fully loaded Python dictionary with Pydantic
+            final_data = GuardrailAnalysis.model_validate(data_dict)
             
             # If successful, return the valid JSON string
             return {"result": final_data.model_dump_json(indent=2)}
@@ -536,11 +551,10 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
                        f"Raw Output Snippet: {raw_output[:200]}"
             )
 
-    # 9. IMPROVED GENERAL ERROR HANDLING (FIX 2: Correctly scoped)
+    # 9. IMPROVED GENERAL ERROR HANDLING (Correctly scoped)
     except Exception as e:
         # Log the full traceback if needed, but return a clean error message
         print(f"Analysis Error: {e}")
-        # FIX 2: Indent the raise statement into the except block
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred during crew execution: {str(e)}")
 
 # Mount static files and index.html (remain the same)
