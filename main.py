@@ -19,6 +19,8 @@ ALLOWED_ENFORCEMENT_ACTIONS = Literal[
     "Identify", "Enforce", "Limit", "Remove", "Test"
 ]
 
+global enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
+
 # --- PYDANTIC MODELS FOR STRUCTURED OUTPUT ---
 class Guardrail(BaseModel):
     """Structured model for a single guardrail - either present or missing"""
@@ -48,7 +50,7 @@ class Guardrail(BaseModel):
         description="Technical implementation suggestion with specific examples (min. 15 characters)"
     )
     triggers: List[str] = Field(
-        description="List of 3-5 specific patterns, words, or conditions that trigger this guardrail"
+        description="List of 1-3 specific patterns, words, or conditions that trigger this guardrail"
     )
     enforcement: ALLOWED_ENFORCEMENT_ACTIONS = Field(
         description="Recommended action when triggered"
@@ -72,7 +74,7 @@ class GuardrailAnalysis(BaseModel):
         description="List of ALL guardrails - both present and missing"
     )
     recommendations: List[str] = Field(
-        description="1-3 high-level strategic recommendations"
+        description="1-2 high-level strategic recommendations"
     )
     tiering_strategy: Optional[TieringStrategy] = Field(
         default=None, 
@@ -102,51 +104,10 @@ NAMING RULES FOR MISSING GUARDRAILS:
 - Example: "MISSING: PII Redaction for Email Addresses"
 
 LOCATION FIELD RULES:
-- If guardrail EXISTS: Provide 8+ word exact quote from instruction
+- If guardrail EXISTS: Provide 5 words exact quote from instruction
 - If guardrail is MISSING: Set location to empty string ""
 - Never use placeholder text like "Not specified" or "N/A"
 """
-
-def cleanse_guardrails_for_pydantic(raw_output: str) -> dict:
-    """
-    Cleans the raw LLM output by performing strict synonym replacement 
-    on the 'enforcement' field to meet Pydantic's Literal requirements.
-    """
-    try:
-        # 1. Attempt to load the JSON
-        # Clean up common markdown/code block wrappers first
-        cleaned_output = raw_output.strip().replace("```json", "").replace("```", "")
-        data = json.loads(cleaned_output)
-    except json.JSONDecodeError as e:
-        # Fallback to rough regex extraction if standard load fails
-        match = re.search(r'\{.*\}', raw_output, re.DOTALL)
-        if match:
-            try:
-                data = json.loads(match.group())
-            except Exception:
-                raise ValueError("Failed to extract or parse JSON from LLM output.")
-        else:
-            raise ValueError("LLM output is not valid JSON and cannot be extracted.")
-
-    # 2. Iterate and replace non-compliant enforcement actions
-    if "guardrails" in data and isinstance(data["guardrails"], list):
-        for guardrail in data["guardrails"]:
-            current_enforcement = guardrail.get("enforcement", "")
-            
-            # Use .get() and strip/title case for robust matching
-            if current_enforcement:
-                # Convert to Title case for dictionary lookup (e.g., 'restrict' -> 'Restrict')
-                key = current_enforcement.strip().title() 
-                
-                if key in ENFORCEMENT_SYNONYM_MAP:
-                    new_action = ENFORCEMENT_SYNONYM_MAP[key]
-                    guardrail["enforcement"] = new_action
-                    print(f"DEBUG: Mapped '{current_enforcement}' to '{new_action}'")
-                elif key and key not in ALLOWED_ENFORCEMENT_ACTIONS.__args__:
-                    # If it's still not in the allowed list after mapping, default to a safe value
-                    print(f"WARNING: Unmapped enforcement '{current_enforcement}'. Defaulting to 'Implement'.")
-                    guardrail["enforcement"] = "Implement" # Safe fallback
-    return data
     
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
@@ -162,9 +123,6 @@ async def run_analysis(request: AnalysisRequest):
             temperature=0.0,
             max_tokens=5000,
         )
-
-        enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
-
         # 2. DEFINE AGENTS WITH STRICT CATEGORIZATION INSTRUCTIONS
 
         security_agent = Agent(
@@ -207,12 +165,12 @@ REQUIRED CHECKS (mark as PRESENT or MISSING):
 {CATEGORY_GUIDELINES}
 
 For EACH control:
-- If PRESENT: Extract 8+ word exact quote in 'location' field
+- If PRESENT: Extract 5 words exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - ALWAYS use category "Security"
-- Provide 3-5 specific trigger examples
+- Provide 1-2 specific trigger examples
 - Set severity: Critical/High for auth & injection, Medium for rate limiting
-- CRITICAL: Enforcement MUST be chosen from this EXACT list: {enforcement_list_str}""",
+- CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -243,11 +201,12 @@ REQUIRED CHECKS (mark as PRESENT or MISSING):
 {CATEGORY_GUIDELINES}
 
 For EACH control:
-- If PRESENT: Extract 8+ word exact quote in 'location' field
+- If PRESENT: Extract 5 words exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - ALWAYS use category "Privacy"
-- List 1-3 PII types as triggers (email, SSN, credit card, etc.)
-- Set severity: Critical for PII leakage, High for consent issues""",
+- List 1-2 PII types as triggers (email, SSN, credit card, etc.)
+- Set severity: Critical for PII leakage, High for consent issues
+- CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -289,11 +248,12 @@ AUDIT PROTOCOL: SAFETY & ETHICAL ALIGNMENT GUARDRAILS VALIDATION (NIST/EU AI ACT
 {CATEGORY_GUIDELINES}
 
 For EACH control:
-- If PRESENT: Extract 8+ word exact quote in 'location' field
+- If PRESENT: Extract 5 words exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - ALWAYS use category "Responsible AI"
-- List 1-3 harmful content types as triggers
-- Set severity: Critical for harmful content, High for bias""",
+- List 1-2 harmful content types as triggers
+- Set severity: Critical for harmful content, High for bias
+- CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -334,11 +294,12 @@ COMPLIANCE PROTOCOL: PROMPT-LEVEL GUARDRAILS VALIDATION
 {CATEGORY_GUIDELINES}
 
 For EACH control:
-- If PRESENT: Extract 8+ word exact quote in 'location' field
+- If PRESENT: Extract 5 words exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - Use appropriate category from: "Input Validation", "Output Control", "QA", "Scope Control"
-- Provide 1-3 specific validation examples as triggers
-- Set severity based on impact (Critical for scope violations, Medium for format checks)""",
+- Provide 1-2 specific validation examples as triggers
+- Set severity based on impact (Critical for scope violations, Medium for format checks)
+- CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}""",
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -356,8 +317,9 @@ OUTPUT REQUIREMENTS:
 2. For PRESENT controls: Name them clearly, extract 10+ word quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Security"
-5. List 3-5 specific triggers per control
-6. Set appropriate severity and enforcement action
+5. List 1-2 specific triggers per control
+6. Set appropriate severity
+7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
 Expected output: 5-10 guardrails covering OWASP Top 10 areas""",
             agent=security_agent,
@@ -372,11 +334,12 @@ INSTRUCTION TO ANALYZE:
 
 OUTPUT REQUIREMENTS:
 1. Find ALL privacy controls (present and missing)
-2. For PRESENT controls: Extract 8+ word quote for 'location'
+2. For PRESENT controls: Extract 5 words quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Privacy"
 5. List 1-3 PII types as triggers
 6. Set severity (Critical for PII leakage risks)
+7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
 Expected output: 5-8 guardrails covering GDPR/CCPA requirements""",
             agent=privacy_ops_agent,
@@ -390,11 +353,12 @@ INSTRUCTION TO ANALYZE:
 '''{request.instruction}'''
 
 OUTPUT REQUIREMENTS:
-1. Find ALL ethical controls (present and missing)
-2. For PRESENT controls: Extract 8+ word quote for 'location'
+1. Find ALL ethical and safety controls (present and missing)
+2. For PRESENT controls: Extract 5 words quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Responsible AI"
 5. List 1-3 harmful content types as triggers
+7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
 Expected output: 5-8 guardrails covering bias, toxicity, harm prevention""",
             agent=rai_agent,
@@ -409,10 +373,11 @@ INSTRUCTION TO ANALYZE:
 
 OUTPUT REQUIREMENTS:
 1. Find ALL validation/quality controls (present and missing)
-2. For PRESENT controls: Extract 10+ word quote for 'location'
+2. For PRESENT controls: Extract 5 words quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. Use correct categories: "Input Validation", "Output Control", "QA", "Scope Control"
 5. List 1-3 validation examples as triggers
+7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
 Expected output: 6-10 guardrails covering input/output validation, scope, and error handling""",
             agent=qa_agent,
@@ -465,18 +430,12 @@ Expected output: 6-10 guardrails covering input/output validation, scope, and er
 
 CRITICAL VALIDATION RULES:
 1. Check every guardrail has a valid category from the allowed list
-2. Verify PRESENT items have 8+ word location quotes
+2. Verify PRESENT items have 5 words location quotes
 3. Verify MISSING items have empty location field ""
 4. Remove exact duplicates (same name + category)
 5. Ensure 3-5 triggers per guardrail
 6. Validate severity levels are appropriate
-7. ABSOLUTELY ENSURE the 'enforcement' action for every single guardrail is chosen from this EXACT, LIMITED LIST ONLY: {enforcement_list_str}
-
-MANDATORY SYNONYM MAPPING RULE FOR 'enforcement':
-If any preceding agent used an unauthorized word like 'Prohibit', 'Remove', 'Decline', 'Halt', or 'Stop', you MUST replace it with the closest authorized synonym from {enforcement_list_str}
-'Prohibit' MUST be converted to 'Block' or 'Reject'
-'Remove' MUST be converted to 'Redact' or 'Sanitize'
-'Decline' MUST be converted to 'Refuse' or 'Reject'
+7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
 OUTPUT ONLY VALID JSON matching the GuardrailAnalysis schema.
 NO markdown formatting, NO ```json blocks, just pure JSON.""",
@@ -496,16 +455,10 @@ REQUIREMENTS:
 1. Combine findings from all agents (Security, Privacy, RAI, QA, Compute)
 2. Remove duplicate guardrails (keep the one with the best location quote)
 3. Validate all categories match allowed values exactly
-4. Ensure PRESENT items have location quotes (10+ words)
+4. Ensure PRESENT items have location quotes (5 words)
 5. Ensure MISSING items have empty location field
 6. Generate 3-5 strategic recommendations
-7. The 'enforcement' field MUST be selected from the list: {enforcement_list_str}
-
-MANDATORY SYNONYM MAPPING RULE FOR 'enforcement':
-If any preceding agent used an unauthorized word like 'Prohibit', 'Remove', 'Decline', 'Halt', or 'Stop', you MUST replace it with the closest authorized synonym from {enforcement_list_str}
-'Prohibit' MUST be converted to 'Block' or 'Reject'
-'Remove' MUST be converted to 'Redact' or 'Sanitize'
-'Decline' MUST be converted to 'Refuse' or 'Reject'
+7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
 
 {tiering_note}
 
@@ -519,7 +472,7 @@ SCHEMA:
             "category": "Security|Privacy|Responsible AI|QA|Scope Control|Input Validation|Output Control",
             "severity": "Critical|High|Medium|Low",
             "complexity_tier": 1-4,
-            "description": "detailed description (30+ chars)",
+            "description": "detailed description (maximum 30 chars)",
             "mechanism": "implementation suggestion",
             "triggers": ["trigger1", "trigger2", "trigger3"],
             "enforcement": "Sanitize| Maintain| Block| Mask| Log| Human Review| Filter| Reject| Refuse| Redact| Implement| Validate| Detect| Identify| Enforce| Limit| Remove",
@@ -547,17 +500,6 @@ SCHEMA:
         
         result = crew.kickoff()
 
-        cleaned_data = cleanse_guardrails_for_pydantic(str(result))
-    
-        try:
-            final_result = GuardrailAnalysis.model_validate(cleaned_data)
-            return {"result": final_result.model_dump_json(indent=2)}
-        except ValidationError as e:
-            # If it still fails, the error is likely structural and needs re-raising
-            print(f"DEBUG: Final Pydantic validation failed after cleansing: {e}")
-            raise HTTPException(status_code=500, detail=f"Final analysis failed due to structural validation errors: {e}")
-
-    # 9. IMPROVED ERROR HANDLING
     except Exception as e:
         print(f"Analysis Error: {e}")
         # Re-raise as HTTPException to prevent the entire server from crashing
