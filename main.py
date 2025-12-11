@@ -119,6 +119,7 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         # 2. DEFINE AGENTS WITH STRICT CATEGORIZATION INSTRUCTIONS
+
         security_agent = Agent(
             role='Senior Adversarial Security Auditor (OWASP LLM Top 10 & ISO 42001)',
             goal='Rigorously audit AI prompts for critical vulnerabilities, specifically Prompt Injection, Sensitive Information Disclosure, and Insecure Function/Tool Calling and categorize them as "Security"',
@@ -159,7 +160,7 @@ REQUIRED CHECKS (mark as PRESENT or MISSING):
 {CATEGORY_GUIDELINES}
 
 For EACH control:
-- If PRESENT: Extract 10+ word exact quote in 'location' field
+- If PRESENT: Extract 8+ word exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - ALWAYS use category "Security"
 - Provide 3-5 specific trigger examples
@@ -194,7 +195,7 @@ REQUIRED CHECKS (mark as PRESENT or MISSING):
 {CATEGORY_GUIDELINES}
 
 For EACH control:
-- If PRESENT: Extract 10+ word exact quote in 'location' field
+- If PRESENT: Extract 8+ word exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - ALWAYS use category "Privacy"
 - List 3-5 PII types as triggers (email, SSN, credit card, etc.)
@@ -240,7 +241,7 @@ AUDIT PROTOCOL: SAFETY & ETHICAL ALIGNMENT GUARDRAILS VALIDATION (NIST/EU AI ACT
 {CATEGORY_GUIDELINES}
 
 For EACH control:
-- If PRESENT: Extract 10+ word exact quote in 'location' field
+- If PRESENT: Extract 8+ word exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - ALWAYS use category "Responsible AI"
 - List 3-5 harmful content types as triggers
@@ -285,7 +286,7 @@ COMPLIANCE PROTOCOL: PROMPT-LEVEL GUARDRAILS VALIDATION
 {CATEGORY_GUIDELINES}
 
 For EACH control:
-- If PRESENT: Extract 10+ word exact quote in 'location' field
+- If PRESENT: Extract 8+ word exact quote in 'location' field
 - If MISSING: Name it "MISSING: [Control Name]", set location to ""
 - Use appropriate category from: "Input Validation", "Output Control", "QA", "Scope Control"
 - Provide 3-5 specific validation examples as triggers
@@ -323,7 +324,7 @@ INSTRUCTION TO ANALYZE:
 
 OUTPUT REQUIREMENTS:
 1. Find ALL privacy controls (present and missing)
-2. For PRESENT controls: Extract 10+ word quote for 'location'
+2. For PRESENT controls: Extract 8+ word quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Privacy"
 5. List 3-5 PII types as triggers
@@ -342,7 +343,7 @@ INSTRUCTION TO ANALYZE:
 
 OUTPUT REQUIREMENTS:
 1. Find ALL ethical controls (present and missing)
-2. For PRESENT controls: Extract 10+ word quote for 'location'
+2. For PRESENT controls: Extract 8+ word quote for 'location'
 3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
 4. ALWAYS use category "Responsible AI"
 5. List 3-5 harmful content types as triggers
