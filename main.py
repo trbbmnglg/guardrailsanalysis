@@ -454,23 +454,7 @@ REQUIREMENTS:
 
 OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
 
-SCHEMA:
-{{
-    "guardrails": [
-        {{
-            "name": "string",
-            "category": "Security|Privacy|Responsible AI|QA|Scope Control|Input Validation|Output Control",
-            "severity": "Critical|High|Medium|Low",
-            "complexity_tier": 1-4,
-            "description": "detailed description (maximum 30 chars)",
-            "mechanism": "implementation suggestion",
-            "triggers": ["trigger1", "trigger2", "trigger3"],
-            "enforcement": "Sanitize| Maintain| Block| Mask| Log| Human Review| Filter| Reject| Refuse| Redact| Implement| Validate| Detect| Identify| Enforce| Limit| Remove",
-            "location": "exact quote or empty string"
-        }}
-    ],
-    "recommendations": ["rec1", "rec2", "rec3"]
-}}""",
+""",
             agent=report_agent,
             context=report_context,
             expected_output="Valid JSON report with categorized guardrails. No explanations, no markdown.",
@@ -495,24 +479,29 @@ SCHEMA:
             # Result is a validated Pydantic object (BEST CASE)
             return {"result": result.model_dump_json(indent=2)}
         
-        # --- FAILURE RECOVERY PATH (This is where the prior error occurred) ---
+        # --- FAILURE RECOVERY PATH ---
         
-        # Step 1: Convert result to a string. This is crucial if it's None or an unexpected object.
+        # Step 1: Convert result to a string. 
         raw_output = str(result)
         
-        # Step 2: Check if the string is empty (meaning the LLM likely returned None or '')
+        # Step 2: Check if the string is empty or 'None'
         if not raw_output.strip() or raw_output == 'None':
              raise HTTPException(
-                status_code=500,
-                detail="CrewAI LLM output was empty or None. This indicates a failure in the underlying LLM call or API connection."
-            )
+                 status_code=500,
+                 detail="CrewAI LLM output was empty or None. This indicates a failure in the underlying LLM call or API connection."
+             )
             
         # Step 3: Attempt manual cleanup and Pydantic re-validation
         try:
-            # Clean up the raw string (remove markdown code blocks and strip whitespace)
+            # 3a. Clean up the raw string: Remove markdown blocks and surrounding whitespace
             cleaned_result = re.sub(r"```json|```", "", raw_output, flags=re.IGNORECASE).strip()
             
-            # Manually parse and validate the cleaned string using Pydantic
+            # 3b. NEW FIX: Aggressively remove any leading human-readable label that precedes the JSON object.
+            # This targets the common LLM failure of adding "Output:", "JSON:", or "Guardrails:" before {
+            # This regex looks for any word characters followed by a colon and whitespace before the JSON starts.
+            cleaned_result = re.sub(r'^\w+:\s*', '', cleaned_result, flags=re.IGNORECASE).strip()
+            
+            # 3c. Manually parse and validate the cleaned string using Pydantic
             final_data = GuardrailAnalysis.model_validate_json(cleaned_result)
             
             # If successful, return the valid JSON string
@@ -522,7 +511,6 @@ SCHEMA:
             # If the manual re-parsing fails, return a clear 500
             print(f"Pydantic Re-Validation Error: {pydantic_error}")
             
-            # Use the raw output in the error message for better debugging
             raise HTTPException(
                 status_code=500, 
                 detail=f"CrewAI output was generated but failed Pydantic re-validation. "
