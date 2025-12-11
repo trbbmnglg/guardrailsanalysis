@@ -491,26 +491,26 @@ SCHEMA:
         result = crew.kickoff()
 
         if isinstance(result, GuardrailAnalysis):
-        # 1. SUCCESS PATH: Result is a validated Pydantic object
-        return {"result": result.model_dump_json(indent=2)}
+            # 1. SUCCESS PATH: Result is a validated Pydantic object
+            return {"result": result.model_dump_json(indent=2)}
         else:
-        # 2. FAILURE PATH: Result is a raw string, attempt to clean and parse it
-        try:
-            # Clean up the raw string result (e.g., remove markdown code blocks)
-            # This is a common failure point for LLMs returning JSON
-            cleaned_result = re.sub(r"```json|```", "", result, flags=re.IGNORECASE).strip()
-            
-            # Use Pydantic's parse_raw for explicit validation after cleaning
-            final_data = GuardrailAnalysis.model_validate_json(cleaned_result)
-            return {"result": final_data.model_dump_json(indent=2)}
-
-        except Exception as pydantic_error:
-            # If the cleaning and re-parsing fails, return a clear 500
-            print(f"Pydantic Re-Validation Error: {pydantic_error}")
-            raise HTTPException(
-                status_code=500, 
-                detail=f"CrewAI output was generated but failed Pydantic validation. Raw output may contain formatting errors: {str(pydantic_error)}"
-            )
+            # 2. FAILURE PATH: Result is a raw string, attempt to clean and parse it
+            try:
+                # Clean up the raw string result (e.g., remove markdown code blocks)
+                # This is a common failure point for LLMs returning JSON
+                cleaned_result = re.sub(r"```json|```", "", result, flags=re.IGNORECASE).strip()
+                
+                # Use Pydantic's parse_raw for explicit validation after cleaning
+                final_data = GuardrailAnalysis.model_validate_json(cleaned_result)
+                return {"result": final_data.model_dump_json(indent=2)}
+    
+            except Exception as pydantic_error:
+                # If the cleaning and re-parsing fails, return a clear 500
+                print(f"Pydantic Re-Validation Error: {pydantic_error}")
+                raise HTTPException(
+                    status_code=500, 
+                    detail=f"CrewAI output was generated but failed Pydantic validation. Raw output may contain formatting errors: {str(pydantic_error)}"
+                )
 
     # 9. IMPROVED ERROR HANDLING
     except Exception as e:
