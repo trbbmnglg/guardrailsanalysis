@@ -530,17 +530,17 @@ OUTPUT FORMAT: Strictly raw JSON only (no markdown, no code blocks)
             # If successful, return the valid JSON string
             return {"result": final_data.model_dump_json(indent=2)}
 
-            except Exception as pydantic_error:
-            # If the manual re-parsing fails, return a clear 500
-            print(f"Pydantic Re-Validation Error (Final Attempt Failed): {pydantic_error}")
-            
-            raise HTTPException(
-                status_code=500, 
-                detail=f"CrewAI output failed to be parsed as JSON even after aggressive cleanup. "
-                       f"The LLM returned a Python object string instead of pure JSON. "
-                       f"Validation Error: {str(pydantic_error)}. "
-                       f"Raw Output Snippet: {raw_output[:200]}"
-            )
+        except Exception as pydantic_error:
+        # If the manual re-parsing fails, return a clear 500
+        print(f"Pydantic Re-Validation Error (Final Attempt Failed): {pydantic_error}")
+        
+        raise HTTPException(
+            status_code=500, 
+            detail=f"CrewAI output failed to be parsed as JSON even after aggressive cleanup. "
+                   f"The LLM returned a Python object string instead of pure JSON. "
+                   f"Validation Error: {str(pydantic_error)}. "
+                   f"Raw Output Snippet: {raw_output[:200]}"
+        )
 
     # 9. IMPROVED GENERAL ERROR HANDLING (No change)
     except Exception as e:
