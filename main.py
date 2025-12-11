@@ -532,10 +532,10 @@ Example structure:
             process=Process.sequential
         )
         
-    def safe_parse_llm_output(raw_output: str) -> dict:
-        import json
-        import re
-        
+def safe_parse_llm_output(raw_output: str) -> dict:
+    import json
+    import re
+    
     # Strategy 1: Direct JSON parse
     try:
         return json.loads(raw_output)
@@ -569,7 +569,15 @@ Example structure:
         pass
     
     raise ValueError("Could not parse LLM output as JSON using any strategy")
+    
     # Use in your endpoint:
+   crew = Crew(
+        agents=agents_list,
+        tasks=tasks_list,
+        verbose=True,
+        process=Process.sequential
+    )
+
     try:
         result = crew.kickoff()
         
