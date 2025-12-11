@@ -36,7 +36,7 @@ class Guardrail(BaseModel):
         description="Computational complexity tier (1=regex, 2=classifier, 3=LLM, 4=reasoning)"
     )
     description: str = Field(
-        description="Detailed description of what this guardrail does (minimum 30 characters)"
+        description="Detailed description of what this guardrail does (minimum 15 characters)"
     )
     mechanism: str = Field(
         description="Technical implementation suggestion with specific examples"
@@ -44,12 +44,12 @@ class Guardrail(BaseModel):
     triggers: List[str] = Field(
         description="List of 3-5 specific patterns, words, or conditions that trigger this guardrail"
     )
-    enforcement: Literal["Block", "Mask", "Log", "Human Review", "Filter"] = Field(
+    enforcement: Literal["Sanitize","Maintain","Block", "Mask", "Log", "Human Review", "Filter", "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", "Identify", "Enforce", "Limit"] = Field(
         description="Recommended action when triggered"
     )
     location: str = Field(
         default="", 
-        description="If control EXISTS: exact quote from instruction (10+ words). If MISSING: empty string."
+        description="If control EXISTS: exact quote from instruction (8+ words). If MISSING: empty string."
     )
 
 class TieringStrategy(BaseModel):
@@ -444,6 +444,8 @@ REQUIREMENTS:
 4. Ensure PRESENT items have location quotes (10+ words)
 5. Ensure MISSING items have empty location field
 6. Generate 3-5 strategic recommendations
+7. CORRECTLY IDENTIFY the right enforcement from the following and nothing else:
+    Sanitize, Maintain, Block, Mask, Log, Human Review, Filter, Reject, Refuse, Redact, Implement, Validate, Detect, Identify, Enforce, Limit.
 {tiering_note}
 
 OUTPUT FORMAT: Raw JSON only (no markdown, no code blocks)
@@ -459,7 +461,7 @@ SCHEMA:
             "description": "detailed description (30+ chars)",
             "mechanism": "implementation suggestion",
             "triggers": ["trigger1", "trigger2", "trigger3"],
-            "enforcement": "Block|Mask|Log|Human Review|Filter",
+            "enforcement": "Sanitize| Maintain| Block| Mask| Log| Human Review| Filter| Reject| Refuse| Redact| Implement| Validate| Detect| Identify| Enforce| Limit",
             "location": "exact quote or empty string"
         }}
     ],
