@@ -186,27 +186,28 @@ def safe_parse_llm_output(raw_output: str) -> dict:
     raise ValueError("Could not parse LLM output as JSON using any strategy")
 
 
+PDF_CONFIG = {
+    'path': os.getenv('OWASP_PDF_PATH', 'kb/LLMAll_en-US_FINAL.pdf'),
+    'timeout': 30,  # PDFSearchTool timeout
+    'max_pages': None  # Limit if needed
+}
+
 def create_owasp_rag_tool(api_key: str) -> Optional[object]:
-    """
-    Factory function to create OWASP compliance PDF search tool.
-    Returns None if PDF not found or tool initialization fails.
-    """
-    import os
+    """Factory using centralized config."""
     from crewai_tools import PDFSearchTool
+    from pathlib import Path
     
-    PDF_PATH = 'kb/LLMAll_en-US_FINAL.pdf'
+    pdf_path = Path(PDF_CONFIG['path']).resolve()
     
-    # Validate file exists before instantiation
-    if not os.path.exists(PDF_PATH):
-        print(f"WARNING: PDF file not found at {PDF_PATH}")
+    if not pdf_path.exists():
+        print(f"WARNING: PDF not found: {pdf_path}")
         return None
     
     try:
-        tool = PDFSearchTool(pdf=PDF_PATH)
-        print(f"✓ PDF search tool initialized: {PDF_PATH}")
+        tool = PDFSearchTool(pdf=str(pdf_path))
         return tool
     except Exception as e:
-        print(f"ERROR: Failed to initialize PDFSearchTool: {e}")
+        print(f"ERROR: PDFSearchTool failed: {e}")
         return None
 
 @app.post("/analyze")
