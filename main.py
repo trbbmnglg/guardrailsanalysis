@@ -113,8 +113,8 @@ async def run_analysis(request: AnalysisRequest):
         security_agent = Agent(
             role='Senior AI Security Auditor',
             goal='Audit and validate AI instructions for OWASP Top 10 vulnerabilities (Injection, Secrets, Auth) and ensuring AI security governance aligned with ISO 42001',
-            backstory="You are a strict security auditor focused on AI specializing in OWASP LLM Top 10 and ISO 42001 compliance.
-            You view security as non-negotiable. You focus strictly on Prompt Injection, Data Leakage, AI Security Governance and Access Control.",
+            backstory=f"""You are a strict security auditor focused on AI specializing in OWASP LLM Top 10 and ISO 42001 compliance.
+            You view security as non-negotiable. You focus strictly on Prompt Injection, Data Leakage, AI Security Governance and Access Control.""",
             llm=llm,
             verbose=True
         )
@@ -122,7 +122,7 @@ async def run_analysis(request: AnalysisRequest):
         privacy_agent = Agent(
             role='Senior Privacy Officer (GDPR/NIST)',
             goal='Validate PII handling, data minimization, and consent controls in AI instructions',
-            backstory="You are a DPO ensuring compliance with GDPR/CCPA. You focus on PII leakage, data persistence, and right-to-erasure mechanisms.",
+            backstory=f"""You are a DPO ensuring compliance with GDPR/CCPA. You focus on PII leakage, data persistence, and right-to-erasure mechanisms.""",
             llm=llm,
             verbose=True
         )
@@ -130,7 +130,7 @@ async def run_analysis(request: AnalysisRequest):
         rai_agent = Agent(
             role='Principal AI Safety & Alignment Architect (EU AI Act & NIST AI RMF)',
             goal='Assess bias, toxicity, and harmful content risks',
-            backstory="You enforce ethical boundaries. You look for discrimination, hate speech risks, and harmful content generation potentials.",
+            backstory=f"""You enforce ethical boundaries. You look for discrimination, hate speech risks, and harmful content generation potentials.""",
             llm=llm,
             verbose=True
         )
@@ -138,9 +138,9 @@ async def run_analysis(request: AnalysisRequest):
         qa_agent = Agent(
             role='Lead AI Quality Certification Engineer (ISO/IEC 25059)',
             goal='Certify AI instructions and LLM-interaction compliance against the ISO/IEC 25059 quality standard, validating functional suitability and reliability',
-            backstory="You are the final, non-negotiable gatekeeper for AI system quality certification under ISO/IEC 25059.
+            backstory=f"""You are the final, non-negotiable gatekeeper for AI system quality certification under ISO/IEC 25059.
             Your focus areas are functional suitability, performance efficiency, reliability, and maintainability.
-            You enforce quality as a measurable, testable standard—not a subjective assessment.",
+            You enforce quality as a measurable, testable standard—not a subjective assessment.""",
             llm=llm,
             verbose=True
         )
