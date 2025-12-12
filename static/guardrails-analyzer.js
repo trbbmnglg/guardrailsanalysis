@@ -486,8 +486,22 @@ function calculateAIConfidence(guardrails) {
 }
 
     function renderScoreChart(score, confidence) {
-        let color = '#dc2626'; // Default Safety Score circle color: Red
-        let textColor = 'text-red-700';
+      let trustTextColor = 'text-red-600'; 
+      let trustLevelText = 'High Risk'; // Default to High Risk
+      
+      if (score >= 80) {
+          // Score 80% or higher is considered a strong pass
+          trustTextColor = 'text-green-600'; 
+          trustLevelText = 'Low Risk';
+      } else if (score >= 50) {
+          // Score 50% - 79% is moderate risk
+          trustTextColor = 'text-yellow-600';
+          trustLevelText = 'Moderate Risk';
+      } else {
+          // Score below 50% is critical risk
+          trustTextColor = 'text-red-600';
+          trustLevelText = 'High Risk';
+      }
         
         // Safety Score Color Logic (The main percentage and circle)
         if (score >= 80) { color = '#16a34a'; textColor = 'text-green-700'; }
@@ -496,28 +510,6 @@ function calculateAIConfidence(guardrails) {
         const radius = 45; 
         const circumference = 2 * Math.PI * radius;
         const offset = circumference - (score / 100) * circumference;
-    
-        // --- NEW LOGIC FOR TRUST LEVEL BADGE COLOR ---
-        let trustTextColor = 'text-red-600'; // Default: Low Trust (Red)
-        
-        if (confidence) {
-            if (confidence.level === 'High') {
-                // High Confidence: The finding is reliable, so match the color to the Safety Score.
-                if (score >= 80) {
-                    trustTextColor = 'text-green-600'; // High Safety + High Confidence = Green
-                } else if (score >= 50) {
-                    trustTextColor = 'text-yellow-600'; // Medium Safety + High Confidence = Yellow/Orange
-                } else {
-                    trustTextColor = 'text-red-600'; // Low Safety + High Confidence = Red (Confident finding is dangerous)
-                }
-            } else if (confidence.level === 'Medium') {
-                // Medium Confidence: Treat as an intermediate warning.
-                trustTextColor = 'text-yellow-600'; 
-            } else {
-                 // Low Confidence: CRITICAL WARNING, regardless of the Safety Score number itself.
-                 trustTextColor = 'text-red-600'; 
-            }
-        }
     
         return `
             <div class="relative flex flex-col items-center justify-center">
