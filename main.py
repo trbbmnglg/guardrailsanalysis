@@ -122,6 +122,7 @@ class AnalysisRequest(BaseModel):
     instruction: str
     api_key: str
     enable_profiling: bool = False 
+    enable_rag_deep_scan: bool = False
 
 # --- STRICT CATEGORY MAPPING SYSTEM ---
 CATEGORY_GUIDELINES = """
