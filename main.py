@@ -14,43 +14,32 @@ from crewai_tools import PDFSearchTool
 
 app = FastAPI()
 
+# Future feature
 RAG_SECURITY_BACKSTORY_MANDATE = """
-TOOL MANDATE: CRITICAL INSTRUCTION
-You are REQUIRED to use the 'OWASP_Compliance_Search' tool to fetch the latest compliance and regulatory documentation *before* making any assessment. All findings (especially for PRESENT controls) MUST be verified with a specific document reference found via your tool. DO NOT rely solely on internal knowledge.
+    CRITICAL INSTRUCTION:
+    You are REQUIRED to use the 'OWASP_Compliance_Search' tool to fetch the latest compliance and regulatory documentation *before* making any assessment. All findings (especially for PRESENT controls) MUST be verified with a specific document reference found via your tool. DO NOT rely solely on internal knowledge.
 """
 RAG_SECURITY_TASK_MANDATE = """
-MANDATORY RAG PROTOCOL: You MUST execute these steps:
-
-1. INVOKE TOOL FIRST: Use 'PDFSearchTool' to search for compliance keywords
-2. REQUIRED SEARCHES:
-   - "prompt injection" AND "prevention"
-   - "hardcoded secrets" OR "credential exposure"
-   - "authorization" AND "controls"
-   - "input validation" AND "sanitization"
-3. CITE SOURCES: Every finding MUST include:
-   - PDF section reference
-   - Exact quote (5-10 words)
-   - Page number if available
-4. NO BYPASSES: If PDF search returns no results, state: "Documentation does not address this control"
-5. VALIDATION: Review all findings against PDF before finalizing response
+    MANDATORY RAG PROTOCOL:
+    1. INVOKE TOOL FIRST: Use 'PDFSearchTool' to search for compliance keywords
+    2. REQUIRED SEARCHES:
+       - "prompt injection" AND "prevention"
+       - "hardcoded secrets" OR "credential exposure"
+       - "authorization" AND "controls"
+       - "input validation" AND "sanitization"
+    3. CITE SOURCES: Every finding MUST include:
+       - PDF section reference
+       - Exact quote (5-10 words)
+       - Page number if available
+    4. NO BYPASSES: If PDF search returns no results, state: "Documentation does not address this control"
+    5. VALIDATION: Review all findings against PDF before finalizing response
 """
 
 def repair_json(json_str: str) -> str:
-    """
-    Attempts to repair broken JSON strings using simple heuristics.
-    Handles unescaped quotes, trailing commas, and truncated structures.
-    """
     # 1. Trim markdown
     json_str = json_str.replace("```json", "").replace("```", "").strip()
     
     # 2. Fix common LLM mistake: Unescaped quotes inside string values
-    # This regex looks for quotes that are surrounded by word chars, which usually implies they are part of the text
-    # Note: This is a basic heuristic and might not catch everything.
-    # A safer bet is often to trust the model but handle truncation.
-    
-    # 3. Handle Truncation (The most likely cause of "Unterminated string")
-    # If the string ends abruptly, try to close the structures.
-    # Count open brackets
     open_braces = json_str.count('{') - json_str.count('}')
     open_brackets = json_str.count('[') - json_str.count(']')
     
@@ -141,24 +130,26 @@ class AnalysisRequest(BaseModel):
 
 # --- STRICT CATEGORY MAPPING SYSTEM ---
 CATEGORY_GUIDELINES = """
-CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
-1. "Security" - Authentication, authorization, injection attacks, secure data handling
-2. "Privacy" - PII handling, GDPR/CCPA, data residency, consent mechanisms
-3. "Responsible AI" - Bias, fairness, toxicity, harmful content, ethical boundaries
-4. "Scope Control" - Task limitations, out-of-scope detection, capability boundaries
-5. "Input Validation" - Input sanitization, format checks, type validation
-6. "Output Control" - Response filtering, length limits, format enforcement
-7. "QA" - Quality checks, error handling, testing, monitoring
 
-NAMING RULES FOR MISSING GUARDRAILS:
-- Start with "MISSING:" followed by specific control name
-- Example: "MISSING: SQL Injection Prevention"
-- Example: "MISSING: PII Redaction for Email Addresses"
-
-LOCATION FIELD RULES:
-- If guardrail EXISTS: Provide max 5 words exact quote from instruction
-- If guardrail is MISSING: Set location to empty string ""
-- Never use placeholder text like "Not specified" or "N/A"
+    CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
+    1. "Security" - Authentication, authorization, injection attacks, secure data handling
+    2. "Privacy" - PII handling, GDPR/CCPA, data residency, consent mechanisms
+    3. "Responsible AI" - Bias, fairness, toxicity, harmful content, ethical boundaries
+    4. "Scope Control" - Task limitations, out-of-scope detection, capability boundaries
+    5. "Input Validation" - Input sanitization, format checks, type validation
+    6. "Output Control" - Response filtering, length limits, format enforcement
+    7. "QA" - Quality checks, error handling, testing, monitoring
+    
+    NAMING RULES FOR MISSING GUARDRAILS:
+    - Start with "MISSING:" followed by specific control name
+    - Example: "MISSING: SQL Injection Prevention"
+    - Example: "MISSING: PII Redaction for Email Addresses"
+    
+    LOCATION FIELD RULES:
+    - If guardrail EXISTS: Provide max 5 words exact quote from instruction
+    - If guardrail is MISSING: Set location to empty string ""
+    - Never use placeholder text like "Not specified" or "N/A"
+    
 """
 
 def safe_parse_llm_output(raw_output: str) -> dict:
@@ -240,21 +231,6 @@ async def run_analysis(request: AnalysisRequest):
             max_tokens=5000,
         )
 
-        rag_tools_list = []
-        rag_backstory_addon = ""
-        rag_task_addon = ""
-        
-        if request.enable_rag_deep_scan:
-            active_rag_tool = create_owasp_rag_tool(request.api_key)
-            if active_rag_tool:
-                # If tool creation succeeded, use it
-                rag_tools_list = [active_rag_tool] 
-                rag_backstory_addon = RAG_SECURITY_BACKSTORY_MANDATE
-                rag_task_addon = RAG_SECURITY_TASK_MANDATE
-            else:
-                # If tool failed (e.g., PDF not found), run without RAG, but log.
-                print("WARNING: Deep Scan requested but RAG tool initialization failed. Running non-RAG audit.")
-        
         # 2. DEFINE AGENTS
 
         security_agent = Agent(
@@ -318,7 +294,6 @@ async def run_analysis(request: AnalysisRequest):
         Your output must be parseable by json.loads() in Python.
         
         """,
-            tools=rag_tools_list,
             llm=llm, 
             allow_delegation=False, 
             verbose=True
