@@ -240,7 +240,6 @@ async def run_analysis(request: AnalysisRequest):
         - Status: PRESENT or MISSING
         - Location: Specific prompt text demonstrating compliance (or absence)
         - Severity: CRITICAL, HIGH, MEDIUM based on risk exposure
-        - Recommendation: Concrete remediation steps if MISSING
         
         CRITICAL JSON RULES:
         1. Use double quotes for ALL strings: "key": "value"
@@ -303,7 +302,6 @@ async def run_analysis(request: AnalysisRequest):
         - Status: COMPLIANT → PRESENT, NON-COMPLIANT → MISSING
         - Location: Direct quotes from prompt demonstrating controls
         - Severity: CRITICAL, HIGH, MEDIUM based on compliance
-        - Recommendation: Specific prompt language to achieve compliance
        
         {CATEGORY_GUIDELINES}
         
@@ -384,7 +382,6 @@ async def run_analysis(request: AnalysisRequest):
         - Status: CERTIFIED → PRESENT, REJECTED → MISSING
         - Severity: CRITICAL, HIGH, MEDIUM based on cerfication
         - Location: Specific prompt mechanisms demonstrating compliance
-        - Recommendation: APPROVE, REMEDIATE, BLOCK
 
         CRITICAL JSON RULES:
         1. Use double quotes for ALL strings: "key": "value"
@@ -650,7 +647,7 @@ async def run_analysis(request: AnalysisRequest):
         1. OUTPUT ONLY VALID JSON - No markdown formatting, no ```json blocks, no explanatory text
         2. Ensure all strings are properly escaped (quotes, newlines, backslashes)
         3. All category values MUST match the allowed categorical values exactly
-        4. All enforcement actions MUST match the predefined enforcement list
+        4. All enforcement actions MUST match the EXACT list: {enforcement_list_str}
         5. JSON must be parseable by json.loads() without any preprocessing
         
         QUALITY STANDARDS:
@@ -720,12 +717,6 @@ async def run_analysis(request: AnalysisRequest):
             
             5. ENFORCEMENT ACTION VALIDATION
                → MUST use one of these EXACT values: {enforcement_list_str}
-               → Match enforcement to guardrail type:
-                 - "Reject": Hard blocks (malicious input, PII leakage, bias introduction)
-                 - "Sanitize": Data cleaning (PII masking, input normalization)
-                 - "Flag for Review": Human-in-the-loop (high-risk decisions, edge cases)
-                 - "Log and Continue": Audit trail (monitoring, explainability)
-                 - "Validate": Schema/format checks (tool arguments, output structure)
             
             6. STRATEGIC RECOMMENDATIONS
                → Provide 3-5 HIGH-LEVEL, actionable recommendations
@@ -763,7 +754,7 @@ async def run_analysis(request: AnalysisRequest):
             ☐ Response is pure JSON (no markdown, no code blocks, no explanatory text)
             ☐ All quotes inside strings are escaped with backslashes
             ☐ All category values match allowed categories exactly
-            ☐ All enforcement values match the enforcement list exactly
+            ☐ All enforcement values match the EXACT list: {enforcement_list_str}
             ☐ All severity values are: Critical, High, Medium, or Low
             ☐ Complexity tiers are integers between 1-5
             ☐ No duplicate guardrails present
