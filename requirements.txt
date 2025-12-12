@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 crewai
-crewai_tools
+crewai[tools]
 pypdf
 langchain_openai
 python-multipart
