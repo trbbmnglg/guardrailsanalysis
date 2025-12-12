@@ -665,9 +665,9 @@ async def run_analysis(request: AnalysisRequest):
             verbose=True
         )
         
-                tiering_note = ""
-                if request.enable_profiling:
-                    tiering_note = "ALSO include a 'tiering_strategy' object with cost/latency analysis."
+        tiering_note = ""
+        if request.enable_profiling:
+            tiering_note = "ALSO include a 'tiering_strategy' object with cost/latency analysis."
         
         task_report = Task(
             description=f"""MISSION: Synthesize audit findings from Security, Privacy, Responsible AI, and Quality agents 
