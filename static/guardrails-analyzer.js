@@ -134,7 +134,7 @@
             controlsContainer.innerHTML = `
                 <h3 class="text-sm font-semibold text-gray-800 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.3-.484-2.77 1.15-2.42 2.585.1.353-.086.746-.51.972-1.393.72-1.393 2.556 0 3.276.424.226.61.619.51.972-.35 1.435 1.125 3.065 2.42 2.585a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.3.484 2.77-1.15 2.42-2.585-.1-.353.086.746.51-.972 1.393-.72 1.393-2.556 0-3.276-.424-.226-.61-.619-.51-.972.35-1.435-1.125-3.065-2.42-2.585a1.532 1.532 0 01-2.286-.948zM10 10a2 2 0 110-4 2 2 0 010 4z" clip-rule="evenodd" /></svg>
-                    Analysis Settings
+                    Advanced Analysis Settings
                 </h3>
                 
                 <label class="flex items-start gap-3 cursor-pointer">
