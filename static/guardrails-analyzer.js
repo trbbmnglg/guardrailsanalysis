@@ -127,13 +127,25 @@
                 const toggleDiv = document.createElement('div');
                 toggleDiv.className = "mt-4 mb-4 flex items-center gap-3 p-4 bg-indigo-50 rounded-lg border border-indigo-100 shadow-sm";
                 toggleDiv.innerHTML = `
-                    <div class="flex items-center h-5">
-                        <input type="checkbox" id="aiProfilingToggle" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer">
-                    </div>
-                    <div class="ml-2 text-sm">
-                        <label for="aiProfilingToggle" class="font-medium text-indigo-900 cursor-pointer">Enable AI-Powered Latency Profiling</label>
-                        <p class="text-xs text-indigo-500">Slower analysis, but detects "hidden" complexity (e.g., Semantic vs. Keyword checks)</p>
-                    </div>
+                  <h3 class="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.3-.484-2.77 1.15-2.42 2.585.1.353-.086.746-.51.972-1.393.72-1.393 2.556 0 3.276.424.226.61.619.51.972-.35 1.435 1.125 3.065 2.42 2.585a1.532 1.532 0 012.286.948c.38 1.56 2.6 1.56 2.98 0a1.532 1.532 0 012.286-.948c1.3.484 2.77-1.15 2.42-2.585-.1-.353.086.746.51-.972 1.393-.72 1.393-2.556 0-3.276-.424-.226-.61-.619-.51-.972.35-1.435-1.125-3.065-2.42-2.585a1.532 1.532 0 01-2.286-.948zM10 10a2 2 0 110-4 2 2 0 010 4z" clip-rule="evenodd" /></svg>
+                    Analysis Settings
+                  </h3>
+                        <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="enableRagDeepScan" class="mt-1 rounded text-blue-600 focus:ring-blue-500">
+                        <div>
+                            <span class="text-sm font-medium text-gray-800">Enable Deep Compliance Scan (RAG)</span>
+                            <p class="text-xs text-gray-500 mt-0.5">Slower analysis. Agents retrieve and cite compliance documents (e.g., OWASP) for verifiable results.</p>
+                        </div>
+                    </label>
+                    
+                        <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="aiProfilingToggle" class="mt-1 rounded text-blue-600 focus:ring-blue-500" checked>
+                        <div>
+                            <span class="text-sm font-medium text-gray-800">Enable AI-Powered Latency Profiling</span>
+                            <p class="text-xs text-gray-500 mt-0.5">Slower analysis, but detects "hidden" complexity (e.g., Semantic vs. Keyword checks).</p>
+                        </div>
+                    </label>
                 `;
                 btnContainer.parentElement.insertBefore(toggleDiv, btnContainer);
             }
