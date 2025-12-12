@@ -706,7 +706,8 @@ function calculateAIConfidence(guardrails) {
     
         try {
             const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
-    
+            const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
+          
             updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
     
             const response = await fetch('/analyze', {
@@ -715,7 +716,8 @@ function calculateAIConfidence(guardrails) {
                 body: JSON.stringify({ 
                     instruction: instruction, 
                     api_key: apiKey,
-                    enable_profiling: enableProfiling
+                    enable_profiling: enableProfiling,
+                    enable_rag_deep_scan: enableRagDeepScan
                 })
             });
     
