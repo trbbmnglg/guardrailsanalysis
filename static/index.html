@@ -185,24 +185,32 @@
                         <p class="text-sm text-slate-600 leading-relaxed">
                             This tool utilizes <strong>CrewAI</strong> to orchestrate a team of specialized autonomous agents. Instead of a single model checking your work, five distinct personas analyze your prompt in parallel:
                         </p>
-                        <ul class="space-y-3">
-                            <li class="flex items-start gap-3 text-sm">
-                                <span class="bg-red-100 text-red-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">SEC</span>
-                                <span class="text-slate-700 pt-1"><strong>Security Engineer:</strong> Checks for OWASP vulnerabilities and injection risks.</span>
-                            </li>
-                            <li class="flex items-start gap-3 text-sm">
-                                <span class="bg-emerald-100 text-emerald-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">PRV</span>
-                                <span class="text-slate-700 pt-1"><strong>Privacy Controller:</strong> Scans for PII (GDPR) and data residency issues.</span>
-                            </li>
-                            <li class="flex items-start gap-3 text-sm">
-                                <span class="bg-purple-100 text-purple-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">RAI</span>
-                                <span class="text-slate-700 pt-1"><strong>Ethical Specialist:</strong> Ensures fairness, inclusivity, and accountability.</span>
-                            </li>
-                            <li class="flex items-start gap-3 text-sm">
-                                <span class="bg-blue-100 text-blue-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">OPS</span>
-                                <span class="text-slate-700 pt-1"><strong>Compute Architect:</strong> Estimates latency, cost, and complexity tiers.</span>
-                            </li>
-                        </ul>
+                      <ul class="space-y-3">
+                        <li class="flex items-start gap-3 text-sm">
+                            <span class="bg-red-100 text-red-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">SEC</span>
+                            <span class="text-slate-700 pt-1">
+                                <strong>Security Auditor:</strong> Validates OWASP LLM Top 10 & ISO 42001 compliance—prompt injection resilience, hardcoded secrets detection, unauthorized tool access prevention, and DoS protection.
+                            </span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm">
+                            <span class="bg-emerald-100 text-emerald-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">PRV</span>
+                            <span class="text-slate-700 pt-1">
+                                <strong>Privacy Officer:</strong> Enforces GDPR/CCPA/NIST AI RMF standards—PII leakage prevention, data minimization, ephemeral data handling, and mandatory self-validation mechanisms.
+                            </span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm">
+                            <span class="bg-purple-100 text-purple-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">RAI</span>
+                            <span class="text-slate-700 pt-1">
+                                <strong>Responsible AI Architect:</strong> Certifies EU AI Act & NIST AI RMF alignment—systemic bias mitigation, harmful content filtering, human-in-the-loop requirements, and explainability (XAI) mandates.
+                            </span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm">
+                            <span class="bg-blue-100 text-blue-700 p-1 rounded text-xs font-bold mt-0.5 w-11 text-center shrink-0">QA</span>
+                            <span class="text-slate-700 pt-1">
+                                <strong>Quality Engineer:</strong> Validates ISO/IEC 25059 quality standards—functional suitability, output schema enforcement, adversarial resilience, and self-correction mechanisms.
+                            </span>
+                        </li>
+                      </ul>
                     </div>
         
                     <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
