@@ -209,15 +209,44 @@
             const minus = document.getElementById(minusId);
             const plus = document.getElementById(plusId);
             
+            // New for API Key: Subtitle element
+            const subtitle = document.getElementById('apiKeySubtitle');
+            const isApiKeyToggle = btnId === 'toggleApiKey';
+
             if (btn && content) {
+                // Initialize the state for the API Key section: it starts open.
+                if (isApiKeyToggle) {
+                    content.classList.remove('hidden');
+                    minus?.classList.remove('hidden');
+                    plus?.classList.add('hidden');
+                    subtitle?.classList.add('hidden'); // Subtitle is hidden when open
+                } else {
+                    // Default behavior for other toggles (How It Works): start closed
+                    content.classList.add('hidden');
+                    minus?.classList.add('hidden');
+                    plus?.classList.remove('hidden');
+                }
+
                 btn.addEventListener('click', () => {
                     content.classList.toggle('hidden');
+                    
                     if (content.classList.contains('hidden')) {
+                        // Minimized State
                         plus?.classList.remove('hidden');
                         minus?.classList.add('hidden');
+                        
+                        if (isApiKeyToggle && subtitle) {
+                            subtitle.classList.remove('hidden'); // Show subtitle to aid centering
+                        }
+
                     } else {
+                        // Maximized State
                         plus?.classList.add('hidden');
                         minus?.classList.remove('hidden');
+                        
+                        if (isApiKeyToggle && subtitle) {
+                            subtitle.classList.add('hidden'); // Hide subtitle when open
+                        }
                     }
                 });
             }
