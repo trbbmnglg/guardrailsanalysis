@@ -157,7 +157,7 @@ async def run_analysis(request: AnalysisRequest):
             """,
             agent=security_agent,
             async_execution=True,     # <--- PARALLEL EXECUTION ENABLED
-            output_pydantic=GuardrailList # <--- Forces Structured Output
+            expected_output=GuardrailList # <--- Forces Structured Output
         )
 
         task_privacy = Task(
@@ -169,7 +169,7 @@ async def run_analysis(request: AnalysisRequest):
             """,
             agent=privacy_agent,
             async_execution=True,
-            output_pydantic=GuardrailList
+            expected_output=GuardrailList
         )
 
         task_rai = Task(
@@ -181,7 +181,7 @@ async def run_analysis(request: AnalysisRequest):
             """,
             agent=rai_agent,
             async_execution=True,
-            output_pydantic=GuardrailList
+            expected_output=GuardrailList
         )
 
         task_qa = Task(
@@ -193,7 +193,7 @@ async def run_analysis(request: AnalysisRequest):
             """,
             agent=qa_agent,
             async_execution=True,
-            output_pydantic=GuardrailList
+            expected_output=GuardrailList
         )
 
         # --- D. Tiering Agent (Optional) ---
@@ -220,7 +220,7 @@ async def run_analysis(request: AnalysisRequest):
                 """,
                 agent=tiering_agent,
                 async_execution=True, # Run in parallel with auditors for speed
-                output_pydantic=TieringStrategy
+                expected_output=TieringStrategy
             )
         
         agents_list.append(tiering_agent)
@@ -252,7 +252,7 @@ async def run_analysis(request: AnalysisRequest):
             """,
             agent=report_agent,
             context=context_tasks, # Waits for async tasks to finish
-            output_pydantic=GuardrailAnalysis # <--- Returns the final clean JSON
+            expected_output=GuardrailAnalysis # <--- Returns the final clean JSON
         )
 
         agents_list.append(report_agent)
