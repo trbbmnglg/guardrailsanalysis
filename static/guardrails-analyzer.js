@@ -528,7 +528,7 @@ function calculateAIConfidence(guardrails) {
                         <span class="text-3xl font-bold ${textColor}">${score}%</span>
                         ${confidence ? `
                             <span class="text-[10px] font-medium ${trustTextColor}">
-                                ${trustLevelText} Trust
+                                ${trustLevelText}
                             </span>
                         ` : ''}
                     </div>
