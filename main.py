@@ -522,9 +522,7 @@ async def run_analysis(request: AnalysisRequest):
         # 3. SETUP TASKS
         
         task_security = Task(
-            description=f"""
-        
-        {rag_task_addon}    
+            description=f"""    
         
         AUDIT this agent instruction for security guardrails:
             
@@ -603,7 +601,7 @@ async def run_analysis(request: AnalysisRequest):
         """,
             agent=rai_agent,
             async_execution=True,
-            expected_output="Structured list of ethical guardrails with location proofs and PDF citations"
+            expected_output="Structured list of ethical guardrails with location proofs"
         )
         
         task_qa = Task(
