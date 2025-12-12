@@ -10,7 +10,7 @@ from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
 from crewai import LLM
 from langchain_core.output_parsers import PydanticOutputParser
-from agent_tools import create_owasp_rag_tool
+from crewai_tools import PDFSearchTool
 
 app = FastAPI()
 
@@ -185,6 +185,30 @@ def safe_parse_llm_output(raw_output: str) -> dict:
     
     raise ValueError("Could not parse LLM output as JSON using any strategy")
 
+
+def create_owasp_rag_tool(api_key: str) -> Optional[object]:
+    """
+    Factory function to create OWASP compliance PDF search tool.
+    Returns None if PDF not found or tool initialization fails.
+    """
+    import os
+    from crewai_tools import PDFSearchTool
+    
+    PDF_PATH = 'kb/LLMAll_en-US_FINAL.pdf'
+    
+    # Validate file exists before instantiation
+    if not os.path.exists(PDF_PATH):
+        print(f"WARNING: PDF file not found at {PDF_PATH}")
+        return None
+    
+    try:
+        tool = PDFSearchTool(pdf=PDF_PATH)
+        print(f"✓ PDF search tool initialized: {PDF_PATH}")
+        return tool
+    except Exception as e:
+        print(f"ERROR: Failed to initialize PDFSearchTool: {e}")
+        return None
+
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
     try:
@@ -205,9 +229,7 @@ async def run_analysis(request: AnalysisRequest):
         rag_task_addon = ""
         
         if request.enable_rag_deep_scan:
-            
             active_rag_tool = create_owasp_rag_tool(request.api_key)
-            
             if active_rag_tool:
                 # If tool creation succeeded, use it
                 rag_tools_list = [active_rag_tool] 
