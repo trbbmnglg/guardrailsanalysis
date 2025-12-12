@@ -300,7 +300,7 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         privacy_ops_agent = Agent(
-        role='Senior Privacy Officer (GDPR/CCPA/NIST AI RMF) & Self-Validation Auditor',
+        role='Senior Privacy Officer (GDPR/CCPA/NIST AI RMF)',
         goal='Rigorously identify and validate ALL prompt-level privacy guardrails, focusing on PII leakage prevention, data minimization, and mandating self-reflection',
         backstory=f"""You are a VETERAN Senior Privacy and Data Protection Officer (DPO) certified with IAPP CIPP/E and CIPT.
         Your mandate is strict compliance with GDPR Articles 5, 25, 32, CCPA Section 1798.100, and the NIST AI RMF 1.0 GOVERN and MAP functions.
