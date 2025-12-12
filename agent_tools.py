@@ -1,5 +1,5 @@
-import os
-from crewai_tools import PDFSearchTool, BaseTool
+from crewai_tools import PDFSearchTool
+from crewai.tools import BaseTool
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PDF_PATH = os.path.join(BASE_DIR, "kb", "LLMAll_en-US_FINAL.pdf")
