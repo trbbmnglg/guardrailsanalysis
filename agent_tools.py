@@ -7,9 +7,7 @@ from typing import ClassVar
 from crewai_tools import PDFSearchTool
 from crewai.tools import BaseTool
 
-# --- Configuration (Path defined at module level) ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PDF_PATH = os.path.join(BASE_DIR, "kb", "LLMAll_en-US_FINAL.pdf")
+PDF_PATH = 'kb/LLMAll_en-US_FINAL.pdf'
 
 # --- GLOBAL CLASS TEMPLATE ---
 class OwaspSecurityRAGTool(BaseTool):
