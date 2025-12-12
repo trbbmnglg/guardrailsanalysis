@@ -12,16 +12,8 @@ ENV HOME=/home/user \
 COPY --chown=user requirements.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-# 4. Copy your app files (EXPLICIT COPY FOR ROBUSTNESS)
-# Copy core Python files (main.py, agent_tools.py)
-COPY --chown=user main.py .
-COPY --chown=user agent_tools.py .
-
-# Copy web files
-COPY --chown=user static ./static
-
-# CRUCIAL FIX: Ensure the knowledge base folder is copied
-COPY --chown=user kb ./kb 
+# 4. Copy your app files
+COPY --chown=user . .
 
 # 5. Run the Python server
 EXPOSE 7860
