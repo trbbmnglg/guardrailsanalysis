@@ -1,3 +1,4 @@
+import os
 from crewai_tools import PDFSearchTool
 from crewai.tools import BaseTool
 
