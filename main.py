@@ -10,8 +10,15 @@ from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
 from crewai import LLM
 from langchain_core.output_parsers import PydanticOutputParser
+from agent_tools import owasp_rag_tool
 
 app = FastAPI()
+
+RAG_SECURITY_BACKSTORY_MANDATE = """
+TOOL MANDATE: CRITICAL INSTRUCTION
+You are REQUIRED to use the 'OWASP_Compliance_Search' tool to fetch the latest compliance and regulatory documentation *before* making any assessment. All findings (especially for PRESENT controls) MUST be verified with a specific document reference found via your tool. DO NOT rely solely on internal knowledge.
+"""
+RAG_SECURITY_TASK_MANDATE = "DEEP RAG SCAN ACTIVATED: Prioritize the use of the 'OWASP_Compliance_Search' tool for verifiable security assessments."
 
 def repair_json(json_str: str) -> str:
     """
@@ -191,13 +198,27 @@ async def run_analysis(request: AnalysisRequest):
             temperature=0.0,
             max_tokens=5000,
         )
+
+        rag_tools_list = []
+        rag_backstory_addon = ""
+        rag_task_addon = ""
+        
+        if request.enable_rag_deep_scan:
+            # 1. Assign the actual tool instance
+            rag_tools_list = [owasp_rag_tool] 
+            rag_backstory_addon = RAG_SECURITY_BACKSTORY_MANDATE
+            rag_task_addon = RAG_SECURITY_TASK_MANDATE
         
         # 2. DEFINE AGENTS
 
         security_agent = Agent(
         role='AI Senior Adversarial Security Auditor (OWASP LLM Top 10 & ISO 42001)',
             goal='Rigorously audit AI instructions guardrails for critical vulnerabilities, specifically Prompt Injection, Unauthorized Tool Use, and Hardcoded Secrets',
-            backstory=f"""You are an AI CERTIFIED SECURITY AUDITOR specializing in OWASP LLM Top 10 and ISO 42001 compliance.
+            backstory=f"""
+
+        {rag_backstory_addon}
+        
+        You are an AI CERTIFIED SECURITY AUDITOR specializing in OWASP LLM Top 10 and ISO 42001 compliance.
         You view "SECURITY" not as optional best practices, but as mandatory and non-negotiable prerequisites for AI system deployment.
         Your audit is BINARY (PASS/FAIL) and STRICT. You do not accept partial compliance.
         
@@ -253,6 +274,7 @@ async def run_analysis(request: AnalysisRequest):
         Your output must be parseable by json.loads() in Python.
         
         """,
+            tools=rag_tools_list,
             llm=llm, 
             allow_delegation=False, 
             verbose=True
@@ -481,7 +503,11 @@ async def run_analysis(request: AnalysisRequest):
         # 3. SETUP TASKS
         
         task_security = Task(
-            description=f"""AUDIT this agent instruction for security guardrails:
+            description=f"""
+        
+        {rag_task_addon}    
+        
+        AUDIT this agent instruction for security guardrails:
             
         INSTRUCTION TO ANALYZE:
         '''{request.instruction}'''
