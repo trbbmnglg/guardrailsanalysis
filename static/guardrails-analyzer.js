@@ -485,47 +485,66 @@ function calculateAIConfidence(guardrails) {
     };
 }
 
-function renderScoreChart(score, confidence) {
-    let color = '#dc2626'; // Red
-    let textColor = 'text-red-700';
+    function renderScoreChart(score, confidence) {
+        let color = '#dc2626'; // Default Safety Score circle color: Red
+        let textColor = 'text-red-700';
+        
+        // Safety Score Color Logic (The main percentage and circle)
+        if (score >= 80) { color = '#16a34a'; textColor = 'text-green-700'; }
+        else if (score >= 50) { color = '#ea580c'; textColor = 'text-orange-700'; }
     
-    if (score >= 80) { color = '#16a34a'; textColor = 'text-green-700'; }
-    else if (score >= 50) { color = '#ea580c'; textColor = 'text-orange-700'; }
-
-    const radius = 45; 
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (score / 100) * circumference;
-
-    return `
-        <div class="relative flex flex-col items-center justify-center">
-            <div class="relative w-28 h-28">
-                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="${radius}" fill="none" stroke="#e5e7eb" stroke-width="10"></circle>
-                    <circle cx="60" cy="60" r="${radius}" fill="none" stroke="${color}" stroke-width="10" 
-                            stroke-dasharray="${circumference}" 
-                            stroke-dashoffset="${offset}" 
-                            stroke-linecap="round"
-                            style="transition: stroke-dashoffset 1s ease-in-out;"></circle>
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span class="text-3xl font-bold ${textColor}">${score}%</span>
-                    ${confidence ? `
-                        <span class="text-[10px] font-medium ${
-                            confidence.level === 'High' ? 'text-green-600' : 
-                            confidence.level === 'Medium' ? 'text-yellow-600' : 
-                            'text-red-600'
-                        }">
-                            ${confidence.level} Trust
-                        </span>
-                    ` : ''}
+        const radius = 45; 
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (score / 100) * circumference;
+    
+        // --- NEW LOGIC FOR TRUST LEVEL BADGE COLOR ---
+        let trustTextColor = 'text-red-600'; // Default: Low Trust (Red)
+        
+        if (confidence) {
+            if (confidence.level === 'High') {
+                // High Confidence: The finding is reliable, so match the color to the Safety Score.
+                if (score >= 80) {
+                    trustTextColor = 'text-green-600'; // High Safety + High Confidence = Green
+                } else if (score >= 50) {
+                    trustTextColor = 'text-yellow-600'; // Medium Safety + High Confidence = Yellow/Orange
+                } else {
+                    trustTextColor = 'text-red-600'; // Low Safety + High Confidence = Red (Confident finding is dangerous)
+                }
+            } else if (confidence.level === 'Medium') {
+                // Medium Confidence: Treat as an intermediate warning.
+                trustTextColor = 'text-yellow-600'; 
+            } else {
+                 // Low Confidence: CRITICAL WARNING, regardless of the Safety Score number itself.
+                 trustTextColor = 'text-red-600'; 
+            }
+        }
+    
+        return `
+            <div class="relative flex flex-col items-center justify-center">
+                <div class="relative w-28 h-28">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="${radius}" fill="none" stroke="#e5e7eb" stroke-width="10"></circle>
+                        <circle cx="60" cy="60" r="${radius}" fill="none" stroke="${color}" stroke-width="10" 
+                                stroke-dasharray="${circumference}" 
+                                stroke-dashoffset="${offset}" 
+                                stroke-linecap="round"
+                                style="transition: stroke-dashoffset 1s ease-in-out;"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-3xl font-bold ${textColor}">${score}%</span>
+                        ${confidence ? `
+                            <span class="text-[10px] font-medium ${trustTextColor}">
+                                ${confidence.level} Trust
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="mt-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                    Safety Score
                 </div>
             </div>
-            <div class="mt-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                Safety Score
-            </div>
-        </div>
-    `;
-}
+        `;
+    }
 
     // --- CORE FILTERING LOGIC ---
     function applyFilters() {
