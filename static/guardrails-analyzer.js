@@ -140,7 +140,7 @@
                 <label class="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" id="enableRagDeepScan" class="mt-1 rounded text-blue-600 focus:ring-blue-500" checked>
                     <div>
-                        <span class="text-sm font-medium text-gray-800">Enable Deep Compliance Scan (RAG)</span>
+                        <span class="text-sm font-medium text-gray-800">Enable Deep Compliance Scan</span>
                         <p class="text-xs text-gray-500 mt-0.5">Slower analysis. Agents retrieve and cite compliance documents (e.g., OWASP) for verifiable results.</p>
                     </div>
                 </label>
