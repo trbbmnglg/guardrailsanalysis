@@ -503,6 +503,7 @@ async def run_analysis(request: AnalysisRequest):
         
         """,
             agent=security_agent,
+            async_execution=True,
             expected_output="Structured list of security guardrails (present and missing) with exact location quotes"
         )
         
@@ -529,6 +530,7 @@ async def run_analysis(request: AnalysisRequest):
         
         """,
             agent=privacy_ops_agent,
+            async_execution=True,
             expected_output="Structured list of privacy guardrails with location proofs"
         )
         
@@ -555,6 +557,7 @@ async def run_analysis(request: AnalysisRequest):
         
         """,
             agent=rai_agent,
+            async_execution=True,
             expected_output="Structured list of ethical guardrails with location proofs"
         )
         
@@ -581,6 +584,7 @@ async def run_analysis(request: AnalysisRequest):
         
         """,
             agent=qa_agent,
+            async_execution=True,
             expected_output="Structured list of quality guardrails with proper categorization"
         )
 
