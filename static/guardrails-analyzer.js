@@ -487,6 +487,7 @@ function calculateAIConfidence(guardrails) {
 
     function renderScoreChart(score, confidence) {
       let color = '#dc2626';
+      let textColor = 'text-red-700';
       let trustTextColor = 'text-red-600'; 
       let trustLevelText = 'High Risk'; // Default to High Risk
       
@@ -527,7 +528,7 @@ function calculateAIConfidence(guardrails) {
                         <span class="text-3xl font-bold ${textColor}">${score}%</span>
                         ${confidence ? `
                             <span class="text-[10px] font-medium ${trustTextColor}">
-                                ${confidence.level} Trust
+                                ${trustLevelText} Trust
                             </span>
                         ` : ''}
                     </div>
