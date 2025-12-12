@@ -703,7 +703,7 @@ async def run_analysis(request: AnalysisRequest):
                → Preserve the most specific, actionable version of each finding
             
             2. CATEGORY VALIDATION
-               → Map each finding to its primary category: {', '.join(ALLOWED_CATEGORIES)}
+               → Map each finding to its primary category: {', '.join(CATEGORY_GUIDELINES)}
                → If a guardrail spans multiple categories, assign the MOST CRITICAL category
                → Validate against CATEGORY_GUIDELINES provided in backstory
             
