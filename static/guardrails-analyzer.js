@@ -486,6 +486,7 @@ function calculateAIConfidence(guardrails) {
 }
 
     function renderScoreChart(score, confidence) {
+      let color = '#dc2626';
       let trustTextColor = 'text-red-600'; 
       let trustLevelText = 'High Risk'; // Default to High Risk
       
