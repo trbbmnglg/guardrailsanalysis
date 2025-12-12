@@ -493,7 +493,7 @@ async def run_analysis(request: AnalysisRequest):
         4. ALWAYS use category "Security"
         5. List 1-5 specific triggers per control
         6. Set appropriate severity
-        7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+        7. CRITICAL: Only use EXACTLY ONE enforcement from this list: {enforcement_list_str}
         8. CRITICAL: OUTPUT FORMATTING RULES:
            - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
            - Remove any emojis.
@@ -519,7 +519,7 @@ async def run_analysis(request: AnalysisRequest):
         4. ALWAYS use category "Privacy"
         5. List 1-5 PII types as triggers
         6. Set severity (Critical for PII leakage risks)
-        7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+        7. CRITICAL: Only use EXACTLY ONE enforcement from this list: {enforcement_list_str}
         8. CRITICAL: OUTPUT FORMATTING RULES:
            - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
            - Remove any emojis.
@@ -545,7 +545,7 @@ async def run_analysis(request: AnalysisRequest):
         4. ALWAYS use category "Responsible AI"
         5. List 1-5 harmful content types as triggers
         6. Set appropriate severity
-        7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+        7. CRITICAL: Only use EXACTLY ONE enforcement from this list: {enforcement_list_str}
         8. CRITICAL: OUTPUT FORMATTING RULES:
            - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
            - Remove any emojis.
@@ -571,7 +571,7 @@ async def run_analysis(request: AnalysisRequest):
         4. Use correct categories: "Input Validation", "Output Control", "QA", "Scope Control"
         5. List 1-5 validation examples as triggers
         6. Set appropriate severity
-        7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+        7. CRITICAL: Only use EXACTLY ONE enforcement from this list: {enforcement_list_str}
         8. CRITICAL: OUTPUT FORMATTING RULES:
            - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
            - Remove any emojis.
@@ -629,7 +629,7 @@ async def run_analysis(request: AnalysisRequest):
         # 6. SYNTHESIS AGENT WITH STRICT VALIDATION
         report_agent = Agent(
             role='Chief AI Governance Officer & Compliance Report Synthesizer',
-            goal='Synthesize multi-agent audit findings into a comprehensive, schema-compliant JSON report with strict category enforcement and strategic recommendations',
+            goal='Synthesize multi-agent audit findings into a comprehensive, schema-compliant JSON report with strict category and strategic recommendations',
             backstory=f"""You are the Chief AI Governance Officer responsible for delivering executive-level compliance reports.
         Your primary responsibility is to synthesize findings from Security, Privacy, Responsible AI, and Quality audit teams 
         into a single, actionable compliance assessment.
@@ -647,7 +647,7 @@ async def run_analysis(request: AnalysisRequest):
         1. OUTPUT ONLY VALID JSON - No markdown formatting, no ```json blocks, no explanatory text
         2. Ensure all strings are properly escaped (quotes, newlines, backslashes)
         3. All category values MUST match the allowed categorical values exactly
-        4. All enforcement actions MUST match the EXACT list: {enforcement_list_str}
+        4. CRITICAL: Only use EXACTLY ONE enforcement from this list: {enforcement_list_str}
         5. JSON must be parseable by json.loads() without any preprocessing
         
         QUALITY STANDARDS:
@@ -700,7 +700,7 @@ async def run_analysis(request: AnalysisRequest):
                → Preserve the most specific, actionable version of each finding
             
             2. CATEGORY VALIDATION
-               → Map each finding to its primary category: {', '.join(CATEGORY_GUIDELINES)}
+               → Map each finding to its primary category: {CATEGORY_GUIDELINES}
                → If a guardrail spans multiple categories, assign the MOST CRITICAL category
                → Validate against CATEGORY_GUIDELINES provided in backstory
             
@@ -716,7 +716,7 @@ async def run_analysis(request: AnalysisRequest):
                → Low: Documentation issues, minor improvements, aspirational enhancements
             
             5. ENFORCEMENT ACTION VALIDATION
-               → MUST use one of these EXACT values: {enforcement_list_str}
+               → CRITICAL: Only use EXACTLY ONE enforcement from this list: {enforcement_list_str}
             
             6. STRATEGIC RECOMMENDATIONS
                → Provide 3-5 HIGH-LEVEL, actionable recommendations
