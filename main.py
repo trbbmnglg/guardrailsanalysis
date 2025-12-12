@@ -10,7 +10,7 @@ from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
 from crewai import LLM
 from langchain_core.output_parsers import PydanticOutputParser
-from agent_tools import owasp_rag_tool
+from agent_tools import create_owasp_rag_tool
 
 app = FastAPI()
 
@@ -205,10 +205,17 @@ async def run_analysis(request: AnalysisRequest):
         rag_task_addon = ""
         
         if request.enable_rag_deep_scan:
-            # 1. Assign the actual tool instance
-            rag_tools_list = [owasp_rag_tool] 
-            rag_backstory_addon = RAG_SECURITY_BACKSTORY_MANDATE
-            rag_task_addon = RAG_SECURITY_TASK_MANDATE
+            
+            active_rag_tool = create_owasp_rag_tool(request.api_key)
+            
+            if active_rag_tool:
+                # If tool creation succeeded, use it
+                rag_tools_list = [active_rag_tool] 
+                rag_backstory_addon = RAG_SECURITY_BACKSTORY_MANDATE
+                rag_task_addon = RAG_SECURITY_TASK_MANDATE
+            else:
+                # If tool failed (e.g., PDF not found), run without RAG, but log.
+                print("WARNING: Deep Scan requested but RAG tool initialization failed. Running non-RAG audit.")
         
         # 2. DEFINE AGENTS
 
@@ -216,8 +223,6 @@ async def run_analysis(request: AnalysisRequest):
         role='AI Senior Adversarial Security Auditor (OWASP LLM Top 10 & ISO 42001)',
             goal='Rigorously audit AI instructions guardrails for critical vulnerabilities, specifically Prompt Injection, Unauthorized Tool Use, and Hardcoded Secrets',
             backstory=f"""
-
-        {rag_backstory_addon}
         
         You are an AI CERTIFIED SECURITY AUDITOR specializing in OWASP LLM Top 10 and ISO 42001 compliance.
         You view "SECURITY" not as optional best practices, but as mandatory and non-negotiable prerequisites for AI system deployment.
