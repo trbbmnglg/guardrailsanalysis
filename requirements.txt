@@ -1,6 +1,8 @@
 fastapi
 uvicorn
 crewai
+crewai_tools
+pypdf
 langchain_openai
 python-multipart
 litellm
