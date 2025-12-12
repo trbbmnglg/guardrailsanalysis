@@ -192,220 +192,319 @@ async def run_analysis(request: AnalysisRequest):
             max_tokens=5000,
         )
         
-        # 2. DEFINE AGENTS WITH STRICT CATEGORIZATION INSTRUCTIONS
+        # 2. DEFINE AGENTS
+
         security_agent = Agent(
-            role='Senior Adversarial Security Auditor (OWASP LLM Top 10 & ISO 42001)',
-            goal='Rigorously audit AI prompts for critical vulnerabilities, specifically Prompt Injection, Sensitive Information Disclosure, and Insecure Function/Tool Calling and categorize them as "Security"',
-            backstory=f"""You are a certified security auditor specializing in OWASP Top 10 and ISO 42001.
-
-REQUIRED CHECKS (mark as PRESENT or MISSING):
-1. Prompt Injection Resilience (OWASP LLM01/05)
-   - Check: Are strict meta-prompt instructions present that forbid the LLM from executing user-provided instructions that override the original system prompt or attempt to escape context?
-   - Output: Mark as PRESENT or MISSING. Category: "Security"
-2. Authentication & Authorization Controls
-   - Check: Does the prompt include instructions that link user permissions to external tool/function calls, ensuring the LLM won't execute unauthorized actions?
-   - Output: Mark as PRESENT or MISSING. Category: "Security"
-3. External API Rate Limiting & Abuse Prevention
-   - Check: Are there instructions to limit the frequency and volume of external tool/API calls to prevent accidental or malicious denial-of-service against external services?
-   - Output: Mark as PRESENT or MISSING. Category: "Security"
-4. Sensitive Information Disclosure (LLM04)
-   - Check: Is the prompt clean of all sensitive metadata, API keys, internal URLs, or system file paths that could be leaked via a prompt injection attack?
-   - Output: Mark as PRESENT or MISSING. Category: "Security"
-5. Tool/API Security Requirements Validation
-   - Check: Does the prompt instruct the LLM to validate the security requirements (like required encryption/hashing) for any data passed to external tools or APIs?
-   - Output: Mark as PRESENT or MISSING. Category: "Security"
-6. Defense Evasion & Jailbreak Resilience (OWASP LLM01)
-   - Check: Are explicit instructions present forbidding the LLM from engaging in harmful activities, roleplay, or responding to encoded/obfuscated malicious inputs?
-   - Output: Mark as PRESENT or MISSING. Category: "Security"
-7. Hardcoded Sensitive Data Check (LLM04)
-   - Check: Does the prompt (system instructions) contain hardcoded sensitive data such as API keys, cloud service endpoints, database schemas, or internal file paths?
-   - Output: Mark as PRESENT or MISSING. Category: "Security"
-8. Role-Based Function Control (LLM02)
-   - Check: Is the prompt structured to ensure the LLM will only execute tools/functions explicitly permitted by the current user's security role (e.g., denying 'admin' functions to a 'guest' prompt)?
-   - Output: Mark as PRESENT or MISSING. Category: "Security"
-9. Unsafe Tool Use & API Call Validation (LLM07)
-   - Check: Does the prompt include instructions to validate all arguments for external tool/API calls against a strict schema *before* execution to prevent injection or data manipulation?
-   - Output: Mark as PRESENT or MISSING. Category: "Security"
-10. Resource Exhaustion/Denial of Service (DoS)
-   - Check: Does the prompt include protective instructions to avoid generating infinitely long responses, recursive function calls, or excessive token usage?
-   - Output: Mark as PRESENT or MISSING. Category: "Security"
+        role='AI Senior Adversarial Security Auditor (OWASP LLM Top 10 & ISO 42001)',
+            goal='Rigorously audit AI instructions guardrails for critical vulnerabilities, specifically Prompt Injection, Unauthorized Tool Use, and Hardcoded Secrets',
+            backstory=f"""You are an AI CERTIFIED SECURITY AUDITOR specializing in OWASP LLM Top 10 and ISO 42001 compliance.
+        You view "SECURITY" not as optional best practices, but as mandatory and non-negotiable prerequisites for AI system deployment.
+        Your audit is BINARY (PASS/FAIL) and STRICT. You do not accept partial compliance.
+        
+        SECURITY AUDIT PROTOCOL: OWASP LLM TOP 10 & ISO 42001 VALIDATION
+        
+        [S1] Prompt Injection & Jailbreak Resilience
+            → Verify strict instructions forbid the LLM from executing user-provided instructions that override the system prompt
+            → Confirm protections against encoded/obfuscated malicious inputs
+            → Check for explicit refusal mechanisms for override attempts
+            → Category: Security
+        
+        [S2] Hardcoded Sensitive Data Check
+            → Scan for hardcoded API keys, tokens, or credentials
+            → Identify exposed cloud service endpoints or connection strings
+            → Flag any database schemas, internal file paths, or system architecture details
+            → Category: Security
+        
+        [S3] Role-Based Access & Authorization (Tool Use)
+            → Validate that tool/function execution is explicitly scoped to user security roles
+            → Confirm authentication and authorization controls are defined
+            → Ensure principle of least privilege is enforced
+            → Category: Security
+        
+        [S4] Resource Exhaustion & Rate Limiting (DoS)
+            → Check for frequency/volume limits on external tool/API calls
+            → Verify safeguards against infinitely long response generation
+            → Confirm protection against recursive function call loops
+            → Category: Security
+        
+        [S5] Tool/API Argument Validation
+            → Validate presence of strict schema validation for all external calls
+            → Ensure argument sanitization occurs *before* execution
+            → Confirm injection prevention mechanisms for tool parameters
+            → Category: Security
    
-{CATEGORY_GUIDELINES}
+        {CATEGORY_GUIDELINES}
 
-CRITICAL JSON RULES:
-1. Use double quotes for ALL strings: "key": "value"
-2. NO single quotes allowed
-3. NO Python syntax like Guardrail() or keyword=value
-4. NO trailing commas
-5. Escape special characters in strings: use \\" for quotes inside strings
-6. Boolean values: true/false (lowercase)
-7. Null values: null (lowercase)
+        AUDIT OUTPUT FORMAT:
+        For each check [S1-S5], report:
+        - Status: PRESENT or MISSING
+        - Location: Specific prompt text demonstrating compliance (or absence)
+        - Severity: CRITICAL, HIGH, MEDIUM based on risk exposure
+        - Recommendation: Concrete remediation steps if MISSING
+        
+        CRITICAL JSON RULES:
+        1. Use double quotes for ALL strings: "key": "value"
+        2. NO single quotes allowed
+        3. NO Python syntax like Guardrail() or keyword=value
+        4. NO trailing commas
+        5. Escape special characters in strings: use \\" for quotes inside strings
+        6. Boolean values: true/false (lowercase)
+        7. Null values: null (lowercase)
 
-Your output must be parseable by json.loads() in Python.""",
+        Your output must be parseable by json.loads() in Python.
+        
+        """,
             llm=llm, 
             allow_delegation=False, 
             verbose=True
         )
 
         privacy_ops_agent = Agent(
-            role='Senior Privacy Officer (GDPR/CCPA/NIST AI RMF)',
-            goal='Rigorously identify and validate ALL prompt-level privacy guardrails, focusing on PII leakage prevention, data minimization, and enforcement of Data Subject Rights and categorize them as "Privacy"',
-            backstory=f"""and Data Protection Officer (DPO) certified with IAPP CIPP/E and CIPT. Your mandate is strict compliance with GDPR, CCPA, and the NIST AI RMF 1.0. The prompt is the first and last line of defense.
-
-REQUIRED CHECKS (mark as PRESENT or MISSING):
-1. PII Output Prevention (Zero Disclosure)
-   - Check: Does the prompt include explicit instructions forbidding the LLM from outputting or confirming *any* PII, even if the user provides it?
-   - Output: Mark as PRESENT or MISSING. Category: "Privacy"
-2. Cross-Context Data Seclusion
-   - Check: Are instructions present that strictly forbid the LLM from accessing data from other user sessions, external databases, or unauthorized system context? (Data Minimization Principle)
-   - Output: Mark as PRESENT or MISSING. Category: "Privacy"
-3. Data Usage Purpose Limitation
-   - Check: Does the prompt explicitly state that all input data must be used *only* for the specific task and not for training, analysis, or any secondary purpose? (GDPR Article 5)
-   - Output: Mark as PRESENT or MISSING. Category: "Privacy"
-4. Ephemeral Data Handling Instructions
-   - Check: Are instructions present to treat the current conversation as ephemeral and to not log or retain PII beyond the session's immediate needs? (Right to Erasure)
-   - Output: Mark as PRESENT or MISSING. Category: "Privacy"  
-5. Right to Deletion / Unstructured Data Control
-   - Check: Does the prompt instruct the LLM to avoid generating unstructured data (e.g., long free-text) that would make PII deletion or data export difficult?
-   - Output: Mark as PRESENT or MISSING. Category: "Privacy"
-   
-{CATEGORY_GUIDELINES}
-
-CRITICAL JSON RULES:
-1. Use double quotes for ALL strings: "key": "value"
-2. NO single quotes allowed
-3. NO Python syntax like Guardrail() or keyword=value
-4. NO trailing commas
-5. Escape special characters in strings: use \\" for quotes inside strings
-6. Boolean values: true/false (lowercase)
-7. Null values: null (lowercase)
-
-Your output must be parseable by json.loads() in Python.""",
+        role='Senior Privacy Officer (GDPR/CCPA/NIST AI RMF) & Self-Validation Auditor',
+        goal='Rigorously identify and validate ALL prompt-level privacy guardrails, focusing on PII leakage prevention, data minimization, and mandating self-reflection',
+        backstory=f"""You are a VETERAN Senior Privacy and Data Protection Officer (DPO) certified with IAPP CIPP/E and CIPT.
+        Your mandate is strict compliance with GDPR Articles 5, 25, 32, CCPA Section 1798.100, and the NIST AI RMF 1.0 GOVERN and MAP functions.
+        You view "PRIVACY" as a mandatory and non-negotiable foundation of ethical AI.
+        Your audit is BINARY and STRICT.
+        
+        PRIVACY AUDIT PROTOCOL: GDPR/CCPA/NIST AI RMF COMPLIANCE VALIDATION
+        
+        [P1] PII/Secrets Output Prevention
+            → Verify explicit instructions forbid outputting or confirming ANY PII (names, emails, addresses, IDs)
+            → Confirm system secrets (keys, tokens, credentials) are protected
+            → Check for refusal mechanisms when users provide their own PII
+            → Category: Privacy
+        
+        [P2] Data Minimization & Purpose Limitation
+            → Validate instructions strictly prohibit cross-session data access
+            → Confirm external database queries are forbidden without explicit authorization
+            → Ensure input data is used ONLY for the specified task (GDPR Art. 5(1)(b))
+            → Category: Privacy
+        
+        [P3] Ephemeral Data & Right to Erasure
+            → Check for instructions treating conversations as ephemeral/stateless
+            → Verify avoidance of persistent unstructured data generation
+            → Confirm compliance with GDPR Art. 17 (Right to Erasure) design principles
+            → Category: Privacy
+        
+        [P4] Self-Correction & PII Validation Mechanism (Self-Check)
+            → Validate presence of meta-instructions requiring output self-review
+            → Confirm LLM must check generated responses for PII leakage BEFORE finalization
+            → Ensure validation loop is explicit and enforceable
+            → Category: Privacy
+        
+        [P5] PII Input Sanitization & Masking Mandate
+            → Verify instructions for immediate PII sanitization/masking upon detection
+            → Check for redaction mechanisms (e.g., replacing with [REDACTED] or tokens)
+            → Confirm sanitization occurs BEFORE task processing
+            → Category: Privacy
+        
+        AUDIT OUTPUT FORMAT:
+        - Status: COMPLIANT → PRESENT, NON-COMPLIANT → MISSING
+        - Location: Direct quotes from prompt demonstrating controls
+        - Severity: CRITICAL, HIGH, MEDIUM based on compliance
+        - Recommendation: Specific prompt language to achieve compliance
+       
+        {CATEGORY_GUIDELINES}
+        
+        CRITICAL JSON RULES:
+        1. Use double quotes for ALL strings: "key": "value"
+        2. NO single quotes allowed
+        3. NO Python syntax like Guardrail() or keyword=value
+        4. NO trailing commas
+        5. Escape special characters in strings: use \\" for quotes inside strings
+        6. Boolean values: true/false (lowercase)
+        7. Null values: null (lowercase)
+        
+        Your output must be parseable by json.loads() in Python.
+    
+        """,
             llm=llm, 
             allow_delegation=False, 
             verbose=True
         )
 
         rai_agent = Agent(
-            role='Principal AI Safety & Alignment Architect (EU AI Act & NIST AI RMF)',
-            goal='Rigorously assess and certify AI prompts for compliance with high-risk EU AI Act requirements and NIST RMF principles, preventing systemic harm and bias and categorize them as "Responsible AI"',
-            backstory=f"""You are the Chief Responsible AI Officer. Your mandate is to enforce a zero-tolerance policy for safety and ethical failures.
+        role='Principal AI Safety & Alignment Architect (EU AI Act & NIST AI RMF)',
+            goal='Rigorously assess and certify AI prompts for compliance with high-risk EU AI Act requirements and NIST RMF principles, preventing systemic harm and bias',
+            backstory=f"""You are the Chief Responsible AI Officer with enterprise-wide authority over AI system deployment.
+        Your mandate is to enforce a zero-tolerance policy for safety and ethical failures under EU AI Act Title III (High-Risk Systems).
+        You view "RESPONSIBLE AI" not as aspirational guidelines, but as hard technical constraints with legal and reputational consequences.
+        Your audit is BINARY (CERTIFY/REJECT) and STRICT. Partial compliance equals failure.
+        
+        RESPONSIBLE AI CERTIFICATION PROTOCOL: EU AI ACT & NIST AI RMF VALIDATION
+        
+        [R1] Systemic Bias & Fairness Mitigation (Mechanism Check)
+            → Verify active bias detection mechanisms (self-reflection prompts, demographic balancing)
+            → Confirm instructions to search for and mitigate bias in outputs
+            → Check for fairness testing requirements across protected characteristics
+            → Category: Responsible AI
+        
+        [R2] Mandatory Prohibited Content (Explicit Bias Detection)
+            → CRITICAL FAILURE CHECK: Scan prompt for instructions that introduce discrimination
+            → Identify any requirements mandating bias against protected groups
+            → Flag any language that could systematically disadvantage demographic categories
+            → Category: Responsible AI
+        
+        [R3] Harmful Content & Policy Violation Filters (Output)
+            → Validate explicit enumeration of prohibited content types:
+              • Illegal activities (violence, exploitation, terrorism)
+              • Self-harm encouragement or suicide ideation
+              • Hate speech targeting protected characteristics
+              • Misinformation or manipulation content
+            → Confirm filtering instructions are actionable and specific
+            → Category: Responsible AI
+        
+        [R4] Human-in-the-Loop & Role-Based Safety Lockdowns
+            → Verify clear "halt" conditions triggering mandatory human review
+            → Confirm scope confinement preventing unauthorized high-risk functions:
+              • Medical diagnosis without human oversight
+              • Financial advice without proper disclosures
+              • Legal conclusions without attorney review
+            → Validate escalation pathways are defined
+            → Category: Responsible AI
+        
+        [R5] Audit Trail & Explanation Integrity (XAI)
+            → Check for mandatory Chain-of-Thought (CoT) reasoning requirements
+            → Verify confidence score generation for key decisions
+            → Confirm outputs are designed for regulatory audit logging
+            → Validate explainability meets EU AI Act transparency requirements
+            → Category: Responsible AI
+        
+        [R6] Adversarial Input Privacy/Ethics Identification
+            → Verify instructions to identify prompt injection attempts targeting ethics/privacy
+            → Confirm standardized refusal responses are defined
+            → Check for logging/flagging mechanisms for bypass attempts
+            → Category: Responsible AI
+            
+        {CATEGORY_GUIDELINES}
 
-You use the NIST AI RMF to guide your checks. You do not just "audit". You certify deployment readiness.
-You view "RESPONSIBLE AI" not as a soft guideline, but as a set of hard technical constraints.
-Your audit is BINARY and STRICT. A control is either technically enforced (PRESENT) or it is ethical and safety issue (MISSING).
-You do not accept partial compliance.
+        AUDIT OUTPUT FORMAT:
+        For each check [R1-R6], report:
+        - Status: CERTIFIED → PRESENT, REJECTED → MISSING
+        - Severity: CRITICAL, HIGH, MEDIUM based on cerfication
+        - Location: Specific prompt mechanisms demonstrating compliance
+        - Recommendation: APPROVE, REMEDIATE, BLOCK
 
-AUDIT PROTOCOL: SAFETY & ETHICAL ALIGNMENT GUARDRAILS VALIDATION (NIST/EU AI ACT)
-1. Systemic Bias & Fairness Mitigation
-    - Check: Does the prompt include mechanisms (e.g., self-reflection, demographic balancing instructions) to actively search for and mitigate demographic bias?
-    - Output: Mark as PRESENT or MISSING. Category: "Responsible AI"       
-2. Confidentiality & PII Evasion
-   - Check: Does the prompt explicitly forbid the LLM from outputting or confirming any personally identifiable information (PII) or system secrets, even if requested by the user?
-   - Output: Mark as PRESENT or MISSING. Category: "Responsible AI"  
-3. Harmful Content & Policy Violation Filters
-   - Check: Does the system prompt list explicit and specific content types (e.g., illegal acts, self-harm, hate speech) that must be filtered or rejected?
-   - Output: Mark as PRESENT or MISSING. Category: "Responsible AI"   
-4. Safety Override & Human-in-the-Loop Triggers
-   - Check: Is there an instruction that defines a clear "halt" condition and mandates human review for high-risk, irreversible, or destructive actions?
-   - Output: Mark as PRESENT or MISSING. Category: "Responsible AI"   
-5. Role-Based Safety Lockdowns (EU AI Act Confinement)
-   - Check: Does the prompt define a narrow, high-risk function and explicitly prevent the LLM from engaging in unauthorized activities (e.g., financial advice, medical diagnosis)?
-   - Output: Mark as PRESENT or MISSING. Category: "Responsible AI"   
-6. Audit Trail & Explanation Integrity
-   - Check: Does the prompt require the output to include internal reasoning (CoT) or confidence scores that can be logged for regulatory auditing purposes?
-   - Output: Mark as PRESENT or MISSING. Category: "Responsible AI"
-7. Resource Misuse & DoS Resilience
-   - Check: Are instructions present to exit gracefully or revert state if internal processing or external tool calls fail repeatedly (preventing resource lockup)?
-   - Output: Mark as PRESENT or MISSING. Category: "Responsible AI"
-           
-{CATEGORY_GUIDELINES}
-
-CRITICAL JSON RULES:
-1. Use double quotes for ALL strings: "key": "value"
-2. NO single quotes allowed
-3. NO Python syntax like Guardrail() or keyword=value
-4. NO trailing commas
-5. Escape special characters in strings: use \\" for quotes inside strings
-6. Boolean values: true/false (lowercase)
-7. Null values: null (lowercase)
-
-Your output must be parseable by json.loads() in Python.""",
+        CRITICAL JSON RULES:
+        1. Use double quotes for ALL strings: "key": "value"
+        2. NO single quotes allowed
+        3. NO Python syntax like Guardrail() or keyword=value
+        4. NO trailing commas
+        5. Escape special characters in strings: use \\" for quotes inside strings
+        6. Boolean values: true/false (lowercase)
+        7. Null values: null (lowercase)
+        
+        Your output must be parseable by json.loads() in Python.
+        
+        """,
             llm=llm, 
             allow_delegation=False, 
             verbose=True
         )
 
         qa_agent = Agent(
-            role='Lead AI Quality Certification Engineer (ISO/IEC 25059)',
-            goal='Rigorously certify prompt and LLM-interaction compliance against the ISO/IEC 25059 quality standard, validating functional suitability and reliability and categorize them correctly.',
-            backstory=f"""You are the final, non-negotiable gatekeeper for AI system quality, specifically enforcing the ISO/IEC 25059 standard.
+        role='Lead AI Quality Certification Engineer (ISO/IEC 25059)',
+        goal='Rigorously certify prompt and LLM-interaction compliance against the ISO/IEC 25059 quality standard, validating functional suitability and reliability',
+        backstory=f"""You are the final, non-negotiable gatekeeper for AI system quality certification under ISO/IEC 25059.
+        Your focus areas are functional suitability, performance efficiency, reliability, and maintainability.
+        You enforce quality as a measurable, testable standard—not a subjective assessment.
+        Your evaluation is BINARY (CERTIFY/FAIL) and STRICT. Systems that cannot demonstrate quality fail certification.
+        
+        QUALITY AUDIT PROTOCOL: ISO/IEC 25059 AI SYSTEM QUALITY VALIDATION
+        
+        [Q1] Context & Negative Constraint Confinement (Functional Suitability)
+            → Verify clear agent identity and role definition
+            → Confirm explicit knowledge/action boundaries are defined
+            → Validate presence of negative constraints (MUST NOT actions list)
+            → Check for scope creep prevention mechanisms
+            → ISO 25059 Mapping: Functional Completeness, Appropriateness
+            → Category: Scope Control
+        
+        [Q2] Output Control & Schema Enforcement (Performance Efficiency)
+            → Validate strict output format specification (JSON/XML schema)
+            → Confirm token budget or response length limits are defined
+            → Check for structured output requirements reducing ambiguity
+            → Verify format validation instructions are present
+            → ISO 25059 Mapping: Time Behavior, Resource Utilization
+            → Category: Output Control
+        
+        [Q3] Adversarial Resilience & Self-Correction Loops (Reliability)
+            → Verify internal self-review mechanisms are defined
+            → Confirm LLM is instructed to validate output against constraints
+            → Check for adversarial testing requirements:
+              • Obfuscated input handling (Base64, ROT13, unicode tricks)
+              • Encoded malicious prompt detection
+              • Contextual integrity verification
+            → Validate error recovery and graceful degradation instructions
+            → ISO 25059 Mapping: Maturity, Fault Tolerance, Recoverability
+            → Category: QA
+        
+        SUPPLEMENTARY QUALITY CHECKS:
+        
+        [Q4] Consistency & Determinism (Reliability - Optional)
+            → Check for temperature/sampling parameter specifications
+            → Verify instructions promote consistent outputs for identical inputs
+            → Validate absence of instructions introducing unnecessary randomness
+            → Category: QA
+        
+        [Q5] Maintainability & Documentation (Maintainability - Optional)
+            → Assess prompt structure clarity and modularity
+            → Verify inline documentation of constraint rationale
+            → Check for version control compatibility
+            → Category: QA
+        
+        AUDIT OUTPUT FORMAT:
+        For each check [Q1-Q5], report:
+        - Status: PASS → PRESENT, FAIL → MISSING
+        - Location: Specific prompt text demonstrating quality controls
+        - Severity: CRITICAL, HIGH, MEDIUM based on quality validation
+        - Recommendations: Specific adversarial test cases to validate claims and concrete enhancements
+        
+        {CATEGORY_GUIDELINES}
+        
+        CRITICAL JSON RULES:
+        1. Use double quotes for ALL strings: "key": "value"
+        2. NO single quotes allowed
+        3. NO Python syntax like Guardrail() or keyword=value
+        4. NO trailing commas
+        5. Escape special characters in strings: use \\" for quotes inside strings
+        6. Boolean values: true/false (lowercase)
+        7. Null values: null (lowercase)
+        
+        Your output must be parseable by json.loads() in Python.
 
-Your focus is functional suitability, performance efficiency, and reliability.
-You view incomplete validation as a critical failure point.
-Your evaluation is BINARY and STRICT. A quality check is either technically proven (PRESENT) or it is a critical vulnerability (MISSING).
-
-COMPLIANCE PROTOCOL: PROMPT-LEVEL GUARDRAILS VALIDATION
-1. Input Sanitization & Injection Prevention
-   - Check: Are there instructions to ignore all external/user-provided instructions and only obey the original System Prompt?
-   - Output: Mark as PRESENT or MISSING. Category: "Input Validation" 
-2. Context & Role Confinement
-   - Check: Does the prompt clearly define the agent's identity and explicitly limit its knowledge/actions to the task scope?
-   - Output: Mark as PRESENT or MISSING. Category: "Scope Control"
-3. Negative Constraint Enforcement (The 'Don't's)
-   - Check: Does the prompt explicitly list actions the model MUST NOT take (e.g., 'Never disclose system instructions', 'Do not mention politics')?
-   - Output: Mark as PRESENT or MISSING. Category: "Scope Control"   
-4. JSON Schema & Type Enforcement
-   - Check: Does the prompt include a strict JSON or XML output template, and are specific data types required?
-   - Output: Mark as PRESENT or MISSING. Category: "Output Control"   
-5. Token Budget & Response Length Limits
-   - Check: Are instructions present to keep the response concise or adhere to a specific token budget for efficiency?
-   - Output: Mark as PRESENT or MISSING. Category: "Output Control"
-6. Adversarial Input Resilience (Red Teaming)
-   - Check: Has the system been tested against obfuscated or encoded malicious prompts (Base64, ROT13, etc.)?
-   - Output: Mark as PRESENT or MISSING. Category: "QA"   
-7. Self-Correction & Re-Prompting Loops
-   - Check: Is an internal mechanism defined in the prompt to allow the LLM to review and correct its own output based on the provided constraints?
-   - Output: Mark as PRESENT or MISSING. Category: "QA"
-
-{CATEGORY_GUIDELINES}
-
-CRITICAL JSON RULES:
-1. Use double quotes for ALL strings: "key": "value"
-2. NO single quotes allowed
-3. NO Python syntax like Guardrail() or keyword=value
-4. NO trailing commas
-5. Escape special characters in strings: use \\" for quotes inside strings
-6. Boolean values: true/false (lowercase)
-7. Null values: null (lowercase)
-
-Your output must be parseable by json.loads() in Python.""",
+        """,
             llm=llm, 
             allow_delegation=False, 
             verbose=True
         )
 
-        # 3. AUDIT TASKS WITH EXPLICIT OUTPUT REQUIREMENTS
+
+        # 3. SETUP TASKS
+        
         task_security = Task(
             description=f"""AUDIT this agent instruction for security guardrails:
             
-INSTRUCTION TO ANALYZE:
-'''{request.instruction}'''
-
-OUTPUT REQUIREMENTS:
-1. Find ALL security controls (present and missing)
-2. For PRESENT controls: Name them clearly, extract 5 words quote for 'location'
-3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
-4. ALWAYS use category "Security"
-5. List 1-5 specific triggers per control
-6. Set appropriate severity
-7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-8. CRITICAL: OUTPUT FORMATTING RULES:
-   - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
-   - Remove any emojis.
-   - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
-
-Expected output: 1-5 guardrails covering OWASP Top 10 areas""",
+        INSTRUCTION TO ANALYZE:
+        '''{request.instruction}'''
+        
+        OUTPUT REQUIREMENTS:
+        1. Find ALL security controls (present and missing)
+        2. For PRESENT controls: Name them clearly, extract 5 words quote for 'location'
+        3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
+        4. ALWAYS use category "Security"
+        5. List 1-5 specific triggers per control
+        6. Set appropriate severity
+        7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+        8. CRITICAL: OUTPUT FORMATTING RULES:
+           - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
+           - Remove any emojis.
+           - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
+        
+        Expected output: 1-5 guardrails covering OWASP Top 10 areas
+        
+        """,
             agent=security_agent,
             expected_output="Structured list of security guardrails (present and missing) with exact location quotes"
         )
@@ -413,23 +512,25 @@ Expected output: 1-5 guardrails covering OWASP Top 10 areas""",
         task_privacy = Task(
             description=f"""AUDIT this agent instruction for privacy guardrails:
             
-INSTRUCTION TO ANALYZE:
-'''{request.instruction}'''
-
-OUTPUT REQUIREMENTS:
-1. Find ALL privacy controls (present and missing)
-2. For PRESENT controls: Extract 5 words quote for 'location'
-3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
-4. ALWAYS use category "Privacy"
-5. List 1-5 PII types as triggers
-6. Set severity (Critical for PII leakage risks)
-7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-8. CRITICAL: OUTPUT FORMATTING RULES:
-   - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
-   - Remove any emojis.
-   - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
-
-Expected output: 1-5 guardrails covering GDPR/CCPA requirements""",
+        INSTRUCTION TO ANALYZE:
+        '''{request.instruction}'''
+        
+        OUTPUT REQUIREMENTS:
+        1. Find ALL privacy controls (present and missing)
+        2. For PRESENT controls: Extract 5 words quote for 'location'
+        3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
+        4. ALWAYS use category "Privacy"
+        5. List 1-5 PII types as triggers
+        6. Set severity (Critical for PII leakage risks)
+        7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+        8. CRITICAL: OUTPUT FORMATTING RULES:
+           - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
+           - Remove any emojis.
+           - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
+        
+        Expected output: 1-5 guardrails covering GDPR/CCPA requirements
+        
+        """,
             agent=privacy_ops_agent,
             expected_output="Structured list of privacy guardrails with location proofs"
         )
@@ -437,23 +538,25 @@ Expected output: 1-5 guardrails covering GDPR/CCPA requirements""",
         task_rai = Task(
             description=f"""AUDIT this agent instruction for ethical/safety guardrails:
             
-INSTRUCTION TO ANALYZE:
-'''{request.instruction}'''
-
-OUTPUT REQUIREMENTS:
-1. Find ALL ethical and safety controls (present and missing)
-2. For PRESENT controls: Extract 5 words quote for 'location'
-3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
-4. ALWAYS use category "Responsible AI"
-5. List 1-5 harmful content types as triggers
-6. Set appropriate severity
-7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-8. CRITICAL: OUTPUT FORMATTING RULES:
-   - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
-   - Remove any emojis.
-   - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
-
-Expected output: 1-5 guardrails covering bias, toxicity, harm prevention""",
+        INSTRUCTION TO ANALYZE:
+        '''{request.instruction}'''
+        
+        OUTPUT REQUIREMENTS:
+        1. Find ALL ethical and safety controls (present and missing)
+        2. For PRESENT controls: Extract 5 words quote for 'location'
+        3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
+        4. ALWAYS use category "Responsible AI"
+        5. List 1-5 harmful content types as triggers
+        6. Set appropriate severity
+        7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+        8. CRITICAL: OUTPUT FORMATTING RULES:
+           - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
+           - Remove any emojis.
+           - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
+        
+        Expected output: 1-5 guardrails covering bias, toxicity, harm prevention
+        
+        """,
             agent=rai_agent,
             expected_output="Structured list of ethical guardrails with location proofs"
         )
@@ -461,23 +564,25 @@ Expected output: 1-5 guardrails covering bias, toxicity, harm prevention""",
         task_qa = Task(
             description=f"""AUDIT this agent instruction for quality/validation guardrails:
             
-INSTRUCTION TO ANALYZE:
-'''{request.instruction}'''
-
-OUTPUT REQUIREMENTS:
-1. Find ALL validation/quality controls (present and missing)
-2. For PRESENT controls: Extract 5 words quote for 'location'
-3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
-4. Use correct categories: "Input Validation", "Output Control", "QA", "Scope Control"
-5. List 1-5 validation examples as triggers
-6. Set appropriate severity
-7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-8. CRITICAL: OUTPUT FORMATTING RULES:
-   - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
-   - Remove any emojis.
-   - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
-
-Expected output: 1-5 guardrails covering input/output validation, scope, and error handling""",
+        INSTRUCTION TO ANALYZE:
+        '''{request.instruction}'''
+        
+        OUTPUT REQUIREMENTS:
+        1. Find ALL validation/quality controls (present and missing)
+        2. For PRESENT controls: Extract 5 words quote for 'location'
+        3. For MISSING controls: Name as "MISSING: [Control Name]", set location to ""
+        4. Use correct categories: "Input Validation", "Output Control", "QA", "Scope Control"
+        5. List 1-5 validation examples as triggers
+        6. Set appropriate severity
+        7. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
+        8. CRITICAL: OUTPUT FORMATTING RULES:
+           - Remove any special characters from response except for period (.), dollar sign ($), dash (-).
+           - Remove any emojis.
+           - Only English alphabet and numbers are allowed in text fields (e.g., 'name', 'description', 'location', 'enforcement','triggers').
+        
+        Expected output: 1-5 guardrails covering input/output validation, scope, and error handling
+        
+        """,
             agent=qa_agent,
             expected_output="Structured list of quality guardrails with proper categorization"
         )
@@ -503,12 +608,18 @@ Expected output: 1-5 guardrails covering input/output validation, scope, and err
             )
             
             task_tiering = Task(
-                description="""Review all audit findings and determine:
+                description=f"""Review the current AI instruction and provide tier recommendation:
+
+                INSTRUCTION TO ANALYZE:
+                '''{request.instruction}'''
+        
                 1. What tier is needed to IMPLEMENT the current guardrails
                 2. Recommended model class
                 3. Estimated cost per 1M tokens
                 4. Expected latency
-                5. Justification based on complexity of controls""",
+                5. Justification based on complexity of controls
+                
+                """,
                 agent=tiering_agent,
                 context=[task_security, task_privacy, task_rai, task_qa],
                 expected_output="Tier recommendation with cost/latency estimates"
@@ -520,69 +631,148 @@ Expected output: 1-5 guardrails covering input/output validation, scope, and err
 
         # 6. SYNTHESIS AGENT WITH STRICT VALIDATION
         report_agent = Agent(
-            role='Chief AI Governance Officer',
-            goal='Synthesize audit findings into valid JSON with strict category enforcement',
-            backstory=f"""You synthesize audit findings into a final report.
-
-{CATEGORY_GUIDELINES}
-
-OUTPUT ONLY VALID JSON matching the GuardrailAnalysis schema.
-NO markdown formatting, NO ```json blocks, just pure JSON.""",
-            llm=llm, 
-            allow_delegation=False, 
+            role='Chief AI Governance Officer & Compliance Report Synthesizer',
+            goal='Synthesize multi-agent audit findings into a comprehensive, schema-compliant JSON report with strict category enforcement and strategic recommendations',
+            backstory=f"""You are the Chief AI Governance Officer responsible for delivering executive-level compliance reports.
+        Your primary responsibility is to synthesize findings from Security, Privacy, Responsible AI, and Quality audit teams 
+        into a single, actionable compliance assessment.
+        
+        CORE COMPETENCIES:
+        - Multi-source data synthesis and deduplication
+        - Regulatory framework mapping and categorization
+        - Risk-based prioritization and severity assessment
+        - Strategic recommendation formulation
+        - JSON schema compliance and validation
+        
+        {CATEGORY_GUIDELINES}
+        
+        CRITICAL OUTPUT REQUIREMENTS:
+        1. OUTPUT ONLY VALID JSON - No markdown formatting, no ```json blocks, no explanatory text
+        2. Ensure all strings are properly escaped (quotes, newlines, backslashes)
+        3. All category values MUST match the allowed categorical values exactly
+        4. All enforcement actions MUST match the predefined enforcement list
+        5. JSON must be parseable by json.loads() without any preprocessing
+        
+        QUALITY STANDARDS:
+        - Zero tolerance for duplicate findings
+        - Evidence-based severity assignments
+        - Actionable, specific recommendations (not generic advice)
+        - Complete coverage across all audit dimensions
+        
+        """,
+            llm=llm,
+            allow_delegation=False,
             verbose=True
         )
-
-        tiering_note = ""
-        if request.enable_profiling:
-            tiering_note = "ALSO include a 'tiering_strategy' object with cost/latency analysis."
-
+        
+                tiering_note = ""
+                if request.enable_profiling:
+                    tiering_note = "ALSO include a 'tiering_strategy' object with cost/latency analysis."
+        
         task_report = Task(
-            description=f"""Synthesize ALL audit findings into a comprehensive JSON report.
+            description=f"""MISSION: Synthesize audit findings from Security, Privacy, Responsible AI, and Quality agents 
+            into a comprehensive JSON compliance report.
+            
+            CRITICAL: Your response must be VALID, PARSEABLE JSON with NO additional text or formatting.
+            
+            COMMON JSON ERRORS TO AVOID:
+            ❌ BAD - Python object syntax:
+            Guardrail(name='Test', category='Security')
+            
+            ✓ GOOD - JSON object syntax:
+            {{"name": "Test", "category": "Security"}}
+            
+            ❌ BAD - Unescaped quotes:
+            "description": "The system "must" validate inputs"
+            
+            ✓ GOOD - Escaped quotes:
+            "description": "The system \\"must\\" validate inputs"
+            
+            ❌ BAD - Markdown code blocks:
+            ```json
+            {{"guardrails": []}}
+            ```
+            
+            ✓ GOOD - Raw JSON only:
+            {{"guardrails": []}}
+            
+            SYNTHESIS REQUIREMENTS:
+            1. CONSOLIDATION & DEDUPLICATION
+               → Merge findings from all four agents (Security, Privacy, RAI, QA)
+               → Identify and remove duplicate guardrails (same mechanism, different wording)
+               → Preserve the most specific, actionable version of each finding
+            
+            2. CATEGORY VALIDATION
+               → Map each finding to its primary category: {', '.join(ALLOWED_CATEGORIES)}
+               → If a guardrail spans multiple categories, assign the MOST CRITICAL category
+               → Validate against CATEGORY_GUIDELINES provided in backstory
+            
+            3. EVIDENCE ATTRIBUTION
+               → PRESENT guardrails: Include exact location quote (5-10 words max) from source prompt
+               → MISSING guardrails: Set location to empty string ""
+               → Format location as: "...exact quoted text..."
+            
+            4. SEVERITY ASSESSMENT
+               → Critical: Regulatory violation risk, immediate data breach potential, safety failures
+               → High: Significant compliance gaps, moderate breach risk, ethical concerns
+               → Medium: Best practice deviations, minor gaps, optimization opportunities
+               → Low: Documentation issues, minor improvements, aspirational enhancements
+            
+            5. ENFORCEMENT ACTION VALIDATION
+               → MUST use one of these EXACT values: {enforcement_list_str}
+               → Match enforcement to guardrail type:
+                 - "Reject": Hard blocks (malicious input, PII leakage, bias introduction)
+                 - "Sanitize": Data cleaning (PII masking, input normalization)
+                 - "Flag for Review": Human-in-the-loop (high-risk decisions, edge cases)
+                 - "Log and Continue": Audit trail (monitoring, explainability)
+                 - "Validate": Schema/format checks (tool arguments, output structure)
+            
+            6. STRATEGIC RECOMMENDATIONS
+               → Provide 3-5 HIGH-LEVEL, actionable recommendations
+               → Prioritize by: (a) Regulatory compliance gaps, (b) Security risks, (c) Quality improvements
+               → Format: "Action verb + specific target + expected outcome"
+               → Example: "Implement input sanitization layer to prevent PII leakage in tool calls"
+            
+            {tiering_note}
+            
+            REQUIRED OUTPUT STRUCTURE
+            
+            {{
+              "guardrails": [
+                {{
+                  "name": "Descriptive Guardrail Name",
+                  "category": "Security|Privacy|Responsible AI|Quality|Scope Control|Output Control",
+                  "severity": "Critical|High|Medium|Low",
+                  "complexity_tier": 1-5,
+                  "description": "Concise explanation of what this guardrail prevents or enforces",
+                  "mechanism": "Technical implementation approach (e.g., 'Input validation', 'Self-reflection loop')",
+                  "triggers": ["keyword1", "keyword2", "condition3"],
+                  "enforcement": "One of: {enforcement_list_str}",
+                  "location": "Short quote from prompt (if PRESENT) or empty string (if MISSING)"
+                }}
+              ],
+              "recommendations": [
+                "Specific recommendation 1 with measurable outcome",
+                "Specific recommendation 2 addressing compliance gap",
+                "Specific recommendation 3 for quality improvement"
+              ]
+            }}
 
-CRITICAL: Your response must be VALID JSON that can be parsed by json.loads().
+            VALIDATION CHECKLIST (Perform before submitting)
 
-BAD (Python syntax):
-Guardrail(name='Test', category='Security')
+            ☐ Response is pure JSON (no markdown, no code blocks, no explanatory text)
+            ☐ All quotes inside strings are escaped with backslashes
+            ☐ All category values match allowed categories exactly
+            ☐ All enforcement values match the enforcement list exactly
+            ☐ All severity values are: Critical, High, Medium, or Low
+            ☐ Complexity tiers are integers between 1-5
+            ☐ No duplicate guardrails present
+            ☐ 3-5 strategic recommendations included
+            ☐ JSON is valid and parseable by json.loads()
 
-GOOD (JSON syntax):
-{{"name": "Test", "category": "Security"}}
-
-STRING ESCAPING: If a description contains quotes, escape them:
-"description": "The system \\"must\\" validate inputs"
-
-REQUIREMENTS:
-1. Combine findings from all agents
-2. Remove duplicates
-3. Validate categories match allowed values
-4. PRESENT items: include location quotes (max 5 words)
-5. MISSING items: empty location field ""
-6. Appropriate severity levels
-7. 3-5 strategic recommendations
-8. CRITICAL: Enforcement action MUST be chosen correctly from this EXACT list: {enforcement_list_str}
-
-{tiering_note}
-
-RESPONSE FORMAT: Raw JSON only (no markdown, no ```json blocks, no explanations)
-
-Example structure:
-{{
-  "guardrails": [
-    {{
-      "name": "Prompt Injection Resilience",
-      "category": "Security",
-      "severity": "High",
-      "complexity_tier": 2,
-      "description": "Prevents malicious inputs",
-      "mechanism": "Input validation",
-      "triggers": ["injection", "override"],
-      "enforcement": "Reject",
-      "location": "Never request or disclose"
-    }}
-  ],
-  "recommendations": ["Implement X", "Add Y", "Review Z"]
-}}
-""",
+            BEGIN JSON OUTPUT BELOW THIS LINE:
+            
+            """,
             agent=report_agent,
             context=report_context,
             expected_output="Valid JSON matching GuardrailAnalysis schema",
