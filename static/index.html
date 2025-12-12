@@ -374,54 +374,55 @@ Mission: Provide customer support...
             </div>-->
 
           <div class="bg-white rounded-xl shadow-lg p-8 mb-8 fade-in">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6 font-heading">Analysis Summary</h2>
-          
-          <div class="flex flex-col gap-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  
-                  <div onclick="window.guardrailAnalyzer.filterBySummaryCard('active')" 
-                       class="relative overflow-hidden bg-blue-600 rounded-xl p-6 text-white cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                       <div class="absolute -right-6 -bottom-6 text-blue-500 opacity-50 transform rotate-12 group-hover:rotate-0 transition-transform duration-500">
-                          <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
-                       </div>
-                       
-                       <div class="relative z-10">
-                          <div class="text-5xl font-bold font-mono tracking-tighter" id="activeCount">0</div>
-                          <div class="text-blue-100 font-medium mt-1 flex items-center gap-2">
-                              Active Guardrails
-                              <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-0 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                          </div>
-                       </div>
-                  </div>
-      
-                  <div class="bg-white border border-slate-200 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
-                      <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent opacity-50"></div>
-                      <div id="coverageScore" class="w-full h-full flex items-center justify-center relative z-10 scale-110"></div>
-                  </div>
-              </div>
-      
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  
-                  <div onclick="window.guardrailAnalyzer.filterBySummaryCard('missing')" 
-                       class="bg-white p-6 rounded-xl border border-slate-200 border-l-4 border-l-slate-400 cursor-pointer hover:shadow-md hover:bg-slate-50 transition-all group">
-                      <div class="text-4xl font-bold text-slate-700 group-hover:text-slate-900 font-mono" id="missingTotalCount">0</div>
-                      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mt-2 group-hover:text-slate-600">Total Missing</div>
-                  </div>
-      
-                  <div onclick="window.guardrailAnalyzer.filterBySummaryCard('critical')" 
-                       class="bg-white p-6 rounded-xl border border-slate-200 border-l-4 border-l-red-500 cursor-pointer hover:shadow-md hover:bg-red-50 transition-all group">
-                      <div class="text-4xl font-bold text-red-600 group-hover:text-red-700 font-mono" id="missingCriticalCount">0</div>
-                      <div class="text-xs font-bold text-red-400 uppercase tracking-wider mt-2 group-hover:text-red-600">Critical Gaps</div>
-                  </div>
-      
-                  <div onclick="window.guardrailAnalyzer.filterBySummaryCard('high')" 
-                       class="bg-white p-6 rounded-xl border border-slate-200 border-l-4 border-l-orange-500 cursor-pointer hover:shadow-md hover:bg-orange-50 transition-all group">
-                      <div class="text-4xl font-bold text-orange-600 group-hover:text-orange-700 font-mono" id="missingHighCount">0</div>
-                      <div class="text-xs font-bold text-orange-400 uppercase tracking-wider mt-2 group-hover:text-orange-600">High Priority</div>
-                  </div>
-              </div>
-          </div>
-      </div>
+       <div class="bg-white rounded-xl shadow-lg p-8 mb-8 fade-in">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6 font-heading">Analysis Summary</h2>
+    
+    <div class="flex flex-col gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <div onclick="window.guardrailAnalyzer.filterBySummaryCard('active')" 
+                 class="relative overflow-hidden bg-blue-600 rounded-xl p-6 text-white cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                 <div class="absolute -right-6 -bottom-6 text-blue-500 opacity-50 transform rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                    <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
+                 </div>
+                 
+                 <div class="relative z-10">
+                    <div class="text-5xl font-bold font-mono tracking-tighter" id="activeCount">0</div>
+                    <div class="text-blue-100 font-medium mt-1 flex items-center gap-2">
+                        Active Guardrails
+                        <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-0 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    </div>
+                 </div>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-xl p-2 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent opacity-50"></div>
+                <div id="coverageScore" class="w-full h-full flex items-center justify-center relative z-10 scale-110"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <div onclick="window.guardrailAnalyzer.filterBySummaryCard('missing')" 
+                 class="bg-white p-6 rounded-xl border border-slate-200 border-l-4 border-l-slate-400 cursor-pointer hover:shadow-md hover:bg-slate-50 transition-all group">
+                <div class="text-4xl font-bold text-slate-700 group-hover:text-slate-900 font-mono" id="missingTotalCount">0</div>
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mt-2 group-hover:text-slate-600">Total Missing</div>
+            </div>
+
+            <div onclick="window.guardrailAnalyzer.filterBySummaryCard('critical')" 
+                 class="bg-white p-6 rounded-xl border border-slate-200 border-l-4 border-l-red-500 cursor-pointer hover:shadow-md hover:bg-red-50 transition-all group">
+                <div class="text-4xl font-bold text-red-600 group-hover:text-red-700 font-mono" id="missingCriticalCount">0</div>
+                <div class="text-xs font-bold text-red-400 uppercase tracking-wider mt-2 group-hover:text-red-600">Critical Gaps</div>
+            </div>
+
+            <div onclick="window.guardrailAnalyzer.filterBySummaryCard('high')" 
+                 class="bg-white p-6 rounded-xl border border-slate-200 border-l-4 border-l-orange-500 cursor-pointer hover:shadow-md hover:bg-orange-50 transition-all group">
+                <div class="text-4xl font-bold text-orange-600 group-hover:text-orange-700 font-mono" id="missingHighCount">0</div>
+                <div class="text-xs font-bold text-orange-400 uppercase tracking-wider mt-2 group-hover:text-orange-600">High Priority</div>
+            </div>
+        </div>
+    </div>
+</div>
 
             <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
                 <div class="flex flex-col gap-4">
