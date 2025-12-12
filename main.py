@@ -56,7 +56,7 @@ def repair_json(json_str: str) -> str:
 ALLOWED_ENFORCEMENT_ACTIONS = Literal[
     "Sanitize", "Maintain", "Block", "Mask", "Log", "Human Review", "Filter", 
     "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", 
-    "Identify", "Enforce", "Limit", "Remove", "Test"
+    "Identify", "Enforce", "Limit", "Remove", "Test", "Encrypt"
 ]
 
 enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
