@@ -18,7 +18,22 @@ RAG_SECURITY_BACKSTORY_MANDATE = """
 TOOL MANDATE: CRITICAL INSTRUCTION
 You are REQUIRED to use the 'OWASP_Compliance_Search' tool to fetch the latest compliance and regulatory documentation *before* making any assessment. All findings (especially for PRESENT controls) MUST be verified with a specific document reference found via your tool. DO NOT rely solely on internal knowledge.
 """
-RAG_SECURITY_TASK_MANDATE = "DEEP RAG SCAN ACTIVATED: Prioritize the use of the 'OWASP_Compliance_Search' tool for verifiable security assessments."
+RAG_SECURITY_TASK_MANDATE = """
+MANDATORY RAG PROTOCOL: You MUST execute these steps:
+
+1. INVOKE TOOL FIRST: Use 'PDFSearchTool' to search for compliance keywords
+2. REQUIRED SEARCHES:
+   - "prompt injection" AND "prevention"
+   - "hardcoded secrets" OR "credential exposure"
+   - "authorization" AND "controls"
+   - "input validation" AND "sanitization"
+3. CITE SOURCES: Every finding MUST include:
+   - PDF section reference
+   - Exact quote (5-10 words)
+   - Page number if available
+4. NO BYPASSES: If PDF search returns no results, state: "Documentation does not address this control"
+5. VALIDATION: Review all findings against PDF before finalizing response
+"""
 
 def repair_json(json_str: str) -> str:
     """
@@ -613,7 +628,7 @@ async def run_analysis(request: AnalysisRequest):
         """,
             agent=rai_agent,
             async_execution=True,
-            expected_output="Structured list of ethical guardrails with location proofs"
+            expected_output="Structured list of ethical guardrails with location proofs and PDF citations"
         )
         
         task_qa = Task(
