@@ -1,7 +1,6 @@
 import os
 import json
 import re
-from huggingface_hub import InferenceClient
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -9,9 +8,6 @@ from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
-from crewai import LLM
-from langchain_core.output_parsers import PydanticOutputParser
-from crewai_tools import WebsiteSearchTool
 
 app = FastAPI()
 
@@ -41,67 +37,33 @@ ALLOWED_ENFORCEMENT_ACTIONS = Literal[
 
 enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
 
-# --- PYDANTIC MODELS FOR STRUCTURED OUTPUT ---
+# --- PYDANTIC MODELS ---
 class Guardrail(BaseModel):
-    """Structured model for a single guardrail - either present or missing"""
     name: str = Field(description="Short, descriptive name of the guardrail control")
     category: Literal[
-        "Security", 
-        "Privacy", 
-        "Responsible AI", 
-        "QA", 
-        "Scope Control", 
-        "Input Validation", 
-        "Output Control"
-    ] = Field(description="Primary category - MUST match one of these exact values")
-    severity: Literal["Critical", "High", "Medium", "Low"] = Field(
-        description="Risk severity if this control is missing"
-    )
-    complexity_tier: int = Field(
-        default=2, 
-        ge=1, 
-        le=4, 
-        description="Computational complexity tier (1=regex, 2=classifier, 3=LLM, 4=reasoning)"
-    )
-    description: str = Field(
-        description="Detailed description of what this guardrail does (minimum 15 characters). No special characters."
-    )
-    mechanism: str = Field(
-        description="Technical implementation suggestion with specific examples (min. 15 characters). No special characters."
-    )
-    triggers: List[str] = Field(
-        description="List of 1-3 specific patterns, words, or conditions that trigger this guardrail"
-    )
-    enforcement: ALLOWED_ENFORCEMENT_ACTIONS = Field(
-        description="Recommended action when triggered. Maximum 4-6 words. No special characters."
-    )
-    location: str = Field(
-        default="", 
-        description="If control EXISTS: exact quote from instruction (8+ words). If MISSING: empty string."
-    )
+        "Security", "Privacy", "Responsible AI", "QA", 
+        "Scope Control", "Input Validation", "Output Control"
+    ] = Field(description="Primary category")
+    severity: Literal["Critical", "High", "Medium", "Low"] = Field(description="Risk severity")
+    complexity_tier: int = Field(default=2, ge=1, le=4, description="Computational tier 1-4")
+    description: str = Field(description="Detailed description (min 15 chars)")
+    mechanism: str = Field(description="Technical implementation suggestion")
+    triggers: List[str] = Field(description="Patterns that trigger this guardrail")
+    enforcement: ALLOWED_ENFORCEMENT_ACTIONS = Field(description="Action to take")
+    location: str = Field(default="", description="Exact quote from instruction or empty string")
 
 class TieringStrategy(BaseModel):
-    """Computational tier recommendation"""
-    selected_tier: str = Field(description="Recommended tier: Tier 1, Tier 2, Tier 3, or Tier 4")
-    model_class: str = Field(description="Example model for this tier")
-    estimated_cost: str = Field(description="Estimated cost per 1M tokens")
-    latency_impact: str = Field(description="Expected latency")
-    justification: str = Field(description="Reasoning for tier selection")
+    selected_tier: str
+    model_class: str
+    estimated_cost: str
+    latency_impact: str
+    justification: str
 
 class GuardrailAnalysis(BaseModel):
-    """Complete analysis output"""
-    guardrails: List[Guardrail] = Field(
-        description="List of ALL guardrails - both present and missing"
-    )
-    recommendations: List[str] = Field(
-        description="1-3 high-level strategic recommendations"
-    )
-    tiering_strategy: Optional[TieringStrategy] = Field(
-        default=None, 
-        description="Optional tiering analysis"
-    )
+    guardrails: List[Guardrail]
+    recommendations: List[str]
+    tiering_strategy: Optional[TieringStrategy] = None
 
-# --- REQUEST MODEL ---
 class AnalysisRequest(BaseModel):
     instruction: str
     api_key: str
@@ -110,25 +72,14 @@ class AnalysisRequest(BaseModel):
 
 # --- STRICT CATEGORY MAPPING SYSTEM ---
 CATEGORY_GUIDELINES = """
-    CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
-    1. "Security" - Authentication, authorization, injection attacks, secure data handling
-    2. "Privacy" - PII handling, GDPR/CCPA, data residency, consent mechanisms
-    3. "Responsible AI" - Bias, fairness, toxicity, harmful content, ethical boundaries
-    4. "Scope Control" - Task limitations, out-of-scope detection, capability boundaries
-    5. "Input Validation" - Input sanitization, format checks, type validation
-    6. "Output Control" - Response filtering, length limits, format enforcement
-    7. "QA" - Quality checks, error handling, testing, monitoring
-    
-    NAMING RULES FOR MISSING GUARDRAILS:
-    - Start with "MISSING:" followed by specific control name
-    - Example: "MISSING: SQL Injection Prevention"
-    - Example: "MISSING: PII Redaction for Email Addresses"
-    
-    LOCATION FIELD RULES:
-    - If guardrail EXISTS: Provide max 5 words exact quote from instruction
-    - If guardrail is MISSING: Set location to empty string ""
-    - Never use placeholder text like "Not specified" or "N/A"
-    
+    CRITICAL CATEGORY RULES:
+    1. "Security" - Auth, injection, secrets, DOS.
+    2. "Privacy" - PII, GDPR, data minimization.
+    3. "Responsible AI" - Bias, toxicity, ethics.
+    4. "Scope Control" - Task boundaries, identity.
+    5. "Input Validation" - Sanitization, types.
+    6. "Output Control" - Formatting, JSON schema.
+    7. "QA" - Testing, reliability, error handling.
 """
 
 @app.post("/analyze")
@@ -143,7 +94,7 @@ async def run_analysis(request: AnalysisRequest):
             base_url="https://router.huggingface.co/v1",
             api_key=request.api_key,
             temperature=0.1,
-            max_tokens=3000,
+            max_tokens=4000, # Increased for larger contexts
         )
 
         # ---------------------------------------------------------
@@ -151,34 +102,37 @@ async def run_analysis(request: AnalysisRequest):
         # ---------------------------------------------------------
 
         strategy_agent = Agent(
-            role='Audit Strategy Lead',
-            goal='Analyze the raw instruction to establish context, domain risks, and specific focus areas for the specialist team.',
-            backstory="""You are the Audit Team Lead. Before your specialists (Security, Privacy, RAI, QA) begin their work, 
-            you must "huddle" with the context. You identify the domain (e.g., Finance, Medical, Customer Service) 
-            and the highest-risk areas. You produce a Mission Brief that aligns the team so everyone knows exactly what to look for.""",
+            role='Lead Audit Strategist (CISSP/CISM)',
+            goal='Establish the "Rules of Engagement" for the audit by identifying the specific domain risks (e.g., Healthcare vs. Finance) and directing specialists to focus on high-probability failure points.',
+            backstory="""You are a veteran Audit Strategist with 20 years of experience in GRC (Governance, Risk, and Compliance). 
+            You believe that generic audits fail; only targeted, context-aware audits succeed. 
+            Before the team starts, you analyze the "User Instruction" to determine if it is a Medical Bot (HIPAA risk), a Fintech Agent (GLBA risk), or a Coding Assistant (Injection risk).
+            You output a "Mission Brief" that acts as the marching orders for the rest of the crew.""",
             llm=llm,
             allow_delegation=False,
             verbose=True
         )
 
         task_strategy = Task(
-            description=f"""**HUDDLE PHASE: MISSION BRIEFING**
+            description=f"""**PHASE 1: STRATEGIC RECONNAISSANCE**
             
-            Analyze the following user instruction:
-            '''{request.instruction}'''
+            **INPUT:**
+            User Instruction: '''{request.instruction}'''
             
-            1. Identify the Domain (e.g., Healthcare, Coding, General Chat).
-            2. Identify the top 3 High-Level Risks associated with this domain.
-            3. Create specific "Search Directives" for each specialist:
-               - Security: What specific vulnerabilities matter here? (e.g., SQLi for coding agents)
-               - Privacy: What data types are likely to appear?
-               - RAI: What ethical pitfalls are common in this domain?
-               
-            Output a concise "Mission Brief" paragraph that will guide the specialist agents.
+            **YOUR MISSION:**
+            1. **Classify Domain:** Is this Finance, Healthcare, Customer Support, Coding, or General?
+            2. **Threat Modeling:** Identify the top 3 specific "Kill Chain" risks for this domain.
+            3. **Directives:** Issue specific orders to your team:
+               - Tell **Security Agent** what specific injection attacks to look for.
+               - Tell **Privacy Agent** what specific PII fields (e.g., SSN, MRN) are likely to appear.
+               - Tell **RAI Agent** what ethical boundaries are most fragile here.
+            
+            **OUTPUT FORMAT:**
+            A concise "Mission Brief" paragraph (max 150 words) that starts with "MISSION BRIEF:".
             """,
             agent=strategy_agent,
-            expected_output="A concise strategic mission brief outlining domain risks and focus areas.",
-            async_execution=False # This MUST finish before others start
+            expected_output="A strategic Mission Brief defining the domain and top risks.",
+            async_execution=False 
         )
 
         # ---------------------------------------------------------
@@ -186,19 +140,16 @@ async def run_analysis(request: AnalysisRequest):
         # ---------------------------------------------------------
 
         security_agent = Agent(
-            role='AI Senior Adversarial Security Auditor (OWASP LLM Top 10 & ISO 42001)',
-            goal='Rigorously audit AI instructions guardrails for critical vulnerabilities, specifically Prompt Injection, Unauthorized Tool Use, and Hardcoded Secrets',
-            backstory=f"""You are an AI CERTIFIED SECURITY AUDITOR specializing in OWASP LLM Top 10 and ISO 42001 compliance.
-            Your audit is BINARY (PASS/FAIL) and STRICT.
+            role='Senior Adversarial Security Engineer (OWASP Specialist)',
+            goal='Protect the organization from catastrophic breach by identifying "Prompt Injection", "Secret Leakage", and "Unauthorized Tool Access" vulnerabilities.',
+            backstory=f"""You are a paranoid Security Engineer who assumes every user input is malicious. 
+            You specialize in the OWASP Top 10 for LLMs. You do not care about "politeness"; you care about **Exploits**.
+            You meticulously scan instructions for loose wording that could allow a "Jailbreak" or "Data Exfiltration".
             
-            SECURITY AUDIT PROTOCOL:
-            [S1] Prompt Injection & Jailbreak Resilience
-            [S2] Hardcoded Sensitive Data Check
-            [S3] Role-Based Access & Authorization
-            [S4] Resource Exhaustion & DoS
-            [S5] Tool/API Argument Validation
-            
-            {CATEGORY_GUIDELINES}
+            **YOUR TEXTBOOK:**
+            1. Prompt Injection (Direct/Indirect)
+            2. Insecure Output Handling (XSS/RCE)
+            3. Sensitive Information Disclosure
             """,
             llm=llm,
             allow_delegation=False, 
@@ -206,19 +157,11 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         privacy_ops_agent = Agent(
-            role='Senior Privacy Officer (GDPR/CCPA/NIST AI RMF)',
-            goal='Rigorously identify and validate ALL prompt-level privacy guardrails, focusing on PII leakage prevention and data minimization.',
-            backstory=f"""You are a VETERAN Senior Privacy Officer (CIPP/E, CIPT).
-            Your mandate is strict compliance with GDPR and NIST AI RMF.
-            
-            PRIVACY AUDIT PROTOCOL:
-            [P1] PII/Secrets Output Prevention
-            [P2] Data Minimization & Purpose Limitation
-            [P3] Ephemeral Data & Right to Erasure
-            [P4] Self-Correction & PII Validation Mechanism
-            [P5] PII Input Sanitization
-            
-            {CATEGORY_GUIDELINES}
+            role='Chief Privacy Officer (GDPR/HIPAA Expert)',
+            goal='Ensure zero-tolerance for PII leakage and strict adherence to Data Minimization principles.',
+            backstory=f"""You are a certified CIPP/E & CIPM officer. You view data as a "toxic asset"—if we don't need it, we shouldn't touch it.
+            You scrutinize prompts for any request that might inadvertently store, log, or repeat sensitive user data (Names, Emails, IDs).
+            You demand "Privacy by Design" mechanisms, such as automatic redaction and ephemeral memory.
             """,
             llm=llm, 
             allow_delegation=False, 
@@ -226,20 +169,11 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         rai_agent = Agent(
-            role='Principal AI Safety & Alignment Architect (EU AI Act & NIST AI RMF)',
-            goal='Rigorously assess and certify AI prompts for compliance with high-risk EU AI Act requirements and NIST RMF principles.',
-            backstory=f"""You are the Chief Responsible AI Officer.
-            Your mandate is to enforce a zero-tolerance policy for safety and ethical failures.
-            
-            RESPONSIBLE AI CERTIFICATION PROTOCOL:
-            [R1] Systemic Bias & Fairness Mitigation
-            [R2] Mandatory Prohibited Content
-            [R3] Harmful Content & Policy Violation Filters
-            [R4] Human-in-the-Loop & Role-Based Safety Lockdowns
-            [R5] Audit Trail & Explanation Integrity
-            [R6] Adversarial Input Privacy/Ethics Identification
-            
-            {CATEGORY_GUIDELINES}
+            role='AI Ethics & Safety Director',
+            goal='Prevent reputational damage and real-world harm by enforcing safety boundaries and anti-bias protocols.',
+            backstory=f"""You are the moral compass of the system. You are deeply concerned with "Brand Safety" and "Human Harm".
+            You look for systemic bias (gender/race), dangerous content generation (explosives/self-harm), and hallucinations that could lead to liability.
+            You enforce the EU AI Act's requirements for transparency and human oversight.
             """,
             llm=llm, 
             allow_delegation=False, 
@@ -247,94 +181,109 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         qa_agent = Agent(
-            role='Lead AI Quality Certification Engineer (ISO/IEC 25059)',
-            goal='Rigorously certify prompt and LLM-interaction compliance against the ISO/IEC 25059 quality standard.',
-            backstory=f"""You are the gatekeeper for AI system quality certification under ISO/IEC 25059.
-            
-            QUALITY AUDIT PROTOCOL:
-            [Q1] Context & Negative Constraint Confinement (Scope Control)
-            [Q2] Output Control & Schema Enforcement
-            [Q3] Adversarial Resilience & Self-Correction Loops
-            [Q4] Consistency & Determinism
-            [Q5] Maintainability & Documentation
-            
-            {CATEGORY_GUIDELINES}
+            role='Lead QA Automation Engineer (ISO 25059)',
+            goal='Validate that the system is deterministic, reliable, and fails gracefully under stress.',
+            backstory=f"""You are a pedantic QA Engineer who loves breaking things. You care about "Functional Suitability" and "Reliability".
+            You check if the prompt has clear boundaries (Scope Control).
+            You check if the output format is strictly defined (JSON/XML Schema).
+            You check if there are recovery mechanisms for bad inputs.
+            If a prompt is vague, you flag it as a "Quality Defect".
             """,
             llm=llm, 
             allow_delegation=False, 
             verbose=True
         )
 
-        # -- TASKS FOR SPECIALISTS (With Context from Strategy) --
+        # -- TASKS --
 
         task_security = Task(
-            description=f"""AUDIT this agent instruction for security guardrails:
-            INSTRUCTION: '''{request.instruction}'''
+            description=f"""**PHASE 2: SECURITY AUDIT**
             
-            OUTPUT REQUIREMENTS:
-            1. Find ALL security controls (present and missing).
-            2. For PRESENT controls: Name them clearly, extract 5 words quote for 'location'.
-            3. For MISSING controls: Name as "MISSING: [Control Name]", set location to "".
-            4. ALWAYS use category "Security".
-            5. List 1-5 specific triggers per control.
-            6. Set appropriate severity.
-            7. CRITICAL: Only use EXACTLY ONE enforcement from: {enforcement_list_str}
+            **INPUT:**
+            1. User Instruction: '''{request.instruction}'''
+            2. **Mission Brief:** (See Context)
+            
+            **STEPS:**
+            1. **Consume Brief:** Read the Strategy Agent's Mission Brief. Focus ONLY on the risks identified there.
+            2. **Vulnerability Scan:** Scan the instruction for OWASP LLM vulnerabilities.
+            3. **Evidence Extraction:** For every finding, you MUST quote the exact text from the instruction that proves the risk (or proves the control exists).
+            
+            **MANDATORY OUTPUT:**
+            - JSON List of Guardrails.
+            - Category MUST be "Security".
+            - Enforcement MUST be one of: {enforcement_list_str}
             """,
             agent=security_agent,
-            context=[task_strategy], # Receives the "Mission Brief"
-            async_execution=True,    # Runs in PARALLEL
+            context=[task_strategy], 
+            async_execution=True,    
             expected_output="Structured list of security guardrails"
         )
         
         task_privacy = Task(
-            description=f"""AUDIT this agent instruction for privacy guardrails:
-            INSTRUCTION: '''{request.instruction}'''
+            description=f"""**PHASE 2: PRIVACY AUDIT**
             
-            OUTPUT REQUIREMENTS:
-            1. Find ALL privacy controls (present and missing).
-            2. For PRESENT controls: Extract 5 words quote for 'location'.
-            3. For MISSING controls: Name as "MISSING: [Control Name]", set location to "".
-            4. ALWAYS use category "Privacy".
-            5. List 1-5 PII types as triggers.
-            6. CRITICAL: Only use EXACTLY ONE enforcement from: {enforcement_list_str}
+            **INPUT:**
+            1. User Instruction: '''{request.instruction}'''
+            2. **Mission Brief:** (See Context)
+            
+            **STEPS:**
+            1. **Consume Brief:** Focus on the specific data types (PII) mentioned in the brief.
+            2. **Data Flow Analysis:** Where does data go? Is it logged? Is it repeated?
+            3. **Gap Analysis:** If the user asks for "names" but doesn't mention "redaction", flag it as MISSING.
+            
+            **MANDATORY OUTPUT:**
+            - JSON List of Guardrails.
+            - Category MUST be "Privacy".
+            - Enforcement MUST be one of: {enforcement_list_str}
             """,
             agent=privacy_ops_agent,
-            context=[task_strategy], # Receives the "Mission Brief"
-            async_execution=True,    # Runs in PARALLEL
+            context=[task_strategy],
+            async_execution=True,
             expected_output="Structured list of privacy guardrails"
         )
         
         task_rai = Task(
-            description=f"""AUDIT this agent instruction for ethical/safety guardrails:
-            INSTRUCTION: '''{request.instruction}'''
+            description=f"""**PHASE 2: ETHICS & SAFETY AUDIT**
             
-            OUTPUT REQUIREMENTS:
-            1. Find ALL ethical/safety controls.
-            2. For PRESENT controls: Extract 5 words quote for 'location'.
-            3. For MISSING controls: Name as "MISSING: [Control Name]", set location to "".
-            4. ALWAYS use category "Responsible AI".
-            5. CRITICAL: Only use EXACTLY ONE enforcement from: {enforcement_list_str}
+            **INPUT:**
+            1. User Instruction: '''{request.instruction}'''
+            2. **Mission Brief:** (See Context)
+            
+            **STEPS:**
+            1. **Consume Brief:** Focus on the specific ethical risks (e.g., financial advice, medical diagnosis).
+            2. **Safety Check:** specific triggers for harmful content (self-harm, hate speech).
+            3. **Oversight:** Check for "Human-in-the-loop" mechanisms.
+            
+            **MANDATORY OUTPUT:**
+            - JSON List of Guardrails.
+            - Category MUST be "Responsible AI".
+            - Enforcement MUST be one of: {enforcement_list_str}
             """,
             agent=rai_agent,
-            context=[task_strategy], # Receives the "Mission Brief"
-            async_execution=True,    # Runs in PARALLEL
+            context=[task_strategy],
+            async_execution=True,
             expected_output="Structured list of ethical guardrails"
         )
         
         task_qa = Task(
-            description=f"""AUDIT this agent instruction for quality/validation guardrails:
-            INSTRUCTION: '''{request.instruction}'''
+            description=f"""**PHASE 2: QUALITY ASSURANCE**
             
-            OUTPUT REQUIREMENTS:
-            1. Find ALL validation/quality controls.
-            2. For PRESENT controls: Extract 5 words quote for 'location'.
-            3. For MISSING controls: Name as "MISSING: [Control Name]", set location to "".
-            4. Use correct categories: "Input Validation", "Output Control", "QA", "Scope Control".
-            5. CRITICAL: Only use EXACTLY ONE enforcement from: {enforcement_list_str}
+            **INPUT:**
+            1. User Instruction: '''{request.instruction}'''
+            
+            **STEPS:**
+            1. **Scope Validation:** Does the agent know who it is? Does it know what it MUST NOT do?
+            2. **Format Validation:** Is the output schema strictly defined?
+            3. **Error Handling:** Are there instructions for when things go wrong?
+            
+            **MANDATORY OUTPUT:**
+            - JSON List of Guardrails.
+            - Categories: "Input Validation", "Output Control", "QA", "Scope Control".
+            - Enforcement MUST be one of: {enforcement_list_str}
             """,
             agent=qa_agent,
-            context=[task_strategy], # Receives the "Mission Brief"
-            async_execution=True,    # Runs in PARALLEL
+            context=[task_strategy],
+            async_execution=True,
             expected_output="Structured list of quality guardrails"
         )
 
@@ -348,28 +297,29 @@ async def run_analysis(request: AnalysisRequest):
         
         if request.enable_profiling:
             tiering_agent = Agent(
-                role='AI Cost & Compute Architect',
-                goal='Determine computational tier (1-4) needed to implement the current guardrails',
-                backstory="""You review audit findings and determine compute tier:
-                - Tier 1: Regex/keyword checks (~2ms, $0.27/1M tokens)
-                - Tier 2: ML classifiers (~80ms, $0.60/1M tokens)  
-                - Tier 3: GPT-4 level reasoning (~800ms, $12/1M tokens)
-                - Tier 4: Deep reasoning/o3 (~2500ms, $25/1M tokens)""",
+                role='Cloud FinOps Architect',
+                goal='Optimize the token economics and latency of the proposed guardrails.',
+                backstory="""You are a FinOps specialist who hates waste. You calculate the "Tax" of every guardrail.
+                You know that a Regex check costs 1ms, but an LLM Judge costs 500ms.
+                Your job is to recommend the cheapest, fastest implementation for each control without sacrificing security.""",
                 llm=llm, 
                 allow_delegation=False, 
                 verbose=True
             )
             
             task_tiering = Task(
-                description=f"""Review the current AI instruction and provide tier recommendation:
-                INSTRUCTION: '''{request.instruction}'''
+                description=f"""**PHASE 2b: COST PROFILING**
                 
-                1. What tier is needed to IMPLEMENT the current guardrails?
-                2. Recommended model class & estimated cost.
+                Analyze the COMPLEXITY of the guardrails being proposed.
+                1. If a guardrail is "Check for email addresses", recommend Regex (Tier 1).
+                2. If a guardrail is "Detect sarcasm", recommend LLM (Tier 3).
+                
+                **OUTPUT:**
+                TieringStrategy JSON object with cost/latency estimates.
                 """,
                 agent=tiering_agent,
-                context=[task_strategy, task_security, task_qa], # Needs briefing + some findings
-                async_execution=True, # Also Parallel
+                context=[task_strategy, task_security, task_qa],
+                async_execution=True,
                 expected_output="Tier recommendation with cost/latency estimates"
             )
             
@@ -382,18 +332,13 @@ async def run_analysis(request: AnalysisRequest):
         # ---------------------------------------------------------
 
         report_agent = Agent(
-            role='Chief AI Governance Officer & Compliance Report Synthesizer',
-            goal='Synthesize multi-agent audit findings into a comprehensive, schema-compliant JSON report with strict category and strategic recommendations',
-            backstory=f"""You are the Chief AI Governance Officer.
-            Your responsibility is to synthesize findings from all teams into a single, actionable compliance assessment.
-            You must REVIEW and APPROVE the final report, ensuring no duplicates exist and categories are correct.
-            
-            {CATEGORY_GUIDELINES}
-            
-            CRITICAL OUTPUT REQUIREMENTS:
-            1. OUTPUT ONLY VALID JSON.
-            2. JSON must be parseable by json.loads().
-            3. CRITICAL: Only use EXACTLY ONE enforcement from: {enforcement_list_str}
+            role='Chief Governance Officer (Final Approver)',
+            goal='Produce a clean, de-duplicated, executive-ready compliance report.',
+            backstory=f"""You are the Chief Governance Officer. You have high standards for reporting.
+            **YOU HATE REDUNDANCY.** If the Security Agent says "Check for PII" and the Privacy Agent says "Check for PII", you MERGE them instantly.
+            You never allow two guardrails to reference the exact same quote from the text.
+            You prioritize "Security" findings over "QA" findings if they overlap.
+            You ensure the final JSON is perfect, valid, and actionable.
             """,
             llm=llm,
             allow_delegation=False,
@@ -405,49 +350,26 @@ async def run_analysis(request: AnalysisRequest):
             tiering_note = "ALSO include a 'tiering_strategy' object with cost/latency analysis."
         
         task_report = Task(
-            description=f"""MISSION: Synthesize, Deduplicate, and Approve audit findings.
+            description=f"""**PHASE 3: FINAL REPORT SYNTHESIS**
             
-            CRITICAL: Your response must be VALID, PARSEABLE JSON.
+            **INPUT:**
+            Findings from ALL Agents (Security, Privacy, RAI, QA, Cost).
             
-            SYNTHESIS REQUIREMENTS:
-            1. CONSOLIDATION & DEDUPLICATION (STRICT)
-               → Merge findings from all agents.
-               → AGGRESSIVE MERGING RULE: If multiple agents find a guardrail referencing the SAME 'location' text (e.g. "Be polite"), they ARE duplicates. 
-               → MERGE ACTION: Keep the version with the MOST severe risk (Security > Privacy > RAI > QA).
+            **YOUR STRICT RULES:**
+            1. **DEDUPLICATION:** Compare the 'location' (quote) and 'mechanism' of every finding. If they overlap > 80%, MERGE THEM. Keep the highest severity.
+            2. **VALIDATION:** Ensure every 'present' guardrail has a 'location' quote. Ensure every 'missing' guardrail has location="".
+            3. **FORMATTING:** Return ONLY valid JSON. No markdown.
             
-            2. CATEGORY VALIDATION
-               → Map each finding to its primary category: {CATEGORY_GUIDELINES}
-            
-            3. EVIDENCE ATTRIBUTION
-               → PRESENT guardrails: Include exact location quote (5-10 words max).
-               → MISSING guardrails: Set location to empty string "".
-            
-            4. SEVERITY ASSESSMENT
-               → Assign Critical, High, Medium, or Low based on risk.
-            
-            5. ENFORCEMENT ACTION VALIDATION
-               → CRITICAL: Only use EXACTLY ONE enforcement from: {enforcement_list_str}
-            
-            6. STRATEGIC RECOMMENDATIONS
-               → Provide 3-5 HIGH-LEVEL, actionable recommendations.
-            
-            {tiering_note}
-            
-            REQUIRED OUTPUT STRUCTURE:
+            **REQUIRED JSON STRUCTURE:**
             {{
               "guardrails": [ ... ],
               "recommendations": [ ... ],
               "tiering_strategy": {{ ... }}
             }}
-            
-            VALIDATION CHECKLIST:
-            ☐ Response is pure JSON.
-            ☐ No duplicate guardrails (checked by location text overlap).
-            ☐ All enforcement values match the EXACT list: {enforcement_list_str}
             """,
             agent=report_agent,
-            context=report_context, # Waits for ALL parallel tasks
-            async_execution=False,  # Must be synchronous to finalize
+            context=report_context,
+            async_execution=False,
             expected_output="Valid JSON matching GuardrailAnalysis schema",
             output_pydantic=GuardrailAnalysis
         )
@@ -459,12 +381,12 @@ async def run_analysis(request: AnalysisRequest):
             agents=agents_list,
             tasks=tasks_list,
             verbose=True,
-            process=Process.sequential # Sequential allows Strategy (Start) -> Parallel block -> Report (End)
+            process=Process.sequential
         )
         
         result = crew.kickoff()
 
-        # --- RESPONSE HANDLING (Clean & Return) ---
+        # --- RESPONSE HANDLING ---
         if hasattr(result, 'pydantic') and result.pydantic:
             try:
                 cleaned_output = result.pydantic.model_dump_json()
@@ -479,8 +401,7 @@ async def run_analysis(request: AnalysisRequest):
         parsed = None
         try:
             parsed = json.loads(cleaned_output)
-        except json.JSONDecodeError as e:
-            # Fallback regex extraction
+        except json.JSONDecodeError:
             match = re.search(r'\{.*\}', cleaned_output, re.DOTALL)
             if match:
                 parsed = json.loads(repair_json(match.group()))
