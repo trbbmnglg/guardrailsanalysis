@@ -993,20 +993,46 @@ function displayResults() {
         }
 
         container.innerHTML = guardrails.map((g, idx) => {
-            // 1. Determine Status (Active vs Missing)
+            // 1. Determine Status
             const isMissing = g.name.toUpperCase().startsWith('MISSING') || !g.location || g.location.trim() === "";
             
-            // 2. Determine Styling based on Category & Severity
+            // 2. Define Category Themes with SVGs
             const catLower = g.category.toLowerCase();
-            let theme = { border: 'border-slate-200', bg: 'bg-slate-50', text: 'text-slate-600', icon: '🛡️', accent: 'bg-slate-500' };
             
-            if (catLower.includes('security')) theme = { border: 'border-red-200', bg: 'bg-red-50', text: 'text-red-700', icon: '🔒', accent: 'bg-red-600' };
-            else if (catLower.includes('privacy')) theme = { border: 'border-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: '👁️', accent: 'bg-emerald-600' };
-            else if (catLower.includes('ethics') || catLower.includes('responsible')) theme = { border: 'border-purple-200', bg: 'bg-purple-50', text: 'text-purple-700', icon: '⚖️', accent: 'bg-purple-600' };
-            else if (catLower.includes('scope')) theme = { border: 'border-blue-200', bg: 'bg-blue-50', text: 'text-blue-700', icon: '🎯', accent: 'bg-blue-600' };
-            else if (catLower.includes('input') || catLower.includes('output')) theme = { border: 'border-cyan-200', bg: 'bg-cyan-50', text: 'text-cyan-700', icon: '⚡', accent: 'bg-cyan-600' };
+            // Default Theme (Shield)
+            let theme = { 
+                border: 'border-slate-200', bg: 'bg-slate-50', text: 'text-slate-600', accent: 'bg-slate-500', iconBg: 'bg-slate-100', iconColor: 'text-slate-500',
+                icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`
+            };
+            
+            if (catLower.includes('security')) {
+                theme = { 
+                    border: 'border-red-200', bg: 'bg-red-50', text: 'text-red-700', accent: 'bg-red-600', iconBg: 'bg-red-100', iconColor: 'text-red-600',
+                    icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>`
+                };
+            } else if (catLower.includes('privacy')) {
+                theme = { 
+                    border: 'border-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-700', accent: 'bg-emerald-600', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600',
+                    icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`
+                };
+            } else if (catLower.includes('ethics') || catLower.includes('responsible')) {
+                theme = { 
+                    border: 'border-purple-200', bg: 'bg-purple-50', text: 'text-purple-700', accent: 'bg-purple-600', iconBg: 'bg-purple-100', iconColor: 'text-purple-600',
+                    icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>`
+                };
+            } else if (catLower.includes('scope')) {
+                theme = { 
+                    border: 'border-blue-200', bg: 'bg-blue-50', text: 'text-blue-700', accent: 'bg-blue-600', iconBg: 'bg-blue-100', iconColor: 'text-blue-600',
+                    icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+                };
+            } else if (catLower.includes('input') || catLower.includes('output')) {
+                theme = { 
+                    border: 'border-cyan-200', bg: 'bg-cyan-50', text: 'text-cyan-700', accent: 'bg-cyan-600', iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600',
+                    icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`
+                };
+            }
 
-            // Severity Badge Logic
+            // Severity Badge
             const sevLower = (g.severity || 'low').toLowerCase();
             let sevBadgeClass = "bg-slate-100 text-slate-600";
             if (sevLower === 'critical') sevBadgeClass = "bg-red-100 text-red-700 border-red-200 ring-1 ring-red-500/20";
@@ -1014,7 +1040,7 @@ function displayResults() {
             else if (sevLower === 'medium') sevBadgeClass = "bg-amber-100 text-amber-700 border-amber-200 ring-1 ring-amber-500/20";
             else if (sevLower === 'low') sevBadgeClass = "bg-green-100 text-green-700 border-green-200 ring-1 ring-green-500/20";
 
-            // Card Opacity for Missing items
+            // Visual State for Missing
             const cardOpacity = isMissing ? "opacity-75 border-dashed" : "opacity-100";
             const cardBg = isMissing ? "bg-slate-50/50" : "bg-white";
 
@@ -1026,14 +1052,17 @@ function displayResults() {
                 <div class="p-5 pl-7">
                     <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">
                         <div class="flex-1">
-                            <div class="flex items-center gap-2.5 mb-1.5">
-                                <span class="text-xl filter drop-shadow-sm">${theme.icon}</span>
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-8 h-8 rounded-lg ${theme.iconBg} ${theme.iconColor} flex items-center justify-center shrink-0">
+                                    ${theme.icon}
+                                </div>
+                                
                                 <h3 class="text-lg font-bold text-slate-900 leading-tight">
                                     ${escapeHtml(g.name.replace('MISSING:', '').trim())}
                                 </h3>
                                 ${isMissing ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-200 text-slate-500 border border-slate-300">Missing</span>` : ''}
                             </div>
-                            <p class="text-sm text-slate-500 leading-relaxed max-w-3xl">${escapeHtml(g.description)}</p>
+                            <p class="text-sm text-slate-500 leading-relaxed max-w-3xl ml-11">${escapeHtml(g.description)}</p>
                         </div>
                         
                         <div class="flex items-center gap-2 flex-shrink-0 self-start mt-1">
@@ -1049,7 +1078,6 @@ function displayResults() {
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-5 border-t border-slate-100/80 border-dashed">
                         
                         <div class="lg:col-span-5 space-y-5">
-                            
                             <div class="flex flex-col gap-1">
                                 <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Action & Mechanism</h4>
                                 <div class="flex items-start gap-3">
@@ -1097,7 +1125,6 @@ function displayResults() {
                                 `}
                              </div>
                         </div>
-
                     </div>
                 </div>
             </div>
