@@ -8,3 +8,5 @@ python-multipart
 litellm
 apscheduler
 fastapi-sso
+sentence-transformers
+huggingface-hub
