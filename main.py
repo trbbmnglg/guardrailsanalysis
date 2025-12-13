@@ -11,7 +11,7 @@ from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
 from crewai import LLM
 from langchain_core.output_parsers import PydanticOutputParser
-from agent_tools import get_owasp_web_tool
+from crewai_tools import WebsiteSearchTool
 
 app = FastAPI()
 
@@ -223,21 +223,43 @@ async def run_analysis(request: AnalysisRequest):
         #os.environ["OPENAI_API_KEY"] = request.api_key
         #os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
 
-        os.environ["HUGGINGFACE_API_KEY"] = request.api_key
-
-        # We do this inside the endpoint to ensure it picks up the fresh API key
-        security_tools = []
-        web_tool = get_owasp_web_tool()
-        
-        if web_tool: 
-            security_tools.append(web_tool)
-        else:
-            print("⚠️ Warning: Continuing without Web Search Tool")
+        os.environ["HF_TOKEN"] = request.api_key
 
         llm = InferenceClient(
             api_key=request.api_key,
             model="meta-llama/Llama-3.3-70B-Instruct,
         )
+
+        tool = WebsiteSearchTool(
+        config=dict(
+            llm=dict(
+                provider="huggingface", # or google, openai, anthropic, llama2, ...
+                config=dict(
+                    model=llm,
+                    # temperature=0.5,
+                    # top_p=1,
+                    # stream=true,
+                ),
+            ),
+            embedder=dict(
+                provider="huggingface", # or openai, ollama, ...
+                config=dict(
+                    model_name="sentence-transformers/all-MiniLM-L6-v2",
+                    task_type="RETRIEVAL_DOCUMENT",
+                        # title="Embeddings",
+                    ),
+                ),
+            )
+        )
+
+        # We do this inside the endpoint to ensure it picks up the fresh API key
+        security_tools = []
+        tool = WebsiteSearchTool('https://www.confident-ai.com/blog/owasp-top-10-2025-for-llm-applications-risks-and-mitigation-techniques')
+        
+        if tool: 
+            security_tools.append(tool)
+        else:
+            print("⚠️ Warning: Continuing without Web Search Tool")
 
         # 2. DEFINE AGENTS
 
