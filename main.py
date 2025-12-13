@@ -193,8 +193,7 @@ async def run_analysis(request: AnalysisRequest):
             task_tiering = Task(
                 config=tasks_config['cost_profiling_task'],
                 agent=tiering_agent,
-                context=[task_strategy, task_security, task_qa],
-                async_execution=True
+                context=[task_strategy, task_security, task_privacy, task_rai, task_qa]
             )
             
             agents_list.append(tiering_agent)
