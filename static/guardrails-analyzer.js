@@ -819,11 +819,12 @@ function displayResults() {
                 ${gapAnalysis.breakdown.map((item, i) => {
                     const isPass = item.status === 'pass';
                     const isNeutral = item.status === 'neutral';
-                    let itemControlText = 'controls'
-                    let itemPtsText = ' PTS'
+                    
+                    let itemControlText = 'controls';
+                    let itemPtsText = ' PTS';
                     if(item.count = 1){
-                      itemControlText = 'control'
-                      itemPtsText = ' PT'
+                      itemControlText = 'control';
+                      itemPtsText = ' PT';
                     }
                     
                     // Dynamic Styles based on Status
