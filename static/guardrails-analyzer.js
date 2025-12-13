@@ -819,6 +819,10 @@ function displayResults() {
                 ${gapAnalysis.breakdown.map((item, i) => {
                     const isPass = item.status === 'pass';
                     const isNeutral = item.status === 'neutral';
+                    const itemControlText = 'controls'
+                    if(item.count = 1){
+                      itemControlText = 'control'
+                    }
                     
                     // Dynamic Styles based on Status
                     let containerClass = isPass ? "bg-emerald-50/50 border-emerald-100 hover:border-emerald-300" 
@@ -846,7 +850,7 @@ function displayResults() {
                                     </span>
                                 </div>
                                 <div class="text-xs text-slate-500 truncate flex items-center gap-1">
-                                    ${item.count > 0 ? `<span class="font-semibold text-slate-700">${item.count}</span> controls verified` : 'No controls detected'}
+                                    ${item.count > 0 ? `<span class="font-semibold text-slate-700">${item.count}</span> ${itemControlText} verified` : 'No controls detected'}
                                 </div>
                             </div>
                         </div>
@@ -914,30 +918,38 @@ function displayResults() {
     // --- END OF NEW RENDERING LOGIC ---
         
         console.log('🤖 AI Governance Score:', gapAnalysis);
-  
-        // New: Event Listener for the Magic Button
+        
         const toggleBtn = document.getElementById('toggleRecsBtn');
         const content = document.getElementById('recsContent');
         const btnText = document.getElementById('toggleRecsText');
+        const btnIcon = toggleBtn ? toggleBtn.querySelector('svg') : null;
 
         if (toggleBtn && content) {
-            toggleBtn.addEventListener('click', () => {
+            // Use .onclick to ensure we override any previous listeners cleanly
+            toggleBtn.onclick = function() {
                 const isHidden = content.classList.contains('hidden');
                 
                 if (isHidden) {
+                    // EXPAND
                     content.classList.remove('hidden');
-                    btnText.textContent = "Minimize Suggestions";
-                    // Update button style to look "active" (optional: simpler style when open)
-                    toggleBtn.classList.remove('from-purple-600', 'to-indigo-600', 'text-white');
-                    toggleBtn.classList.add('bg-purple-100', 'text-purple-700', 'border', 'border-purple-200');
+                    if(btnText) btnText.textContent = "Hide Actions";
+                    if(btnIcon) btnIcon.style.transform = "rotate(0deg)";
+                    
+                    // Optional: Add active styling if desired, or keep it clean
+                    toggleBtn.classList.add('bg-white', 'border-slate-200');
+                    toggleBtn.classList.remove('bg-slate-100');
                 } else {
+                    // COLLAPSE (MINIMIZE)
                     content.classList.add('hidden');
-                    btnText.textContent = "Show Magic Fixes";
-                    // Revert button style
-                    toggleBtn.classList.add('from-purple-600', 'to-indigo-600', 'text-white');
-                    toggleBtn.classList.remove('bg-purple-100', 'text-purple-700', 'border', 'border-purple-200');
+                    if(btnText) btnText.textContent = "Show Actions";
+                    // Rotate the arrow
+                    if(btnIcon) btnIcon.style.transform = "rotate(180deg)";
+                    
+                    // Keep the button clean (fix for the white-text issue)
+                    toggleBtn.classList.add('bg-slate-50', 'border-slate-300');
+                    toggleBtn.classList.remove('bg-white', 'border-slate-200');
                 }
-            });
+            };
         }
 
         // 5. Initial Render - Default to Active
