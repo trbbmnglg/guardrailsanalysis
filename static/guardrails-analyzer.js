@@ -795,9 +795,11 @@ function displayResults() {
             <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-200 ring-1 ring-indigo-100">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                            </svg>
+                        </div>
                         Governance Insights
                     </h2>
                     <p class="text-slate-500 mt-1 ml-14">AI-verified compliance gaps and remediation steps</p>
