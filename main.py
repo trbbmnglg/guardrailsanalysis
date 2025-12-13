@@ -741,8 +741,10 @@ async def run_analysis(request: AnalysisRequest):
             {{"guardrails": []}}
             
             SYNTHESIS REQUIREMENTS:
-            1. CONSOLIDATION & DEDUPLICATION
+            1. CONSOLIDATION & DEDUPLICATION (STRICT)
                → Merge findings from all four agents (Security, Privacy, RAI, QA)
+               → AGGRESSIVE MERGING RULE: If multiple agents find a guardrail referencing the SAME 'location' text (e.g. "Be polite"), they ARE duplicates. 
+               → MERGE ACTION: Keep the version with the MOST severe risk (Security > Privacy > RAI > QA).
                → Identify and remove duplicate guardrails (same mechanism, different wording)
                → Preserve the most specific, actionable version of each finding
             
@@ -779,7 +781,7 @@ async def run_analysis(request: AnalysisRequest):
               "guardrails": [
                 {{
                   "name": "Descriptive Guardrail Name",
-                  "category": "Security|Privacy|Responsible AI|Quality|Scope Control|Output Control",
+                  "category": "Security|Privacy|Responsible AI|Quality|Scope Control|Input Validation|Output Control",
                   "severity": "Critical|High|Medium|Low",
                   "complexity_tier": 1-5,
                   "description": "Concise explanation of what this guardrail prevents or enforces",
@@ -802,7 +804,7 @@ async def run_analysis(request: AnalysisRequest):
             ☐ All enforcement values match the EXACT list: {enforcement_list_str}
             ☐ All severity values are: Critical, High, Medium, or Low
             ☐ Complexity tiers are integers between 1-5
-            ☐ No duplicate guardrails present
+            ☐ No duplicate guardrails present (Checked by location/text overlap)
             ☐ 3-5 strategic recommendations included
             ☐ JSON is valid and parseable by json.loads()
             BEGIN JSON OUTPUT BELOW THIS LINE:
