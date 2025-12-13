@@ -822,7 +822,7 @@ function displayResults() {
                     
                     let itemControlText = 'controls';
                     let itemPtsText = ' PTS';
-                    if(item.count == 1){
+                    if(Math.trunc(item.count) == 1){
                       itemControlText = 'control';
                       itemPtsText = ' PT';
                     }
