@@ -821,10 +821,12 @@ function displayResults() {
                     const isNeutral = item.status === 'neutral';
                     
                     let itemControlText = 'controls';
-                    let itemPtsText = ' PTS';
+                    let itemPtsText = ' PT';
                     if(Math.trunc(item.count) == 1){
                       itemControlText = 'control';
-                      itemPtsText = ' PT';
+                      if(item.weight > 1){
+                        itemPtsText = ' PTS';
+                      }
                     }
                     
                     // Dynamic Styles based on Status
