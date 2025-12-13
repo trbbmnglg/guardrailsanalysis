@@ -1,59 +1,16 @@
-# ======================================================================
-# agent_tools.py (FIXED: Deferred Initialization)
-# ======================================================================
+from crewai_tools import WebsiteSearchTool
 
-import os
-from typing import ClassVar
-from crewai_tools import PDFSearchTool
-from crewai.tools import BaseTool
+# --- Configuration ---
+OWASP_URL = "https://www.confident-ai.com/blog/owasp-top-10-2025-for-llm-applications-risks-and-mitigation-techniques"
 
-PDF_PATH = 'kb/LLMAll_en-US_FINAL.pdf'
-
-# --- GLOBAL CLASS TEMPLATE ---
-class OwaspSecurityRAGTool(BaseTool):
-    """Semantic search tool for querying the LLM Guardrails PDF."""
-    
-    # ClassVar declaration is retained but no initializer is run here
-    pdf_searcher: ClassVar[object] = None 
-    
-    name: str = "OWASP_Compliance_Search"
-    description: str = "A semantic search tool for querying the official 'LLM Guardrails Compliance' PDF."
-    
-    # We remove the __init__ method entirely to prevent startup errors
-    # The tool is assumed to be initialized externally before _run is called
-
-    def _run(self, search_query: str) -> str:
-        """Executes the semantic search against the PDF Knowledge Base."""
-        # This check is still necessary, but initialization happens externally.
-        if OwaspSecurityRAGTool.pdf_searcher:
-            return OwaspSecurityRAGTool.pdf_searcher.run(search_query)
-        else:
-            return "ERROR: Compliance PDF tool is unavailable. (Key missing)"
-
-# --- NEW: Function to create the tool ONLY when the API key is known ---
-def create_owasp_rag_tool(api_key: str) -> OwaspSecurityRAGTool | None:
-    """Initializes the RAG tool using the dynamic API key."""
-    if not api_key:
-        print("DIAGNOSTIC: Cannot initialize RAG tool without API key.")
-        return None
-    
+def get_owasp_web_tool():
+    """
+    Factory for the Website Search Tool (2025 RAG).
+    Initialized with the specific Confident AI OWASP 2025 guide.
+    """
     try:
-        # CRITICAL FIX: Set the key in the environment before tool creation
-        os.environ["OPENAI_API_KEY"] = api_key 
-        
-        # 1. Initialize the underlying PDFSearchTool
-        searcher = PDFSearchTool(pdf=PDF_PATH)
-        
-        # 2. Update the ClassVar of the custom tool class
-        OwaspSecurityRAGTool.pdf_searcher = searcher 
-        
-        # 3. Instantiate and return the tool wrapper
-        print(f"INFO: Successfully initialized PDF RAG tool with dynamic key.")
-        return OwaspSecurityRAGTool()
-        
+        # The tool automatically uses the OPENAI_API_KEY from os.environ for embeddings
+        return WebsiteSearchTool(website=OWASP_URL)
     except Exception as e:
-        print(f"CRITICAL ERROR (Runtime Init): Failed to initialize PDF RAG tool. Error: {e}")
+        print(f"❌ ERROR: Failed to initialize WebsiteSearchTool: {e}")
         return None
-
-# We remove the line 'owasp_rag_tool = OwaspSecurityRAGTool()'
-# The tool is now created on demand.
