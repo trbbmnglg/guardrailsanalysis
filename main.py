@@ -294,7 +294,6 @@ async def run_analysis(request: AnalysisRequest):
         
         """,
             llm=llm,
-            tools=security_tools,
             allow_delegation=False, 
             verbose=True
         )
