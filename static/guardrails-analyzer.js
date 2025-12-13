@@ -966,15 +966,14 @@ function displayResults() {
             const isMissing = g.name.toUpperCase().startsWith('MISSING') || !g.location || g.location.trim() === "";
             
             // 2. Determine Styling based on Category & Severity
-            // We map categories to specific Tailwind colors
             const catLower = g.category.toLowerCase();
-            let theme = { border: 'border-slate-200', bg: 'bg-slate-50', text: 'text-slate-600', icon: '🛡️' };
+            let theme = { border: 'border-slate-200', bg: 'bg-slate-50', text: 'text-slate-600', icon: '🛡️', accent: 'bg-slate-500' };
             
-            if (catLower.includes('security')) theme = { border: 'border-red-200', bg: 'bg-red-50', text: 'text-red-700', icon: '🔒' };
-            else if (catLower.includes('privacy')) theme = { border: 'border-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: '👁️' };
-            else if (catLower.includes('ethics') || catLower.includes('responsible')) theme = { border: 'border-purple-200', bg: 'bg-purple-50', text: 'text-purple-700', icon: '⚖️' };
-            else if (catLower.includes('scope')) theme = { border: 'border-blue-200', bg: 'bg-blue-50', text: 'text-blue-700', icon: '🎯' };
-            else if (catLower.includes('input') || catLower.includes('output')) theme = { border: 'border-cyan-200', bg: 'bg-cyan-50', text: 'text-cyan-700', icon: '⚡' };
+            if (catLower.includes('security')) theme = { border: 'border-red-200', bg: 'bg-red-50', text: 'text-red-700', icon: '🔒', accent: 'bg-red-600' };
+            else if (catLower.includes('privacy')) theme = { border: 'border-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: '👁️', accent: 'bg-emerald-600' };
+            else if (catLower.includes('ethics') || catLower.includes('responsible')) theme = { border: 'border-purple-200', bg: 'bg-purple-50', text: 'text-purple-700', icon: '⚖️', accent: 'bg-purple-600' };
+            else if (catLower.includes('scope')) theme = { border: 'border-blue-200', bg: 'bg-blue-50', text: 'text-blue-700', icon: '🎯', accent: 'bg-blue-600' };
+            else if (catLower.includes('input') || catLower.includes('output')) theme = { border: 'border-cyan-200', bg: 'bg-cyan-50', text: 'text-cyan-700', icon: '⚡', accent: 'bg-cyan-600' };
 
             // Severity Badge Logic
             const sevLower = (g.severity || 'low').toLowerCase();
@@ -991,57 +990,53 @@ function displayResults() {
             return `
             <div class="relative group rounded-xl border ${theme.border} ${cardBg} ${cardOpacity} shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden fade-in" style="animation-delay: ${idx * 0.05}s">
                 
-                <div class="absolute left-0 top-0 bottom-0 w-1 ${theme.bg.replace('bg-', 'bg-gradient-to-b from-').replace('50', '500').replace('to-', 'to-') + theme.bg.replace('bg-', '').replace('50', '600')}"></div>
+                <div class="absolute left-0 top-0 bottom-0 w-1.5 ${theme.accent}"></div>
 
                 <div class="p-5 pl-7">
-                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
+                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">
                         <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-lg">${theme.icon}</span>
+                            <div class="flex items-center gap-2.5 mb-1.5">
+                                <span class="text-xl filter drop-shadow-sm">${theme.icon}</span>
                                 <h3 class="text-lg font-bold text-slate-900 leading-tight">
                                     ${escapeHtml(g.name.replace('MISSING:', '').trim())}
                                 </h3>
-                                ${isMissing ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-200 text-slate-500">Missing</span>` : ''}
+                                ${isMissing ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-200 text-slate-500 border border-slate-300">Missing</span>` : ''}
                             </div>
-                            <p class="text-sm text-slate-500 leading-relaxed max-w-2xl">${escapeHtml(g.description)}</p>
+                            <p class="text-sm text-slate-500 leading-relaxed max-w-3xl">${escapeHtml(g.description)}</p>
                         </div>
                         
-                        <div class="flex items-center gap-2 flex-shrink-0">
+                        <div class="flex items-center gap-2 flex-shrink-0 self-start mt-1">
                             <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${sevBadgeClass}">
                                 ${escapeHtml(g.severity)}
                             </span>
-                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 bg-white text-slate-500">
+                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 bg-white text-slate-500 shadow-sm">
                                 ${escapeHtml(g.category)}
                             </span>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-4 border-t border-slate-100">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-5 border-t border-slate-100/80 border-dashed">
                         
-                        <div class="lg:col-span-5 space-y-4">
-                            <div>
-                                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Enforcement Action</h4>
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        <div class="lg:col-span-5 space-y-5">
+                            
+                            <div class="flex flex-col gap-1">
+                                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Action & Mechanism</h4>
+                                <div class="flex items-start gap-3">
+                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                         ${escapeHtml(g.enforcement || "Review")}
                                     </span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Mechanism</h4>
-                                <div class="relative pl-3">
-                                    <div class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-slate-200 rounded-full"></div>
-                                    <p class="text-sm text-slate-600">${escapeHtml(g.mechanism)}</p>
+                                    <div class="text-sm text-slate-600 leading-snug pt-0.5 border-l-2 border-slate-200 pl-3">
+                                        ${escapeHtml(g.mechanism)}
+                                    </div>
                                 </div>
                             </div>
 
                             <div>
                                 <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Trigger Conditions</h4>
-                                <div class="flex flex-wrap gap-1.5">
+                                <div class="flex flex-wrap gap-2">
                                     ${g.triggers.map(t => `
-                                        <span class="px-2 py-1 rounded bg-slate-50 border border-slate-100 text-slate-500 text-xs hover:bg-white hover:border-slate-300 transition-colors cursor-default">
+                                        <span class="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-500 text-xs hover:border-slate-300 hover:text-slate-700 transition-colors cursor-default shadow-sm">
                                             ${escapeHtml(t)}
                                         </span>
                                     `).join('')}
@@ -1049,22 +1044,24 @@ function displayResults() {
                             </div>
                         </div>
 
-                        <div class="lg:col-span-7">
-                             <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center justify-between">
-                                Detected Context
-                                ${!isMissing ? '<span class="text-emerald-600 text-[10px] normal-case flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Verified in prompt</span>' : ''}
-                             </h4>
+                        <div class="lg:col-span-7 flex flex-col h-full">
+                             <div class="flex items-center justify-between mb-2">
+                                 <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Detected Context</h4>
+                                 ${!isMissing ? '<span class="text-emerald-600 text-[10px] font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Verified in prompt</span>' : ''}
+                             </div>
                              
-                             <div class="relative bg-slate-50 rounded-lg border border-slate-200 p-4 h-full min-h-[120px]">
+                             <div class="relative bg-slate-50/80 rounded-lg border border-slate-200 p-4 flex-grow group-hover:border-slate-300 transition-colors min-h-[100px]">
                                 ${!isMissing ? `
-                                    <div class="absolute top-3 right-3 text-slate-300">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                                    <div class="absolute top-2 right-2 flex gap-1.5">
+                                        <div class="w-2.5 h-2.5 rounded-full bg-red-200/50"></div>
+                                        <div class="w-2.5 h-2.5 rounded-full bg-amber-200/50"></div>
+                                        <div class="w-2.5 h-2.5 rounded-full bg-green-200/50"></div>
                                     </div>
-                                    <div class="font-mono text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">"${escapeHtml(g.location)}"</div>
+                                    <div class="font-mono text-xs text-slate-600 leading-relaxed whitespace-pre-wrap mt-2 select-all">"${escapeHtml(g.location)}"</div>
                                 ` : `
-                                    <div class="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
-                                        <svg class="w-6 h-6 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        <span class="text-xs italic">Not detected in current instruction set</span>
+                                    <div class="flex flex-col items-center justify-center h-full text-slate-400 gap-2 py-4">
+                                        <svg class="w-8 h-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        <span class="text-xs italic opacity-60">Not detected in current instruction set</span>
                                     </div>
                                 `}
                              </div>
