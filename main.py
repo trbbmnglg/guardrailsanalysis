@@ -223,7 +223,7 @@ async def run_analysis(request: AnalysisRequest):
         #os.environ["OPENAI_API_KEY"] = request.api_key
         #os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
 
-        os.environ["HF_TOKEN"] = request.api_key
+        os.environ["HUGGINGFACE_API_KEY"] = request.api_key
 
         llm = InferenceClient(
             api_key=request.api_key,
