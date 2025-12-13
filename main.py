@@ -220,8 +220,8 @@ def create_owasp_rag_tool(api_key: str) -> Optional[object]:
 async def run_analysis(request: AnalysisRequest):
     try:
         # 1. SETUP LLM
-        os.environ["OPENAI_API_KEY"] = request.api_key
-        os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
+        #os.environ["OPENAI_API_KEY"] = request.api_key
+        #os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
 
         os.environ["HUGGINGFACE_API_KEY"] = request.api_key
 
@@ -233,23 +233,12 @@ async def run_analysis(request: AnalysisRequest):
             security_tools.append(web_tool)
         else:
             print("⚠️ Warning: Continuing without Web Search Tool")
-        
-        llm = ChatOpenAI(
-            model="meta-llama/meta-llama/Llama-3.3-70B-Instruct",
-            base_url="https://router.huggingface.co/v1",
-            api_key=request.api_key,
-            temperature=0.0,
-            max_tokens=5000,
-        )
 
-        client = InferenceClient(
-            api_key=os.environ["HF_TOKEN"],
-        )
-        
-        llm = client.chat.completions.create(
+        llm = InferenceClient(
+            api_key=request.api_key,
             model="meta-llama/Llama-3.3-70B-Instruct:sambanova",
             temperature=0.0,
-            max_tokens=5000,
+            max_tokens=4000,
         )
 
         # 2. DEFINE AGENTS
