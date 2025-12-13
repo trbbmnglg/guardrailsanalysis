@@ -819,9 +819,11 @@ function displayResults() {
                 ${gapAnalysis.breakdown.map((item, i) => {
                     const isPass = item.status === 'pass';
                     const isNeutral = item.status === 'neutral';
-                    const itemControlText = 'controls'
+                    let itemControlText = 'controls'
+                    let itemPtsText = ' PTS'
                     if(item.count = 1){
                       itemControlText = 'control'
+                      itemPtsText = ' PT'
                     }
                     
                     // Dynamic Styles based on Status
@@ -846,7 +848,7 @@ function displayResults() {
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="font-bold text-slate-800 text-sm truncate pr-2">${escapeHtml(item.label)}</span>
                                     <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${isPass ? 'bg-emerald-100 text-emerald-700' : isNeutral ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-700'}">
-                                        ${isPass ? '+' + item.weight + ' PTS' : 'MISSING'}
+                                        ${isPass ? '+' + item.weight + itemPtsText : 'MISSING'}
                                     </span>
                                 </div>
                                 <div class="text-xs text-slate-500 truncate flex items-center gap-1">
