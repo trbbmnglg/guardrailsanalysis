@@ -1,0 +1,132 @@
+strategic_recon_task:
+  description: >
+    **PHASE 1: STRATEGIC RECONNAISSANCE**
+
+    **INPUT:**
+    User Instruction: '''{instruction}'''
+
+    **YOUR MISSION:**
+    1. **Classify Domain:** Is this Finance, Healthcare, Customer Support, Coding, or General?
+    2. **Threat Modeling:** Identify the top 3 specific "Kill Chain" risks for this domain.
+    3. **Directives:** Issue specific orders to your team:
+       - Tell **Security Agent** what specific injection attacks to look for.
+       - Tell **Privacy Agent** what specific PII fields are likely to appear.
+       - Tell **RAI Agent** what ethical boundaries are most fragile here.
+
+    **OUTPUT FORMAT:**
+    A concise "Mission Brief" paragraph (max 150 words) that starts with "MISSION BRIEF:".
+  expected_output: >
+    A strategic Mission Brief defining the domain and top risks.
+
+security_audit_task:
+  description: >
+    **PHASE 2: SECURITY AUDIT**
+
+    **INPUT:**
+    1. User Instruction: '''{instruction}'''
+    2. **Mission Brief:** (See Context)
+
+    **STEPS:**
+    1. **Consume Brief:** Read the Strategy Agent's Mission Brief. Focus ONLY on the risks identified there.
+    2. **Vulnerability Scan:** Scan the instruction for OWASP LLM vulnerabilities.
+    3. **Evidence Extraction:** For every finding, you MUST quote the exact text from the instruction that proves the risk.
+
+    **MANDATORY OUTPUT:**
+    - JSON List of Guardrails.
+    - Category MUST be "Security".
+    - Enforcement MUST be one of: {enforcement_list}
+  expected_output: >
+    Structured list of security guardrails (present and missing).
+
+privacy_audit_task:
+  description: >
+    **PHASE 2: PRIVACY AUDIT**
+
+    **INPUT:**
+    1. User Instruction: '''{instruction}'''
+    2. **Mission Brief:** (See Context)
+
+    **STEPS:**
+    1. **Consume Brief:** Focus on the specific data types (PII) mentioned in the brief.
+    2. **Data Flow Analysis:** Where does data go? Is it logged? Is it repeated?
+    3. **Gap Analysis:** If the user asks for "names" but doesn't mention "redaction", flag it as MISSING.
+
+    **MANDATORY OUTPUT:**
+    - JSON List of Guardrails.
+    - Category MUST be "Privacy".
+    - Enforcement MUST be one of: {enforcement_list}
+  expected_output: >
+    Structured list of privacy guardrails.
+
+rai_audit_task:
+  description: >
+    **PHASE 2: ETHICS & SAFETY AUDIT**
+
+    **INPUT:**
+    1. User Instruction: '''{instruction}'''
+    2. **Mission Brief:** (See Context)
+
+    **STEPS:**
+    1. **Consume Brief:** Focus on the specific ethical risks (e.g., financial advice, medical diagnosis).
+    2. **Safety Check:** Check for triggers for harmful content (self-harm, hate speech).
+    3. **Oversight:** Check for "Human-in-the-loop" mechanisms.
+
+    **MANDATORY OUTPUT:**
+    - JSON List of Guardrails.
+    - Category MUST be "Responsible AI".
+    - Enforcement MUST be one of: {enforcement_list}
+  expected_output: >
+    Structured list of ethical guardrails.
+
+qa_audit_task:
+  description: >
+    **PHASE 2: QUALITY ASSURANCE**
+
+    **INPUT:**
+    1. User Instruction: '''{instruction}'''
+
+    **STEPS:**
+    1. **Scope Validation:** Does the agent know who it is? Does it know what it MUST NOT do?
+    2. **Format Validation:** Is the output schema strictly defined?
+    3. **Error Handling:** Are there instructions for when things go wrong?
+
+    **MANDATORY OUTPUT:**
+    - JSON List of Guardrails.
+    - Categories: "Input Validation", "Output Control", "QA", "Scope Control".
+    - Enforcement MUST be one of: {enforcement_list}
+  expected_output: >
+    Structured list of quality guardrails.
+
+cost_profiling_task:
+  description: >
+    **PHASE 2b: COST PROFILING**
+
+    Analyze the COMPLEXITY of the guardrails being proposed.
+    1. If a guardrail is "Check for email addresses", recommend Regex (Tier 1).
+    2. If a guardrail is "Detect sarcasm", recommend LLM (Tier 3).
+
+    **OUTPUT:**
+    TieringStrategy JSON object with cost/latency estimates.
+  expected_output: >
+    Tier recommendation with cost/latency estimates.
+
+report_synthesis_task:
+  description: >
+    **PHASE 3: FINAL REPORT SYNTHESIS**
+
+    **INPUT:**
+    Findings from ALL Agents (Security, Privacy, RAI, QA, Cost).
+
+    **YOUR STRICT RULES:**
+    1. **DEDUPLICATION:** Compare the 'location' (quote) and 'mechanism' of every finding. If they overlap > 80%, MERGE THEM. Keep the highest severity.
+    2. **VALIDATION:** Ensure every 'present' guardrail has a 'location' quote. Ensure every 'missing' guardrail has location="".
+    3. **FORMATTING:** Return ONLY valid JSON. No markdown.
+
+    **REQUIRED JSON STRUCTURE:**
+    {{
+      "guardrails": [ ... ],
+      "recommendations": [ ... ],
+      "tiering_strategy": {{ ... }}
+    }}
+  expected_output: >
+    Valid JSON matching GuardrailAnalysis schema.
