@@ -236,9 +236,7 @@ async def run_analysis(request: AnalysisRequest):
 
         llm = InferenceClient(
             api_key=request.api_key,
-            model="meta-llama/Llama-3.3-70B-Instruct:sambanova",
-            temperature=0.0,
-            max_tokens=4000,
+            model="meta-llama/Llama-3.3-70B-Instruct,
         )
 
         # 2. DEFINE AGENTS
