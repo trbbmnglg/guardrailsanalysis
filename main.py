@@ -1,6 +1,7 @@
 import os
 import json
 import re
+from huggingface_hub import InferenceClient
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -234,9 +235,19 @@ async def run_analysis(request: AnalysisRequest):
             print("⚠️ Warning: Continuing without Web Search Tool")
         
         llm = ChatOpenAI(
-            model="openai/meta-llama/Llama-3.3-70B-Instruct",
+            model="meta-llama/meta-llama/Llama-3.3-70B-Instruct",
             base_url="https://router.huggingface.co/v1",
             api_key=request.api_key,
+            temperature=0.0,
+            max_tokens=5000,
+        )
+
+        client = InferenceClient(
+            api_key=os.environ["HF_TOKEN"],
+        )
+        
+        llm = client.chat.completions.create(
+            model="meta-llama/Llama-3.3-70B-Instruct:sambanova",
             temperature=0.0,
             max_tokens=5000,
         )
