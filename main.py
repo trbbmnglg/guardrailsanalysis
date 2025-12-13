@@ -10,7 +10,7 @@ from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
 from crewai import LLM
 from langchain_core.output_parsers import PydanticOutputParser
-from crewai_tools import PDFSearchTool
+from agent_tools import get_owasp_web_tool
 
 app = FastAPI()
 
@@ -221,6 +221,15 @@ async def run_analysis(request: AnalysisRequest):
         # 1. SETUP LLM
         os.environ["OPENAI_API_KEY"] = request.api_key
         os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
+
+        # We do this inside the endpoint to ensure it picks up the fresh API key
+        security_tools = []
+        web_tool = get_owasp_web_tool()
+        
+        if web_tool: 
+            security_tools.append(web_tool)
+        else:
+            print("⚠️ Warning: Continuing without Web Search Tool")
         
         llm = ChatOpenAI(
             model="openai/meta-llama/Llama-3.3-70B-Instruct",
@@ -291,7 +300,8 @@ async def run_analysis(request: AnalysisRequest):
         Your output must be parseable by json.loads() in Python.
         
         """,
-            llm=llm, 
+            llm=llm,
+            tools=security_tools,
             allow_delegation=False, 
             verbose=True
         )
@@ -522,6 +532,11 @@ async def run_analysis(request: AnalysisRequest):
             
         INSTRUCTION TO ANALYZE:
         '''{request.instruction}'''
+
+        RAG VERIFICATION STEPS:
+            1. Use the 'WebsiteSearchTool' to search for risks related to the user's instruction.
+            2. Specifically search for "Prompt Injection", "Sensitive Data", and "Unauthorized Access" in the OWASP 2025 guide.
+            3. Quote the specific mitigation technique found in the search results in the 'mechanism' field of your JSON output.
         
         OUTPUT REQUIREMENTS:
         1. Find ALL security controls (present and missing)
