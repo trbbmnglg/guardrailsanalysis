@@ -227,7 +227,7 @@ async def run_analysis(request: AnalysisRequest):
 
         llm = InferenceClient(
             api_key=request.api_key,
-            model="meta-llama/Llama-3.3-70B-Instruct,
+            model="meta-llama/Llama-3.3-70B-Instruct",
         )
 
         tool = WebsiteSearchTool(
