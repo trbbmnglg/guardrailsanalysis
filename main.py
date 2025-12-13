@@ -319,7 +319,6 @@ async def run_analysis(request: AnalysisRequest):
                 """,
                 agent=tiering_agent,
                 context=[task_strategy, task_security, task_qa],
-                async_execution=True,
                 expected_output="Tier recommendation with cost/latency estimates"
             )
             
