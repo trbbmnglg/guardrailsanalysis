@@ -788,108 +788,117 @@ function displayResults() {
 
     // 4. Enhanced Breakdown with AI Confidence
     const breakdownContainer = document.getElementById('recommendations');
+   // --- START OF NEW RENDERING LOGIC ---
+
+    // 1. Compliance Scorecard (The Grid)
     const checklistHTML = `
-        <div class="mb-6 bg-white bg-opacity-50 rounded-lg p-4">
-            <!-- Header with Confidence Badge -->
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="font-bold text-purple-900 uppercase text-xs tracking-wider">
-                    AI-Governed Gap Analysis
-                </h4>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-500 font-mono">
-                        ${gapAnalysis.stats.earnedPoints}/${gapAnalysis.stats.possiblePoints} pts
-                    </span>
-                    <span class="px-2 py-1 rounded text-xs font-bold ${
-                        gapAnalysis.confidence.level === 'High' ? 'bg-green-100 text-green-700' :
-                        gapAnalysis.confidence.level === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                    }">
-                        ${gapAnalysis.confidence.score}% AI Confidence
-                    </span>
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                        <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-600 text-white text-lg shadow-md shadow-indigo-200">🛡️</span>
+                        Governance Insights
+                    </h2>
+                    <p class="text-slate-500 mt-1 ml-14">AI-verified compliance gaps and remediation steps</p>
+                </div>
+                
+                <div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200">
+                    <div class="text-right">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Analysis Confidence</div>
+                        <div class="text-sm font-bold ${gapAnalysis.confidence.level === 'High' ? 'text-emerald-600' : 'text-amber-500'}">
+                            ${gapAnalysis.confidence.score}% (${gapAnalysis.confidence.level})
+                        </div>
+                    </div>
+                    <div class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${gapAnalysis.confidence.level === 'High' ? 'bg-emerald-400' : 'bg-amber-400'} opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 ${gapAnalysis.confidence.level === 'High' ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Dimension Breakdown -->
-            <ul class="space-y-2 mb-4">
-                ${gapAnalysis.breakdown.map(item => {
-                    let icon, textClass, bgClass;
-                    if (item.status === 'pass') {
-                        icon = '✅';
-                        textClass = 'text-gray-800 font-semibold';
-                        bgClass = 'bg-green-50 border-green-200';
-                    } else if (item.status === 'fail') {
-                        icon = '❌';
-                        textClass = 'text-red-700 font-semibold';
-                        bgClass = 'bg-red-50 border-red-200';
-                    } else {
-                        icon = '⚪';
-                        textClass = 'text-gray-400 italic';
-                        bgClass = 'bg-gray-50 border-gray-200';
-                    }
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ${gapAnalysis.breakdown.map((item, i) => {
+                    const isPass = item.status === 'pass';
+                    const isNeutral = item.status === 'neutral';
                     
+                    // Dynamic Styles based on Status
+                    let containerClass = isPass ? "bg-emerald-50/50 border-emerald-100 hover:border-emerald-300" 
+                                       : isNeutral ? "bg-slate-50 border-slate-100"
+                                       : "bg-red-50/50 border-red-100 hover:border-red-300";
+                    
+                    let iconClass = isPass ? "bg-emerald-100 text-emerald-600" 
+                                  : isNeutral ? "bg-slate-200 text-slate-400"
+                                  : "bg-red-100 text-red-600";
+                                  
+                    let icon = isPass ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`
+                             : isNeutral ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>`
+                             : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
+
                     return `
-                        <li class="flex items-center gap-3 p-2 rounded border ${bgClass}">
-                            <span class="text-lg font-bold">${icon}</span>
-                            <span class="${textClass} flex-1">
-                                ${escapeHtml(item.label)}
-                                ${item.count > 0 ? `<span class="text-xs opacity-60 ml-1">(${item.count})</span>` : ''}
-                            </span>
-                            <span class="text-xs font-mono ${item.status === 'pass' ? 'text-green-600' : 'text-gray-400'}">
-                                ${item.status === 'pass' ? '+' : ''}${item.weight}
-                            </span>
-                        </li>
+                        <div class="flex items-center gap-4 p-4 rounded-xl border ${containerClass} transition-all duration-300 group fade-in" style="animation-delay: ${i * 0.05}s">
+                            <div class="h-12 w-12 rounded-lg ${iconClass} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                                ${icon}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="font-bold text-slate-800 text-sm truncate pr-2">${escapeHtml(item.label)}</span>
+                                    <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${isPass ? 'bg-emerald-100 text-emerald-700' : isNeutral ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-700'}">
+                                        ${isPass ? '+' + item.weight + ' PTS' : 'MISSING'}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-slate-500 truncate flex items-center gap-1">
+                                    ${item.count > 0 ? `<span class="font-semibold text-slate-700">${item.count}</span> controls verified` : 'No controls detected'}
+                                </div>
+                            </div>
+                        </div>
                     `;
                 }).join('')}
-            </ul>
-
-            <!-- AI Confidence Details (if not High) -->
-            ${gapAnalysis.confidence.level !== 'High' ? `
-                <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                    <p class="font-bold text-yellow-900 mb-1">⚠️ AI Analysis Confidence: ${gapAnalysis.confidence.level}</p>
-                    <ul class="text-yellow-800 space-y-1 ml-4">
-                        ${gapAnalysis.confidence.issues.map(issue => `<li>• ${escapeHtml(issue)}</li>`).join('')}
-                    </ul>
-                </div>
-            ` : ''}
-
-            <!-- Methodology Note -->
-            <div class="mt-4 pt-3 border-t border-purple-100">
-                <p class="text-xs text-gray-500 italic">
-                    <strong>Methodology:</strong> ${escapeHtml(gapAnalysis.methodology)}
-                </p>
             </div>
         </div>
     `;
 
-        const recsHTML = `
-        <div class="flex items-center justify-between mb-4 p-2 bg-purple-50 rounded-lg border border-purple-100">
-            <h4 class="font-bold text-purple-900 uppercase text-xs tracking-wider flex items-center gap-2">
-                AI Suggestions
-                <span class="bg-white text-purple-700 px-2 py-0.5 rounded-full text-[10px] border border-purple-100 shadow-sm">
-                    ${analysisResults.recommendations.length}
-                </span>
-            </h4>
-            
-            <button id="toggleRecsBtn" class="group flex items-center gap-2 text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-4 py-1.5 rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span id="toggleRecsText">Show Magic Fixes</span>
-            </button>
-        </div>
+    // 2. Actionable Recommendations (The Cards)
+    const recsHTML = `
+        <div class="relative overflow-hidden bg-slate-900 rounded-xl p-6 text-white shadow-xl">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-600 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-        <div id="recsContent" class="hidden transition-all duration-300 ease-in-out origin-top">
-            <ul class="space-y-3 bg-white/40 p-4 rounded-xl border border-purple-100">
+            <div class="relative z-10 flex items-center justify-between mb-6 border-b border-slate-700 pb-4">
+                <div class="flex items-center gap-3">
+                    <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-400/30 text-indigo-300">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </span>
+                    <div>
+                        <h3 class="font-bold text-lg tracking-tight">AI Strategy</h3>
+                        <p class="text-xs text-slate-400">Recommended actions to improve score</p>
+                    </div>
+                </div>
+                
+                <button id="toggleRecsBtn" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold transition-all flex items-center gap-2">
+                    <span id="toggleRecsText">Hide Actions</span>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+            </div>
+
+            <div id="recsContent" class="grid grid-cols-1 gap-3 transition-all duration-300">
                 ${analysisResults.recommendations.map((rec, i) => `
-                    <li class="flex items-start gap-3 p-2 hover:bg-white rounded-lg transition-colors fade-in" style="animation-delay: ${i * 0.05}s">
-                        <span class="text-purple-600 mt-0.5 text-lg">⚡</span>
-                        <span class="text-gray-700 text-sm leading-relaxed">${escapeHtml(rec)}</span>
-                    </li>
+                    <div class="flex items-start gap-4 p-4 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-indigo-400/30 transition-all group cursor-default">
+                        <div class="mt-1 flex-shrink-0">
+                            <div class="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-300 group-hover:text-indigo-200 group-hover:scale-110 transition-all">
+                                <span class="text-xs">⚡</span>
+                            </div>
+                        </div>
+                        <div class="text-sm text-slate-200 leading-relaxed font-medium">
+                            ${escapeHtml(rec)}
+                        </div>
+                    </div>
                 `).join('')}
-            </ul>
-        </div>`;
-        
-        breakdownContainer.innerHTML = checklistHTML + recsHTML;
+            </div>
+        </div>
+    `;
+
+    breakdownContainer.innerHTML = checklistHTML + recsHTML;
+
+    // --- END OF NEW RENDERING LOGIC ---
         
         console.log('🤖 AI Governance Score:', gapAnalysis);
   
