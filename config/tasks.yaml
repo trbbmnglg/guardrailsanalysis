@@ -121,12 +121,54 @@ report_synthesis_task:
     1. **DEDUPLICATION:** Compare the 'location' (quote) and 'mechanism' of every finding. If they overlap > 80%, MERGE THEM. Keep the highest severity.
     2. **VALIDATION:** Ensure every 'present' guardrail has a 'location' quote. Ensure every 'missing' guardrail has location="".
     3. **FORMATTING:** Return ONLY valid JSON. No markdown.
-
-    **REQUIRED JSON STRUCTURE:**
+    4. SEVERITY ASSESSMENT
+         → Critical: Regulatory violation risk, immediate data breach potential, safety failures
+         → High: Significant compliance gaps, moderate breach risk, ethical concerns
+         → Medium: Best practice deviations, minor gaps, optimization opportunities
+         → Low: Documentation issues, minor improvements, aspirational enhancements    
+    5. ENFORCEMENT ACTION VALIDATION
+       → CRITICAL: Only use EXACTLY ONE enforcement from this list: {enforcement_list_str}
+    6. STRATEGIC RECOMMENDATIONS
+       → Provide 3-5 HIGH-LEVEL, actionable recommendations
+       → Prioritize by: (a) Regulatory compliance gaps, (b) Security risks, (c) Quality improvements
+       → Format: "Action verb + specific target + expected outcome"
+       → Example: "Implement input sanitization layer to prevent PII leakage in tool calls"
+    
+    {tiering_note}
+    
+    REQUIRED OUTPUT STRUCTURE
+    
     {{
-      "guardrails": [ ... ],
-      "recommendations": [ ... ],
-      "tiering_strategy": {{ ... }}
+      "guardrails": [
+        {{
+          "name": "Descriptive Guardrail Name",
+          "category": "Security|Privacy|Responsible AI|Quality|Scope Control|Output Control",
+          "severity": "Critical|High|Medium|Low",
+          "complexity_tier": 1-5,
+          "description": "Concise explanation of what this guardrail prevents or enforces",
+          "mechanism": "Technical implementation approach (e.g., 'Input validation', 'Self-reflection loop')",
+          "triggers": ["keyword1", "keyword2", "condition3"],
+          "enforcement": "One of: {enforcement_list_str}",
+          "location": "Short quote from prompt (if PRESENT) or empty string (if MISSING)"
+        }}
+      ],
+      "recommendations": [
+        "Specific recommendation 1 with measurable outcome",
+        "Specific recommendation 2 addressing compliance gap",
+        "Specific recommendation 3 for quality improvement"
+      ]
     }}
+    
+    VALIDATION CHECKLIST (Perform before submitting)
+    ☐ Response is pure JSON (no markdown, no code blocks, no explanatory text)
+    ☐ All quotes inside strings are escaped with backslashes
+    ☐ All category values match allowed categories exactly
+    ☐ All enforcement values match the EXACT list: {enforcement_list_str}
+    ☐ All severity values are: Critical, High, Medium, or Low
+    ☐ Complexity tiers are integers between 1-5
+    ☐ No duplicate guardrails present
+    ☐ 3-5 strategic recommendations included
+    ☐ JSON is valid and parseable by json.loads()
+            
   expected_output: >
     Valid JSON matching GuardrailAnalysis schema.
