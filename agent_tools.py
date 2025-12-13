@@ -22,7 +22,3 @@ def get_owasp_web_tool():
             }
         )
     return tool
-    
-except Exception as e:
-        print(f"❌ ERROR: Failed to initialize WebsiteSearchTool: {e}")
-        return None
