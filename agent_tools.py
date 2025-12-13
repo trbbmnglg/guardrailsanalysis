@@ -6,11 +6,26 @@ OWASP_URL = "https://www.confident-ai.com/blog/owasp-top-10-2025-for-llm-applica
 def get_owasp_web_tool():
     """
     Factory for the Website Search Tool (2025 RAG).
-    Initialized with the specific Confident AI OWASP 2025 guide.
+    Configured to use HuggingFace for embeddings to avoid OpenAI 401 errors.
     """
     try:
-        # The tool automatically uses the OPENAI_API_KEY from os.environ for embeddings
-        return WebsiteSearchTool(website=OWASP_URL)
+        return WebsiteSearchTool(
+            website=OWASP_URL,
+            config={
+                "llm": {
+                    "provider": "huggingface",
+                    "config": {
+                        "model": "meta-llama/Llama-3.3-70B-Instruct",
+                    }
+                },
+                "embedder": {
+                    "provider": "huggingface",
+                    "config": {
+                        "model": "sentence-transformers/all-MiniLM-L6-v2"
+                    }
+                }
+            }
+        )
     except Exception as e:
         print(f"❌ ERROR: Failed to initialize WebsiteSearchTool: {e}")
         return None
