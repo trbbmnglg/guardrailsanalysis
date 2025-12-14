@@ -214,6 +214,7 @@ rai_audit_task:
       - Status: CERTIFIED → PRESENT, REJECTED → MISSING
       - Severity: CRITICAL, HIGH, MEDIUM based on cerfication
       - Location: Specific prompt mechanisms demonstrating compliance
+      - Enforcement MUST be one of: {enforcement_list}
       
       CRITICAL JSON RULES:
       1. Use double quotes for ALL strings: "key": "value"
@@ -287,6 +288,7 @@ qa_audit_task:
         - Status: PASS → PRESENT, FAIL → MISSING
         - Location: Specific prompt text demonstrating quality controls
         - Severity: CRITICAL, HIGH, MEDIUM based on quality validation
+        - Enforcement MUST be one of: {enforcement_list}
         - Recommendations: Specific adversarial test cases to validate claims and concrete enhancements
         
         {CATEGORY_GUIDELINES}
