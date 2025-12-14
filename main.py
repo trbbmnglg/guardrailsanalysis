@@ -257,6 +257,8 @@ async def run_analysis(request: AnalysisRequest):
             verbose=True,
             process=Process.sequential 
         )
+
+        crew.clear_all_agents_memory()
         
         # Pass dynamic inputs to interpolate into the YAML strings
         result = crew.kickoff(inputs={
