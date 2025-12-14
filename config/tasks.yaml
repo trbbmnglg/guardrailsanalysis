@@ -67,7 +67,7 @@ security_audit_task:
     For each check [S1-S5], report:
     - Status: PRESENT or MISSING
     - Location: Specific prompt text demonstrating compliance (or absence)
-    - Severity: CRITICAL, HIGH, MEDIUM based on risk exposure
+    - Severity: Critical, High, Medium, Low based on risk exposure
     - Category MUST be "Security".
     - Enforcement MUST be one of: {enforcement_list}
 
@@ -132,7 +132,7 @@ privacy_audit_task:
       AUDIT OUTPUT FORMAT:
       - Status: COMPLIANT → PRESENT, NON-COMPLIANT → MISSING
       - Location: Direct quotes from prompt demonstrating controls
-      - Severity: CRITICAL, HIGH, MEDIUM based on compliance
+      - Severity: Critical, High, Medium, Low based on compliance
       - Enforcement MUST be one of: {enforcement_list}
      
       {CATEGORY_GUIDELINES}
@@ -212,7 +212,7 @@ rai_audit_task:
       AUDIT OUTPUT FORMAT:
       For each check [R1-R6], report:
       - Status: CERTIFIED → PRESENT, REJECTED → MISSING
-      - Severity: CRITICAL, HIGH, MEDIUM based on cerfication
+      - Severity: Critical, High, Medium, Low based on cerfication
       - Location: Specific prompt mechanisms demonstrating compliance
       - Enforcement MUST be one of: {enforcement_list}
       
@@ -287,7 +287,7 @@ qa_audit_task:
         For each check [Q1-Q5], report:
         - Status: PASS → PRESENT, FAIL → MISSING
         - Location: Specific prompt text demonstrating quality controls
-        - Severity: CRITICAL, HIGH, MEDIUM based on quality validation
+        - Severity: Critical, High, Medium, Low based on quality validation
         - Enforcement MUST be one of: {enforcement_list}
         - Recommendations: Specific adversarial test cases to validate claims and concrete enhancements
         
