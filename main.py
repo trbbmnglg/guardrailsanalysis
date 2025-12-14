@@ -45,6 +45,28 @@ ALLOWED_ENFORCEMENT_ACTIONS = Literal[
     "Identify", "Enforce", "Limit", "Remove", "Test", "Encrypt"
 ]
 
+CATEGORY_GUIDELINES = """
+    CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
+    1. "Security" - Authentication, authorization, injection attacks, secure data handling
+    2. "Privacy" - PII handling, GDPR/CCPA, data residency, consent mechanisms
+    3. "Responsible AI" - Bias, fairness, toxicity, harmful content, ethical boundaries
+    4. "Scope Control" - Task limitations, out-of-scope detection, capability boundaries
+    5. "Input Validation" - Input sanitization, format checks, type validation
+    6. "Output Control" - Response filtering, length limits, format enforcement
+    7. "QA" - Quality checks, error handling, testing, monitoring
+    
+    NAMING RULES FOR MISSING GUARDRAILS:
+    - Start with "MISSING:" followed by specific control name
+    - Example: "MISSING: SQL Injection Prevention"
+    - Example: "MISSING: PII Redaction for Email Addresses"
+    
+    LOCATION FIELD RULES:
+    - If guardrail EXISTS: Provide max 5 words exact quote from instruction
+    - If guardrail is MISSING: Set location to empty string ""
+    - Never use placeholder text like "Not specified" or "N/A"
+    
+"""
+
 enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
 tiering_note = ""
 
