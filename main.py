@@ -82,6 +82,9 @@ class AnalysisRequest(BaseModel):
 
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
+    
+    tiering_note = ""
+    
     try:
         # 1. SETUP LLM
         os.environ["OPENAI_API_KEY"] = request.api_key
@@ -174,7 +177,6 @@ async def run_analysis(request: AnalysisRequest):
             async_execution=True
         )
 
-        tiering_note = ""
         agents_list = [strategy_agent, security_agent, privacy_ops_agent, rai_agent, qa_agent]
         tasks_list = [task_strategy, task_security, task_privacy, task_rai, task_qa]
         report_context = [task_security, task_privacy, task_rai, task_qa]
