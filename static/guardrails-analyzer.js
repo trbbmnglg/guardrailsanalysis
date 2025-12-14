@@ -370,6 +370,7 @@
             setTimeout(() => { 
                 hideLoading(); 
                 displayResults(); 
+                scrollToSummary();
             }, 500);
     
         } catch (error) {
@@ -380,6 +381,21 @@
     }
   
     // --- UPDATED DISPLAY RESULTS: Full UI Rebuild to Prevent ID Conflicts ---
+
+    function scrollToSummary() {
+        // Find the element by its ID
+        const summaryElement = document.getElementById("executive-summary");
+
+        // Check if the element exists to prevent errors
+        if (summaryElement) {
+            // Scroll to it smoothly
+            summaryElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+    }
+  
     function displayResults() {
         if (!analysisResults) return;
 
@@ -397,7 +413,7 @@
         const summaryHTML = `
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 fade-in">
                 <div class="flex items-center justify-between mb-6">
-                    <div>
+                    <div id="executive-summary">
                         <h2 class="text-xl font-bold text-slate-900">Executive Summary</h2>
                         <p class="text-sm text-slate-500">Real-time analysis of guardrail coverage and risk exposure.</p>
                     </div>
