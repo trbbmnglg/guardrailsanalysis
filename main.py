@@ -180,7 +180,6 @@ async def run_analysis(request: AnalysisRequest):
             agents=agents_list,
             tasks=tasks_list,
             verbose=True,
-            memory=True,
             process=Process.sequential 
         )
         
