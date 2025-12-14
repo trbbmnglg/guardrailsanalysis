@@ -460,23 +460,49 @@ Mission: Provide customer support...
             </div>
 
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mt-12">
-            <div class="max-w-auto">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    AI Diligence & Attribution
-                </h3>
-                <div class="italic space-y-4 text-sm text-slate-600">
-                    "The final output accurately reflects my understanding, expertise, and intended meaning. While AI assistance was instrumental in the process, I maintain full responsibility for the content, its accuracy, and its presentation. This disclosure is made in
-                    the spirit of transparency and to acknowledge the role of AI in the creation process."
-                    <div class="text-xs text-slate-400 pt-4 border-t border-slate-100 mt-4">
-                        <p>© 2025 Robert Bumanglag • Powered by Llama 3.3 via HuggingFace</p>
+        <footer class="mt-12 border-t border-slate-200 pt-8 pb-12 px-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            
+            <div>
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="p-1.5 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
                     </div>
+                    <span class="font-bold text-slate-700 tracking-tight">Guardrails Analyzer</span>
+                </div>
+                <p class="text-xs text-slate-500 max-w-sm leading-relaxed">
+                    An agentic AI audit platform powered by <a href="#" class="text-blue-600 hover:underline">CrewAI</a> and <a href="#" class="text-blue-600 hover:underline">Llama 3.3</a>. Designed to verify enterprise compliance, security, and safety standards.
+                </p>
+                <div class="mt-4 text-xs font-mono text-slate-400">
+                    v3.9.6-weighted-scoring
                 </div>
             </div>
+    
+            <div class="md:text-right">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Diligence & Attribution</h4>
+                <p class="text-xs text-slate-500 italic leading-relaxed mb-2">
+                    "The final output accurately reflects my understanding, expertise, and intended meaning. While AI assistance was instrumental in the process, I maintain full responsibility for the content, its accuracy, and its presentation."
+                </p>
+                <p class="text-xs text-slate-400">
+                    &copy; 2025 Robert Bumanglag. All rights reserved.
+                </p>
+            </div>
         </div>
+    
+        <div class="flex flex-wrap gap-4 justify-center md:justify-start border-t border-slate-100 pt-6">
+            <a href="https://huggingface.co/" target="_blank" class="text-xs text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
+                HuggingFace Models ↗
+            </a>
+            <a href="https://crewai.com" target="_blank" class="text-xs text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1">
+                CrewAI Documentation ↗
+            </a>
+            <a href="#" onclick="window.guardrailAnalyzer.resetFilters(); window.scrollTo({top: 0, behavior: 'smooth'}); return false;" class="text-xs text-slate-500 hover:text-blue-600 transition-colors ml-auto">
+                Back to Top
+            </a>
+        </div>
+    </footer>
     </div>
 </body>
 
