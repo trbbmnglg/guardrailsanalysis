@@ -1,7 +1,3 @@
-{
-type: uploaded file
-fileName: guardrails_analyzer_v2-main/static/guardrails-analyzer.js
-fullContent:
 // AI Agent Guardrail Analyzer - Enterprise Agentic Edition
 // Author: Robert Bumanglag
 // Backend: Python CrewAI (FastAPI)
@@ -754,4 +750,3 @@ fullContent:
         version: '3.9.6-weighted-scoring' 
     };
 })();
-}
