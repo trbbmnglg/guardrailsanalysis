@@ -29,7 +29,7 @@ security_audit_task:
     **STEPS:**
     1. **Consume Brief:** Read the Strategy Agent's Mission Brief. Focus ONLY on the risks identified there.
     2. **Vulnerability Scan:** Scan the instruction for OWASP LLM vulnerabilities.
-    3. ** Security Audit: **
+    3. **Security Audit:**
       SECURITY AUDIT PROTOCOL: OWASP LLM TOP 10 & ISO 42001 VALIDATION      
       [S1] Prompt Injection & Jailbreak Resilience
           → Verify strict instructions forbid the LLM from executing user-provided instructions that override the system prompt
@@ -162,7 +162,7 @@ rai_audit_task:
     1. **Consume Brief:** Focus on the specific ethical risks (e.g., financial advice, medical diagnosis).
     2. **Safety Check:** Check for triggers for harmful content (self-harm, hate speech).
     3. **Oversight:** Check for "Human-in-the-loop" mechanisms.
-    4. **Responsible AI Certification: **
+    4. **Responsible AI Certification:**
      RESPONSIBLE AI CERTIFICATION PROTOCOL: EU AI ACT & NIST AI RMF VALIDATION
       [R1] Systemic Bias & Fairness Mitigation (Mechanism Check)
           → Verify active bias detection mechanisms (self-reflection prompts, demographic balancing)
@@ -314,7 +314,7 @@ cost_profiling_task:
     Review the current AI instruction and provide tier recommendation.
     
     INSTRUCTION TO REVIEW:
-    '''{request.instruction}'''
+    '''{instruction}'''
 
     1. What tier is needed to IMPLEMENT the current guardrails
     2. Recommended model class
