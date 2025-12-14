@@ -332,6 +332,8 @@ report_synthesis_task:
     **INPUT:**
     Findings from ALL Agents (Security, Privacy, RAI, QA, Cost).
 
+    {tiering_note}
+
     **YOUR STRICT RULES:**
     1. **DEDUPLICATION:** Compare the 'location' (quote) and 'mechanism' of every finding. If they overlap > 80%, MERGE THEM. Keep the highest severity.
     2. **VALIDATION:** Ensure every 'present' guardrail has a 'location' quote. Ensure every 'missing' guardrail has location="".
@@ -339,17 +341,18 @@ report_synthesis_task:
     4. **SEVERITY ASSESSMENT:**
        - Critical: Regulatory violation risk, immediate data breach potential, safety failures
        - High: Significant compliance gaps, moderate breach risk, ethical concerns
-       - Medium: Best practice deviations, minor gaps, optimization opportunities
-       - Low: Documentation issues, minor improvements, aspirational enhancements    
-    5. **ENFORCEMENT ACTION VALIDATION:**
+       - Medium: Best practice deviations, minor gaps
+       - Low: Documentation issues, minor improvements, aspirational enhancements
+    5. **COMPLEXITY TIERING:**
+       - If tiering is not required do not assume complexity_tier
+       - Never use complexity_tier for serverity assessment
+    6. **ENFORCEMENT ACTION VALIDATION:**
        - CRITICAL: Only use EXACTLY ONE enforcement from this list: {enforcement_list}
-    6. **STRATEGIC RECOMMENDATIONS:**
+    7. **STRATEGIC RECOMMENDATIONS:**
        - Provide 3-5 HIGH-LEVEL, actionable recommendations
        - Prioritize by: (a) Regulatory compliance gaps, (b) Security risks, (c) Quality improvements
        - Format: "Action verb + specific target + expected outcome"
        - Example: "Implement input sanitization layer to prevent PII leakage in tool calls"
-    
-    {tiering_note}
     
     **REQUIRED OUTPUT STRUCTURE:**
     
