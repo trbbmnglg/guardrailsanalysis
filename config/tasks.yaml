@@ -23,7 +23,7 @@ security_audit_task:
     **PHASE 2: SECURITY AUDIT**
 
     **INPUT:**
-    1. User Instruction: '''{instruction}'''
+    1. AI Instructions: '''{instruction}'''
     2. **Mission Brief:** (See Context)
 
     **STEPS:**
@@ -89,7 +89,7 @@ privacy_audit_task:
     **PHASE 2: PRIVACY AUDIT**
 
     **INPUT:**
-    1. User Instruction: '''{instruction}'''
+    1. AI Instructions: '''{instruction}'''
     2. **Mission Brief:** (See Context)
 
     **STEPS:**
@@ -131,7 +131,7 @@ privacy_audit_task:
       
       AUDIT OUTPUT FORMAT:
       - Status: COMPLIANT → PRESENT, NON-COMPLIANT → MISSING
-      - Location: Direct quotes from prompt demonstrating controls
+      - Location: Direct quotes from the AI instructions
       - Severity: Critical, High, Medium, Low based on compliance
       - Enforcement MUST be one of: {enforcement_list}
      
@@ -155,7 +155,7 @@ rai_audit_task:
     **PHASE 2: ETHICS & SAFETY AUDIT**
 
     **INPUT:**
-    1. User Instruction: '''{instruction}'''
+    1. AI Instructions '''{instruction}'''
     2. **Mission Brief:** (See Context)
 
     **STEPS:**
@@ -213,7 +213,7 @@ rai_audit_task:
       For each check [R1-R6], report:
       - Status: CERTIFIED → PRESENT, REJECTED → MISSING
       - Severity: Critical, High, Medium, Low based on cerfication
-      - Location: Specific prompt mechanisms demonstrating compliance
+      - Location: Specific mechanisms demonstrating compliance from the AI instructions
       - Enforcement MUST be one of: {enforcement_list}
       
       CRITICAL JSON RULES:
@@ -234,7 +234,8 @@ qa_audit_task:
     **PHASE 2: QUALITY ASSURANCE**
 
     **INPUT:**
-    1. User Instruction: '''{instruction}'''
+    1. AI Instruction: '''{instruction}'''
+    2. **Mission Brief:** (See Context)
 
     **STEPS:**
     1. **Scope Validation:** Does the agent know who it is? Does it know what it MUST NOT do?
@@ -286,7 +287,7 @@ qa_audit_task:
         AUDIT OUTPUT FORMAT:
         For each check [Q1-Q5], report:
         - Status: PASS → PRESENT, FAIL → MISSING
-        - Location: Specific prompt text demonstrating quality controls
+        - Location: Specific prompt text demonstrating quality controls from the AI instructions
         - Severity: Critical, High, Medium, Low based on quality validation
         - Enforcement MUST be one of: {enforcement_list}
         - Recommendations: Specific adversarial test cases to validate claims and concrete enhancements
