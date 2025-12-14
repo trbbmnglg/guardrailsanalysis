@@ -23,21 +23,12 @@ GLOBAL_AGENTS_CONFIG = load_config('config/agents.yaml')
 GLOBAL_TASKS_CONFIG = load_config('config/tasks.yaml')
 
 def repair_json(json_str: str) -> str:
-    # 1. Trim markdown
     json_str = json_str.replace("```json", "").replace("```", "").strip()
-    
-    # 2. Fix common LLM mistake: Unescaped quotes inside string values
     open_braces = json_str.count('{') - json_str.count('}')
     open_brackets = json_str.count('[') - json_str.count(']')
-    
-    # If we are inside a string (odd number of quotes), close it
-    if json_str.count('"') % 2 != 0:
-        json_str += '"'
-    
-    # Close open arrays/objects
+    if json_str.count('"') % 2 != 0: json_str += '"'
     json_str += ']' * open_brackets
     json_str += '}' * open_braces
-    
     return json_str
 
 ALLOWED_ENFORCEMENT_ACTIONS = Literal[
@@ -116,145 +107,68 @@ async def run_analysis(request: AnalysisRequest):
             max_tokens=4000,
         )
 
-        # 2. CONFIG DEEP COPY (Crucial for state isolation)
         agents_config = copy.deepcopy(GLOBAL_AGENTS_CONFIG)
         tasks_config = copy.deepcopy(GLOBAL_TASKS_CONFIG)
 
         # ---------------------------------------------------------
-        # PHASE 1: THE HUDDLE (STRATEGY & ALIGNMENT)
+        # PHASE 1 & 2: STRATEGY AND SPECIALISTS
         # ---------------------------------------------------------
 
-        strategy_agent = Agent(
-            config=agents_config['audit_strategy_lead'],
-            llm=llm,
-            allow_delegation=False,
-            verbose=True
-        )
+        strategy_agent = Agent(config=agents_config['audit_strategy_lead'], llm=llm, allow_delegation=False, verbose=True)
+        task_strategy = Task(config=tasks_config['strategic_recon_task'], agent=strategy_agent, async_execution=False)
 
-        task_strategy = Task(
-            config=tasks_config['strategic_recon_task'],
-            agent=strategy_agent,
-            async_execution=False 
-        )
+        security_agent = Agent(config=agents_config['security_auditor'], llm=llm, allow_delegation=False, verbose=True)
+        privacy_ops_agent = Agent(config=agents_config['privacy_officer'], llm=llm, allow_delegation=False, verbose=True)
+        rai_agent = Agent(config=agents_config['rai_director'], llm=llm, allow_delegation=False, verbose=True)
+        qa_agent = Agent(config=agents_config['qa_engineer'], llm=llm, allow_delegation=False, verbose=True)
 
-        # ---------------------------------------------------------
-        # PHASE 2: PARALLEL SPECIALIST EXECUTION
-        # ---------------------------------------------------------
-
-        security_agent = Agent(
-            config=agents_config['security_auditor'],
-            llm=llm,
-            allow_delegation=False, 
-            verbose=True
-        )
-
-        privacy_ops_agent = Agent(
-            config=agents_config['privacy_officer'],
-            llm=llm, 
-            allow_delegation=False, 
-            verbose=True
-        )
-
-        rai_agent = Agent(
-            config=agents_config['rai_director'],
-            llm=llm, 
-            allow_delegation=False, 
-            verbose=True
-        )
-
-        qa_agent = Agent(
-            config=agents_config['qa_engineer'],
-            llm=llm, 
-            allow_delegation=False, 
-            verbose=True
-        )
-
-        # -- TASKS --
-
-        task_security = Task(
-            config=tasks_config['security_audit_task'],
-            agent=security_agent,
-            context=[task_strategy], 
-            async_execution=True    
-        )
-        
-        task_privacy = Task(
-            config=tasks_config['privacy_audit_task'],
-            agent=privacy_ops_agent,
-            context=[task_strategy],
-            async_execution=True
-        )
-        
-        task_rai = Task(
-            config=tasks_config['rai_audit_task'],
-            agent=rai_agent,
-            context=[task_strategy],
-            async_execution=True
-        )
-        
-        task_qa = Task(
-            config=tasks_config['qa_audit_task'],
-            agent=qa_agent,
-            context=[task_strategy],
-            async_execution=True
-        )
+        task_security = Task(config=tasks_config['security_audit_task'], agent=security_agent, context=[task_strategy], async_execution=True)
+        task_privacy = Task(config=tasks_config['privacy_audit_task'], agent=privacy_ops_agent, context=[task_strategy], async_execution=True)
+        task_rai = Task(config=tasks_config['rai_audit_task'], agent=rai_agent, context=[task_strategy], async_execution=True)
+        task_qa = Task(config=tasks_config['qa_audit_task'], agent=qa_agent, context=[task_strategy], async_execution=True)
 
         agents_list = [strategy_agent, security_agent, privacy_ops_agent, rai_agent, qa_agent]
         tasks_list = [task_strategy, task_security, task_privacy, task_rai, task_qa]
         report_context = [task_security, task_privacy, task_rai, task_qa]
 
         # ---------------------------------------------------------
-        # PHASE 3: OPTIONAL COST ARCHITECT
+        # PHASE 3: OPTIONAL COST ARCHITECT (ISOLATED)
         # ---------------------------------------------------------
+        
+        # NOTE: We declare task_tiering outside the if block so we can reference it later
+        task_tiering = None
 
-        # THE FIREWALL LOGIC:
-        # We explicitly instruct the Report Agent on how to handle Cost data
-        # to prevent it from contaminating the Safety/Guardrail analysis.
         if request.enable_profiling:
-            tiering_note = """
-            8. **TIERING STRATEGY (ISOLATED):**
-               - Locate the 'TieringStrategy' output from the Cost Architect.
-               - Include it exactly as is in the 'tiering_strategy' field.
-               - CRITICAL: Do NOT allow the Cost Architect's opinions to add, remove, or modify any items in the 'guardrails' list. The guardrails list must be derived ONLY from Security, Privacy, RAI, and QA agents.
-            """
-            
-            tiering_agent = Agent(
-                config=agents_config['cost_architect'],
-                llm=llm, 
-                allow_delegation=False, 
-                verbose=True
-            )
+            tiering_agent = Agent(config=agents_config['cost_architect'], llm=llm, allow_delegation=False, verbose=True)
             
             task_tiering = Task(
-                config=tasks_config['cost_profiling_task'],
+                config=tasks_config['cost_profiling_task'], 
                 agent=tiering_agent,
-                context=[task_strategy, task_security, task_qa] # Cost needs context from others
+                # Cost agent output will be structured JSON
+                output_pydantic=TieringStrategy 
             )
             
             agents_list.append(tiering_agent)
             tasks_list.append(task_tiering)
-            report_context.append(task_tiering)
-        else:
-            tiering_note = """
-            8. **TIERING STRATEGY:**
-               - Set 'tiering_strategy' to null.
-            """
+            
+            # CRITICAL FIX: DO NOT add task_tiering to report_context. 
+            # The Report Agent must remain unaware of the Cost Agent to preserve Safety Score determinism.
+            # report_context.append(task_tiering) <--- REMOVED
 
         # ---------------------------------------------------------
-        # PHASE 4: FINAL CONSOLIDATION & APPROVAL
+        # PHASE 4: FINAL CONSOLIDATION
         # ---------------------------------------------------------
 
-        report_agent = Agent(
-            config=agents_config['governance_officer'],
-            llm=llm,
-            allow_delegation=False,
-            verbose=True
-        )
+        report_agent = Agent(config=agents_config['governance_officer'], llm=llm, allow_delegation=False, verbose=True)
         
+        # We explicitly tell the Report Agent to ignore/nullify the tiering strategy 
+        # because we will inject it manually later.
+        tiering_note = "7. Set 'tiering_strategy' to null (it will be injected by the system)."
+
         task_report = Task(
             config=tasks_config['report_synthesis_task'],
             agent=report_agent,
-            context=report_context,
+            context=report_context, # ONLY sees Audit findings
             async_execution=False,
             output_pydantic=GuardrailAnalysis
         )
@@ -277,42 +191,61 @@ async def run_analysis(request: AnalysisRequest):
             'CATEGORY_GUIDELINES': CATEGORY_GUIDELINES
         })
 
-        # --- RESPONSE HANDLING ---
+        # --- MANUAL MERGING LOGIC ---
+        
+        # 1. Parse the main Guardrail Report
+        final_output_str = ""
         if hasattr(result, 'pydantic') and result.pydantic:
-            try:
-                cleaned_output = result.pydantic.model_dump_json()
-            except AttributeError:
-                cleaned_output = result.pydantic.json()
+            try: final_output_str = result.pydantic.model_dump_json()
+            except AttributeError: final_output_str = result.pydantic.json()
         else:
-            raw_output = str(result)
-            cleaned_output = raw_output.replace("```json", "").replace("```", "").strip()
-            cleaned_output = cleaned_output.replace("\n", " ").replace("\r", "").replace("\t", " ")
-            cleaned_output = repair_json(cleaned_output)
-        
-        parsed = None
-        try:
-            parsed = json.loads(cleaned_output)
-        except json.JSONDecodeError:
-            match = re.search(r'\{.*\}', cleaned_output, re.DOTALL)
-            if match:
-                parsed = json.loads(repair_json(match.group()))
-        
-        if parsed:
-            if "guardrails" in parsed:
-                for gr in parsed["guardrails"]:
-                    if gr.get("name", "").upper().startswith("MISSING"): gr["location"] = ""
-                    if "enforcement" not in gr or not gr["enforcement"]: gr["enforcement"] = "Log" 
-                    if "location" not in gr: gr["location"] = "" 
-                    if "complexity_tier" not in gr: gr["complexity_tier"] = 2
-            cleaned_output = json.dumps(parsed)
-        else:
-            cleaned_output = json.dumps({
-                "guardrails": [],
-                "recommendations": ["Error: Analysis failed. Please try again."],
-                "tiering_strategy": None
-            })
+            final_output_str = str(result)
 
-        return {"result": cleaned_output}
+        # Cleanup JSON string
+        final_output_str = repair_json(final_output_str.replace("```json", "").replace("```", "").strip())
+        
+        try:
+            parsed_result = json.loads(final_output_str)
+        except json.JSONDecodeError:
+            # Fallback regex extraction
+            match = re.search(r'\{.*\}', final_output_str, re.DOTALL)
+            if match: parsed_result = json.loads(repair_json(match.group()))
+            else: raise ValueError("Failed to parse Report Agent output")
+
+        # 2. If Profiling was ON, extract and inject the Cost Data
+        if request.enable_profiling and task_tiering and hasattr(task_tiering, 'output'):
+            try:
+                # task_tiering.output might be a Pydantic object or a string depending on CrewAI version/state
+                tiering_data = None
+                
+                # Check if output is already the Pydantic object
+                if hasattr(task_tiering.output, 'model_dump'):
+                    tiering_data = task_tiering.output.model_dump()
+                elif hasattr(task_tiering.output, 'dict'):
+                    tiering_data = task_tiering.output.dict()
+                else:
+                    # It's a string (raw output)
+                    raw_tier_output = str(task_tiering.output)
+                    raw_tier_output = repair_json(raw_tier_output.replace("```json", "").replace("```", "").strip())
+                    tiering_data = json.loads(raw_tier_output)
+
+                # INJECT into the final result
+                parsed_result['tiering_strategy'] = tiering_data
+                print("✅ Successfully merged Tiering Strategy into final report.")
+                
+            except Exception as e:
+                print(f"⚠️ Warning: Failed to merge Tiering Strategy: {e}")
+                parsed_result['tiering_strategy'] = None
+
+        # 3. Post-processing normalization
+        if "guardrails" in parsed_result:
+            for gr in parsed_result["guardrails"]:
+                if gr.get("name", "").upper().startswith("MISSING"): gr["location"] = ""
+                if "enforcement" not in gr or not gr["enforcement"]: gr["enforcement"] = "Log" 
+                if "location" not in gr: gr["location"] = "" 
+                if "complexity_tier" not in gr: gr["complexity_tier"] = 2
+
+        return {"result": json.dumps(parsed_result)}
 
     except Exception as e:
         print(f"Error: {e}")
