@@ -181,8 +181,10 @@ async def run_analysis(request: AnalysisRequest):
         # ---------------------------------------------------------
         # PHASE 3: OPTIONAL COST ARCHITECT (PARALLEL)
         # ---------------------------------------------------------
-        
+
+        tiering_note = ""
         if request.enable_profiling:
+            tiering_note = "ALSO include a 'tiering_strategy' object with cost/latency analysis."
             tiering_agent = Agent(
                 config=agents_config['cost_architect'],
                 llm=llm, 
