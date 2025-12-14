@@ -70,7 +70,8 @@
     function init() {
         // --- UI TRANSFORMATION: Convert "Save API Key" checkbox to Modern Toggle ---
         const saveKeyCheckbox = document.getElementById('saveApiKey');
-        if (saveKeyCheckbox && saveKeyCheckbox.parentElement && saveKeyCheckbox.type === 'checkbox') {
+        // SAFETY CHECK: Only apply transformation if not already styled (via sr-only class in new HTML)
+        if (saveKeyCheckbox && saveKeyCheckbox.parentElement && saveKeyCheckbox.type === 'checkbox' && !saveKeyCheckbox.classList.contains('sr-only')) {
              const parent = saveKeyCheckbox.parentElement;
              const toggleHTML = `
                 <label class="flex items-center gap-3 cursor-pointer group select-none">
@@ -81,7 +82,6 @@
                     <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors font-medium">Remember API key for this session</span>
                 </label>
              `;
-             // Replace the old checkbox container with the new toggle
              const tempDiv = document.createElement('div');
              tempDiv.innerHTML = toggleHTML;
              if (tempDiv.firstElementChild) {
