@@ -101,12 +101,17 @@ cost_profiling_task:
   description: >
     **PHASE 2b: COST PROFILING**
 
-    Analyze the COMPLEXITY of the guardrails being proposed.
-    1. If a guardrail is "Check for email addresses", recommend Regex (Tier 1).
-    2. If a guardrail is "Detect sarcasm", recommend LLM (Tier 3).
+    Review the current AI instruction and provide tier recommendation.
+    
+    INSTRUCTION TO REVIEW:
+    '''{request.instruction}'''
 
-    **OUTPUT:**
-    TieringStrategy JSON object with cost/latency estimates.
+    1. What tier is needed to IMPLEMENT the current guardrails
+    2. Recommended model class
+    3. Estimated cost per 1M tokens
+    4. Expected latency
+    5. Justification based on complexity of controls
+
   expected_output: >
     Tier recommendation with cost/latency estimates.
 
@@ -161,15 +166,16 @@ report_synthesis_task:
     }}
     
     **VALIDATION CHECKLIST (Perform before submitting):**
-    - Response is pure JSON (no markdown, no code blocks, no explanatory text)
-    - All quotes inside strings are escaped with backslashes
-    - All category values match allowed categories exactly
-    - All enforcement values match the EXACT list: {enforcement_list}
-    - All severity values are: Critical, High, Medium, or Low
-    - Complexity tiers are integers between 1-5
-    - No duplicate guardrails present
-    - 3-5 strategic recommendations included
-    - JSON is valid and parseable by json.loads()
+    ☐ Response is pure JSON (no markdown, no code blocks, no explanatory text)
+    ☐ All quotes inside strings are escaped with backslashes
+    ☐ All category values match allowed categories exactly
+    ☐ All enforcement values match the EXACT list: {enforcement_list}
+    ☐ All severity values are: Critical, High, Medium, or Low
+    ☐ Complexity tiers are integers between 1-5
+    ☐ No duplicate guardrails present
+    ☐ 3-5 strategic recommendations included
+    ☐ JSON is valid and parseable by json.loads()
+    BEGIN JSON OUTPUT BELOW THIS LINE:
 
   expected_output: >
     Valid JSON matching GuardrailAnalysis schema.
