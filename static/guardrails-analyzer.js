@@ -83,24 +83,38 @@
             if (btnContainer && btnContainer.parentElement && !document.getElementById('analysisControlsContainer')) {
                 const controlsContainer = document.createElement('div');
                 controlsContainer.id = 'analysisControlsContainer';
-                controlsContainer.className = "mt-6 space-y-3 p-4 border border-gray-100 rounded-lg bg-gray-50";
+                controlsContainer.className = "mt-6 space-y-4 p-5 border border-slate-200 rounded-xl bg-slate-50/50";
 
+                // --- NEW TOGGLE BUTTON UI ---
                 controlsContainer.innerHTML = `
-                    <h3 class="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
+                        <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                         Advanced Analysis Settings
                     </h3>
-                    <label class="flex items-start gap-3 cursor-pointer">
-                      <input type="checkbox" id="enableRagDeepScan" class="mt-1 rounded text-blue-600 focus:ring-blue-500" checked>
-                      <div>
-                          <span class="text-sm font-medium text-gray-800">Deep Compliance Scan</span>
-                      </div>
-                    </label>
-                    <label class="flex items-start gap-3 cursor-pointer">
-                      <input type="checkbox" id="aiProfilingToggle" class="mt-1 rounded text-blue-600 focus:ring-blue-500" checked>
-                      <div>
-                          <span class="text-sm font-medium text-gray-800">Latency & Cost Profiling</span>
-                      </div>
-                    </label>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex items-center justify-between group">
+                            <div>
+                                <span class="text-sm font-medium text-slate-700 block">Deep Compliance Scan</span>
+                                <span class="text-xs text-slate-500 block mt-0.5">Enables stricter regex & RAG checks</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="enableRagDeepScan" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between group">
+                            <div>
+                                <span class="text-sm font-medium text-slate-700 block">Latency & Cost Profiling</span>
+                                <span class="text-xs text-slate-500 block mt-0.5">Activates FinOps Architect agent</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="aiProfilingToggle" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                            </label>
+                        </div>
+                    </div>
                 `;
                 btnContainer.parentElement.insertBefore(controlsContainer, btnContainer);
             }
@@ -109,6 +123,9 @@
         setupEventListeners();
         loadCachedApiKey();
         setupToggleButtons();
+        // Dynamic Footer Version
+        const footerVer = document.getElementById('appVersionDisplay');
+        if(footerVer && window.guardrailAnalyzer.version) footerVer.textContent = window.guardrailAnalyzer.version;
     }
 
     function setupEventListeners() {
@@ -212,7 +229,6 @@
         }
     }
 
-    // GAP ANALYSIS & CONFIDENCE FUNCTIONS
     function performGapAnalysis(foundGuardrails) {
         const expectedDimensions = [
             { id: "security", label: "Security & Compliance", backendCategories: ["Security", "Security & Compliance", "Compliance"], weight: 2.0 },
@@ -624,7 +640,7 @@
             contextGuardrails = contextGuardrails.filter(g => g.severity?.toLowerCase() === currentSeverityFilter.toLowerCase());
         }
 
-        const categories = ['all', ...new Set(contextGuardrails.map(g => g.category))].sort().reverse();
+        const categories = ['all', ...new Set(contextGuardrails.map(g => g.category))].sort();
         const counts = {};
         contextGuardrails.forEach(g => { counts[g.category] = (counts[g.category] || 0) + 1; });
         const total = contextGuardrails.length;
@@ -685,6 +701,7 @@
         filterByCategory: filterByCategory, 
         filterByStatus: filterByStatus,
         filterBySummaryCard: filterBySummaryCard,
-        resetFilters: resetFilters
+        resetFilters: resetFilters, 
+        version: '3.9.6-weighted-scoring' 
     };
 })();
