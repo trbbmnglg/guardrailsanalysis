@@ -85,35 +85,37 @@
                 controlsContainer.id = 'analysisControlsContainer';
                 controlsContainer.className = "mt-6 space-y-4 p-5 border border-slate-200 rounded-xl bg-slate-50/50";
 
-                // --- NEW TOGGLE BUTTON UI ---
+                // --- NEW DESIGN: Clean Toggles with Grid Layout ---
                 controlsContainer.innerHTML = `
                     <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
                         <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                         Advanced Analysis Settings
                     </h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="flex items-center justify-between group">
-                            <div>
-                                <span class="text-sm font-medium text-slate-700 block">Deep Compliance Scan</span>
-                                <span class="text-xs text-slate-500 block mt-0.5">Enables stricter regex & RAG checks</span>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <div class="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-lg shadow-sm hover:border-indigo-100 transition-colors">
+                            <div class="flex-1 mr-4">
+                                <div class="text-sm font-semibold text-slate-800">Deep Compliance Scan</div>
+                                <div class="text-xs text-slate-500 mt-0.5">Enables stricter regex & RAG checks</div>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="enableRagDeepScan" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors"></div>
                             </label>
                         </div>
 
-                        <div class="flex items-center justify-between group">
-                            <div>
-                                <span class="text-sm font-medium text-slate-700 block">Latency & Cost Profiling</span>
-                                <span class="text-xs text-slate-500 block mt-0.5">Activates FinOps Architect agent</span>
+                        <div class="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-lg shadow-sm hover:border-indigo-100 transition-colors">
+                            <div class="flex-1 mr-4">
+                                <div class="text-sm font-semibold text-slate-800">Latency & Cost Profiling</div>
+                                <div class="text-xs text-slate-500 mt-0.5">Activates FinOps Architect agent</div>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="aiProfilingToggle" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors"></div>
                             </label>
                         </div>
+
                     </div>
                 `;
                 btnContainer.parentElement.insertBefore(controlsContainer, btnContainer);
@@ -123,9 +125,6 @@
         setupEventListeners();
         loadCachedApiKey();
         setupToggleButtons();
-        // Dynamic Footer Version
-        const footerVer = document.getElementById('appVersionDisplay');
-        if(footerVer && window.guardrailAnalyzer.version) footerVer.textContent = window.guardrailAnalyzer.version;
     }
 
     function setupEventListeners() {
