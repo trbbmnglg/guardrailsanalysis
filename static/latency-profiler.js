@@ -15,7 +15,7 @@
         chartDown: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>`,
         hourglass: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
         turtle: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-        tools: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>` // Gear icon
+        tools: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`
     };
 
     const MODEL_TIERS = {
@@ -112,7 +112,8 @@
         return tips;
     }
 
-    function analyzeProfile(guardrails) {
+    // MAIN ANALYSIS FUNCTION (Hybrid Override Logic)
+    function analyzeProfile(guardrails, backendStrategy) {
         console.log('📊 analyzeProfile: Input count:', guardrails.length);
         
         let totalBaseLatency = 30; 
@@ -166,8 +167,30 @@
 
         if (breakdown.length === 0) highestTier = 1;
 
-        const tierKey = `tier${highestTier}`; 
-        const model = MODEL_TIERS[tierKey];
+        // --- HYBRID OVERRIDE START ---
+        let model;
+        
+        // If the backend AI (Cost Architect) provided a strategy, assume it knows best
+        if (backendStrategy && backendStrategy.selected_tier) {
+            console.log("⚡ Hybrid Mode: Applying AI Cost Architect Strategy...");
+            
+            // Try to extract the tier number from string "Tier 3" or similar
+            const match = backendStrategy.selected_tier.match(/(\d)/);
+            if (match) highestTier = parseInt(match[0]);
+            
+            const tierKey = `tier${highestTier}`; 
+            model = MODEL_TIERS[tierKey] || MODEL_TIERS['tier2']; // Fallback safety
+
+            // Use the AI's justification for the description if it's substantial
+            if (backendStrategy.justification && backendStrategy.justification.length > 20) {
+                model = { ...model, description: backendStrategy.justification };
+            }
+        } else {
+            console.log("⚡ Client Mode: Using local tier calculation.");
+            const tierKey = `tier${highestTier}`; 
+            model = MODEL_TIERS[tierKey];
+        }
+        // --- HYBRID OVERRIDE END ---
         
         let finalLatency = 0; 
         breakdown.forEach(item => { 
@@ -189,14 +212,15 @@
     const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
     const formatNum = (num) => new Intl.NumberFormat('en-US').format(num);
 
-    function renderReport(guardrails) {
+    function renderReport(guardrails, backendStrategy = null) {
       
         console.log('🔍 Latency Profiler: renderReport called');
   
         const container = document.getElementById('latencyReportSection');
         if (!container) return;
 
-        const data = analyzeProfile(guardrails);
+        // PASS THE BACKEND STRATEGY TO THE ANALYSIS
+        const data = analyzeProfile(guardrails, backendStrategy);
         const isTier4 = data.tierLevel === 4;
         const isTier3 = data.tierLevel === 3;
         
