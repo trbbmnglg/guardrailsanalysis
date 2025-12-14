@@ -183,6 +183,8 @@ async def run_analysis(request: AnalysisRequest):
             memory=False,
             process=Process.sequential 
         )
+
+        crew.reset_memories()
         
         result = crew.kickoff(inputs={
             'instruction': request.instruction,
