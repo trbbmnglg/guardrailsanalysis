@@ -1,8 +1,8 @@
 ---
-title: Guardrails Analyzer V2
-emoji: 😻
-colorFrom: indigo
-colorTo: blue
+title: Guardrails360 v3.0 Itadori
+emoji: 📊
+colorFrom: purple
+colorTo: pink
 sdk: docker
 pinned: false
 license: mit
