@@ -1,7 +1,8 @@
 import os
 import json
 import re
-import yaml # NEW: Import YAML
+import yaml
+import copy
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -18,8 +19,8 @@ def load_config(file_path):
         return yaml.safe_load(file)
 
 # Load configs at startup (or inside the route if you want hot-reloading)
-agents_config = load_config('config/agents.yaml')
-tasks_config = load_config('config/tasks.yaml')
+GLOBAL_AGENTS_CONFIG = load_config('config/agents.yaml')
+GLOBAL_TASKS_CONFIG = load_config('config/tasks.yaml')
 
 def repair_json(json_str: str) -> str:
     # 1. Trim markdown
@@ -119,6 +120,9 @@ async def run_analysis(request: AnalysisRequest):
             temperature=0.1,
             max_tokens=4000,
         )
+
+        agents_config = copy.deepcopy(GLOBAL_AGENTS_CONFIG)
+        tasks_config = copy.deepcopy(GLOBAL_TASKS_CONFIG)
 
         # ---------------------------------------------------------
         # PHASE 1: THE HUDDLE (STRATEGY & ALIGNMENT)
