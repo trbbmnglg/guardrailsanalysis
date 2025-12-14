@@ -372,8 +372,145 @@
         const scoreEl = document.getElementById('coverageScore');
         if (scoreEl) {
             scoreEl.className = 'flex flex-col items-center justify-center py-2 h-full'; 
-            scoreEl.innerHTML = renderScoreChart(gapAnalysis.score, gapAnalysis.confidence);
+            //scoreEl.innerHTML = renderScoreChart(gapAnalysis.score, gapAnalysis.confidence);
+
+          const summaryHTML = `
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 fade-in">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Executive Summary</h2>
+                    <p class="text-sm text-slate-500">Real-time analysis of guardrail coverage and risk exposure.</p>
+                </div>
+                ${gapAnalysis.confidence ? `
+                <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full border border-slate-200" title="AI Confidence Level">
+                    <div class="w-2 h-2 rounded-full ${gapAnalysis.confidence.level === 'High' ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Confidence: ${gapAnalysis.confidence.level}</span>
+                </div>` : ''}
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                
+                <div class="lg:col-span-1 bg-white rounded-xl border border-slate-200 p-4 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                    <div id="coverageScore" class="transform scale-90"></div> </div>
+
+                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('active')" 
+                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Coverage</p>
+                            <div class="text-3xl font-black text-slate-800 group-hover:text-blue-600 transition-colors" id="activeCount">${presentGuardrails.length}</div>
+                            <p class="text-xs text-slate-500 mt-1">Active Guardrails</p>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-blue-500 group-hover:scale-110 transition-transform shadow-sm">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('critical')" 
+                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Risk Exposure</p>
+                            <div class="text-3xl font-black text-slate-800 group-hover:text-red-600 transition-colors" id="missingCriticalCount">${missingCritical}</div>
+                            <p class="text-xs text-slate-500 mt-1">Critical Gaps</p>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-red-500 group-hover:scale-110 transition-transform shadow-sm">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('high')" 
+                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-orange-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Improvements</p>
+                            <div class="text-3xl font-black text-slate-800 group-hover:text-orange-600 transition-colors" id="missingHighCount">${missingHigh}</div>
+                            <p class="text-xs text-slate-500 mt-1">High Priority</p>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-orange-500 group-hover:scale-110 transition-transform shadow-sm">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    `;
         }
+      const summaryHTML = `
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 fade-in">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Executive Summary</h2>
+                    <p class="text-sm text-slate-500">Real-time analysis of guardrail coverage and risk exposure.</p>
+                </div>
+                ${gapAnalysis.confidence ? `
+                <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full border border-slate-200" title="AI Confidence Level">
+                    <div class="w-2 h-2 rounded-full ${gapAnalysis.confidence.level === 'High' ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Confidence: ${gapAnalysis.confidence.level}</span>
+                </div>` : ''}
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                
+                <div class="lg:col-span-1 bg-white rounded-xl border border-slate-200 p-4 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                    <div id="coverageScore" class="transform scale-90"></div> </div>
+
+                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('active')" 
+                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Coverage</p>
+                            <div class="text-3xl font-black text-slate-800 group-hover:text-blue-600 transition-colors" id="activeCount">${presentGuardrails.length}</div>
+                            <p class="text-xs text-slate-500 mt-1">Active Guardrails</p>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-blue-500 group-hover:scale-110 transition-transform shadow-sm">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('critical')" 
+                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Risk Exposure</p>
+                            <div class="text-3xl font-black text-slate-800 group-hover:text-red-600 transition-colors" id="missingCriticalCount">${missingCritical}</div>
+                            <p class="text-xs text-slate-500 mt-1">Critical Gaps</p>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-red-500 group-hover:scale-110 transition-transform shadow-sm">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('high')" 
+                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-orange-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Improvements</p>
+                            <div class="text-3xl font-black text-slate-800 group-hover:text-orange-600 transition-colors" id="missingHighCount">${missingHigh}</div>
+                            <p class="text-xs text-slate-500 mt-1">High Priority</p>
+                        </div>
+                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-orange-500 group-hover:scale-110 transition-transform shadow-sm">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    `;
 
         // 3. Render Breakdown (Grid)
         const breakdownContainer = document.getElementById('recommendations');
