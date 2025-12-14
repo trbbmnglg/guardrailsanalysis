@@ -46,6 +46,7 @@ ALLOWED_ENFORCEMENT_ACTIONS = Literal[
 ]
 
 enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
+tiering_note = ""
 
 # --- PYDANTIC MODELS ---
 class Guardrail(BaseModel):
@@ -63,16 +64,24 @@ class Guardrail(BaseModel):
     location: str = Field(default="", description="Exact quote from instruction or empty string")
 
 class TieringStrategy(BaseModel):
-    selected_tier: str
-    model_class: str
-    estimated_cost: str
-    latency_impact: str
-    justification: str
+    """Computational tier recommendation"""
+    selected_tier: str = Field(description="Recommended tier: Tier 1, Tier 2, Tier 3, or Tier 4")
+    model_class: str = Field(description="Example model for this tier")
+    estimated_cost: str = Field(description="Estimated cost per 1M tokens")
+    latency_impact: str = Field(description="Expected latency")
+    justification: str = Field(description="Reasoning for tier selection")
 
 class GuardrailAnalysis(BaseModel):
-    guardrails: List[Guardrail]
-    recommendations: List[str]
-    tiering_strategy: Optional[TieringStrategy] = None
+    guardrails: List[Guardrail] = Field(
+        description="List of ALL guardrails - both present and missing"
+    )
+    recommendations: List[str] = Field(
+        description="1-3 high-level strategic recommendations"
+    )
+    tiering_strategy: Optional[TieringStrategy] = Field(
+        default=None, 
+        description="Optional tiering analysis"
+    )
 
 class AnalysisRequest(BaseModel):
     instruction: str
@@ -82,8 +91,6 @@ class AnalysisRequest(BaseModel):
 
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
-    
-    tiering_note = ""
     
     try:
         # 1. SETUP LLM
@@ -182,7 +189,7 @@ async def run_analysis(request: AnalysisRequest):
         report_context = [task_security, task_privacy, task_rai, task_qa]
 
         # ---------------------------------------------------------
-        # PHASE 3: OPTIONAL COST ARCHITECT (PARALLEL)
+        # PHASE 3: OPTIONAL COST ARCHITECT
         # ---------------------------------------------------------
 
         if request.enable_profiling:
@@ -197,7 +204,6 @@ async def run_analysis(request: AnalysisRequest):
             task_tiering = Task(
                 config=tasks_config['cost_profiling_task'],
                 agent=tiering_agent,
-                context=[task_strategy, task_security, task_privacy, task_rai, task_qa]
             )
             
             agents_list.append(tiering_agent)
