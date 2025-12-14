@@ -85,6 +85,7 @@
                 controlsContainer.id = 'analysisControlsContainer';
                 controlsContainer.className = "mt-6 space-y-4 p-5 border border-slate-200 rounded-xl bg-slate-50/50";
 
+                // --- NEW DESIGN: Clickable Cards with Modern Toggles ---
                 controlsContainer.innerHTML = `
                     <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
                         <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
@@ -92,6 +93,7 @@
                     </h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
                         <label class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
                             <div class="flex-1 mr-4">
                                 <span class="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Deep Compliance Scan</span>
@@ -113,6 +115,7 @@
                                 <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
                             </div>
                         </label>
+
                     </div>
                 `;
                 btnContainer.parentElement.insertBefore(controlsContainer, btnContainer);
@@ -122,7 +125,6 @@
         setupEventListeners();
         loadCachedApiKey();
         setupToggleButtons();
-        
         const footerVer = document.getElementById('appVersionDisplay');
         if(footerVer && window.guardrailAnalyzer.version) footerVer.textContent = window.guardrailAnalyzer.version;
     }
@@ -355,6 +357,7 @@
         }
     }
   
+    // --- UPDATED DISPLAY RESULTS: Full UI Rebuild to Prevent ID Conflicts ---
     function displayResults() {
         if (!analysisResults) return;
 
@@ -368,7 +371,7 @@
         // 2. Score Calculation
         const gapAnalysis = performGapAnalysis(analysisResults.guardrails);
 
-        // --- NEW: Inject Bento Grid HTML Dynamically ---
+        // --- DYNAMIC HTML CONSTRUCTION (Bento Grid) ---
         const summaryHTML = `
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 fade-in">
                 <div class="flex items-center justify-between mb-6">
@@ -438,8 +441,33 @@
                 </div>
             </div>`;
 
-        // 3. Render Breakdown (Grid)
-        const breakdownContainer = document.getElementById('recommendations');
+        // Filter Controls
+        const filterHTML = `
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">View:</span>
+                        <div class="flex bg-gray-100 rounded-lg p-1 gap-1">
+                            <button onclick="window.guardrailAnalyzer.filterByStatus('active')" id="btn-status-active" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-blue-700">Active Only</button>
+                            <button onclick="window.guardrailAnalyzer.filterByStatus('missing')" id="btn-status-missing" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900">Missing Only</button>
+                            <button onclick="window.guardrailAnalyzer.filterByStatus('all')" id="btn-status-all" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900">Show All</button>
+                        </div>
+                        <div id="activeFilterBadge" class="hidden ml-auto px-3 py-1 rounded-full text-xs font-bold bg-gray-800 text-white flex items-center gap-2">
+                            <span id="activeFilterText">Filtered</span>
+                            <button onclick="window.guardrailAnalyzer.resetFilters()" class="hover:text-gray-300">✕</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">Category:</span>
+                        <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="guardrailsDisplay" class="space-y-6"></div>`;
+
+        // Recommendations & Breakdown
+        const breakdownContainer = document.getElementById('recommendations'); // Original ID reuse might be risky if we wipe parent, but we will reconstruct below
+        
         const checklistHTML = `
             <div class="mb-8">
                 <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
@@ -475,34 +503,10 @@
                     `).join('')}
                 </div>
             </div>`;
-        breakdownContainer.innerHTML = checklistHTML + recsHTML;
+        
+        const fullBreakdownHTML = `<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mt-8 fade-in" id="recommendations">${checklistHTML + recsHTML}</div>`;
 
-        // 4. Filters and List
-        const filterHTML = `
-            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-                <div class="flex flex-col gap-4">
-                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">View:</span>
-                        <div class="flex bg-gray-100 rounded-lg p-1 gap-1">
-                            <button onclick="window.guardrailAnalyzer.filterByStatus('active')" id="btn-status-active" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-blue-700">Active Only</button>
-                            <button onclick="window.guardrailAnalyzer.filterByStatus('missing')" id="btn-status-missing" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900">Missing Only</button>
-                            <button onclick="window.guardrailAnalyzer.filterByStatus('all')" id="btn-status-all" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900">Show All</button>
-                        </div>
-                        <div id="activeFilterBadge" class="hidden ml-auto px-3 py-1 rounded-full text-xs font-bold bg-gray-800 text-white flex items-center gap-2">
-                            <span id="activeFilterText">Filtered</span>
-                            <button onclick="window.guardrailAnalyzer.resetFilters()" class="hover:text-gray-300">✕</button>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">Category:</span>
-                        <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
-                    </div>
-                </div>
-            </div>
-            <div id="guardrailsDisplay" class="space-y-6"></div>
-        `;
-
-        // 5. Latency and Export
+        // Latency & Export
         const latencyHTML = `<div id="latencyReportSection" class="hidden fade-in mb-8"></div>`;
         const exportHTML = `
             <div class="bg-white rounded-xl shadow-lg p-6 mt-8 flex items-center justify-between">
@@ -517,40 +521,31 @@
                 </div>
             </div>`;
 
-        // INJECT ALL
-        resultsSection.innerHTML = summaryHTML + filterHTML + recsHTML + latencyHTML + exportHTML;
+        // INJECT FULL HTML to prevent null ID references
+        resultsSection.innerHTML = summaryHTML + filterHTML + '<div id="guardrailsDisplay" class="space-y-6"></div>' + fullBreakdownHTML + latencyHTML + exportHTML;
         
-        // Re-attach listeners manually because we wiped the DOM
+        // Re-attach Export Listeners
         document.getElementById('exportPdfBtn').addEventListener('click', exportPdf);
         document.getElementById('exportJson').addEventListener('click', exportJson);
         document.getElementById('exportCsv').addEventListener('click', exportCsv);
 
         // --- RENDER LATENCY PROFILER (HYBRID MODE) ---
         const latencyContainer = document.getElementById('latencyReportSection');
-        
         if (window.latencyProfiler) {
             console.log('📊 Rendering Latency Profiler...');
-            
-            // EXTRACT TIERING STRATEGY (Backend Overrides)
-            // If profiling was ON, this object exists. If OFF, it's null.
             const backendStrategy = analysisResults.tiering_strategy || null;
-            
             if (backendStrategy) {
                 console.log('⚡ Hybrid Mode: Using Backend Cost Strategy', backendStrategy);
             } else {
                 console.log('⚡ Client Mode: Calculating Latency locally');
             }
-
-            // PASS BOTH ARGUMENTS
             window.latencyProfiler.analyze(analysisResults.guardrails, backendStrategy);
-            
             latencyContainer.classList.remove('hidden');
         } else {
             console.error('❌ Latency profiler script not loaded!');
         }
 
         resultsSection.classList.remove('hidden');
-        // Initial filter application to render guardrails (and update UI)
         applyFilters();
     }
 
@@ -566,24 +561,17 @@
              
              // Dynamic Theme Selection
              const catLower = (g.category || 'default').toLowerCase();
-             let theme = categoryStyles['default']; // Default fallback
-             
-             // Partial match strategy for categories
+             let theme = categoryStyles['default']; 
              for (const [key, style] of Object.entries(categoryStyles)) {
-                 if (catLower.includes(key)) {
-                     theme = style;
-                     break;
-                 }
+                 if (catLower.includes(key)) { theme = style; break; }
              }
 
-             // Visual States
              const cardOpacity = isMissing ? "border-dashed opacity-90" : "";
              const cardBg = isMissing ? "bg-slate-50" : "bg-white";
              const borderColor = isMissing ? "border-red-200" : theme.border;
              const accentColor = isMissing ? "bg-red-400" : theme.accent;
              const nameColor = isMissing ? "text-red-700" : "text-slate-900";
 
-             // Severity Badge Color
              let sevBadgeClass = "bg-slate-100 text-slate-600";
              const sevLower = (g.severity || 'low').toLowerCase();
              if (sevLower === 'critical') sevBadgeClass = "bg-red-100 text-red-700 border-red-200";
@@ -592,14 +580,12 @@
              else sevBadgeClass = "bg-green-100 text-green-700 border-green-200";
 
              return `
-            <div class="relative group rounded-xl border ${borderColor} ${cardBg} ${cardOpacity} shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden mb-4 fade-in" style="animation-delay: ${idx * 0.05}s">
-                
+            <div class="relative group rounded-xl border ${borderColor} ${cardBg} ${cardOpacity} shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden fade-in" style="animation-delay: ${idx * 0.05}s">
                 <div class="absolute left-0 top-0 bottom-0 w-1.5 ${accentColor}"></div>
-
                 <div class="p-5 pl-7">
-                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
+                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">
                         <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-1">
+                            <div class="flex items-center gap-3 mb-2">
                                 <div class="w-8 h-8 rounded-lg ${isMissing ? 'bg-red-100 text-red-600' : theme.iconBg + ' ' + theme.iconColor} flex items-center justify-center shrink-0">
                                     ${isMissing ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>` : theme.icon}
                                 </div>
@@ -610,63 +596,43 @@
                             </div>
                             <p class="text-sm text-slate-500 leading-relaxed max-w-3xl ml-11">${escapeHtml(g.description)}</p>
                         </div>
-                        
                         <div class="flex items-center gap-2 flex-shrink-0 self-start mt-1">
-                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${sevBadgeClass}">
-                                ${escapeHtml(g.severity)}
-                            </span>
-                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 bg-white text-slate-500 shadow-sm">
-                                ${escapeHtml(g.category)}
-                            </span>
+                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${sevBadgeClass}">${escapeHtml(g.severity)}</span>
+                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 bg-white text-slate-500 shadow-sm">${escapeHtml(g.category)}</span>
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-slate-100 border-dashed">
-                        
-                        <div>
-                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Enforcement Strategy</div>
-                            <div class="flex items-start gap-3 mb-3">
-                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                                    ${escapeHtml(g.enforcement || "Review")}
-                                </span>
-                                <div class="text-sm text-slate-600 leading-snug pt-0.5 pl-2">
-                                    ${escapeHtml(g.mechanism)}
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-5 border-t border-slate-100/80 border-dashed">
+                        <div class="lg:col-span-5 space-y-5">
+                            <div class="flex flex-col gap-1">
+                                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Action & Mechanism</h4>
+                                <div class="flex items-start gap-3">
+                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                        ${escapeHtml(g.enforcement || "Review")}
+                                    </span>
+                                    <div class="text-sm text-slate-600 leading-snug pt-0.5 border-l-2 border-slate-200 pl-3">${escapeHtml(g.mechanism)}</div>
                                 </div>
                             </div>
-
-                            ${g.triggers && g.triggers.length > 0 ? `
+                            <div>
+                                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Trigger Conditions</h4>
                                 <div class="flex flex-wrap gap-2">
-                                    ${g.triggers.map(t => `
-                                        <span class="px-2 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-slate-500 text-[10px] font-medium">
-                                            ${escapeHtml(t)}
-                                        </span>
-                                    `).join('')}
+                                    ${g.triggers.map(t => `<span class="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-500 text-xs hover:border-slate-300 hover:text-slate-700 transition-colors cursor-default shadow-sm">${escapeHtml(t)}</span>`).join('')}
                                 </div>
-                            ` : ''}
+                            </div>
                         </div>
-
-                        <div>
+                        <div class="lg:col-span-7 flex flex-col h-full">
                              <div class="flex items-center justify-between mb-2">
-                                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Detected Context</div>
-                                 ${!isMissing ? '<span class="text-emerald-600 text-[10px] font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Verified</span>' : ''}
+                                 <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Detected Context</h4>
+                                 ${!isMissing ? '<span class="text-emerald-600 text-[10px] font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Verified in prompt</span>' : ''}
                              </div>
-                             
-                             <div class="relative bg-slate-50/50 rounded-lg border border-slate-200 p-3 flex-grow min-h-[60px]">
-                                ${!isMissing ? `
-                                    <div class="font-mono text-xs text-slate-600 leading-relaxed whitespace-pre-wrap select-all">"${escapeHtml(g.location)}"</div>
-                                ` : `
-                                    <div class="flex items-center justify-center h-full gap-2 py-2">
-                                        <svg class="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        <span class="text-xs italic text-slate-400">Not detected in current instruction set</span>
-                                    </div>
-                                `}
+                             <div class="relative bg-slate-50/80 rounded-lg border border-slate-200 p-4 flex-grow group-hover:border-slate-300 transition-colors min-h-[100px]">
+                                ${!isMissing ? `<div class="font-mono text-xs text-slate-600 leading-relaxed whitespace-pre-wrap mt-2 select-all">"${escapeHtml(g.location)}"</div>` 
+                                : `<div class="flex flex-col items-center justify-center h-full text-slate-400 gap-2 py-4"><svg class="w-8 h-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span class="text-xs italic opacity-60">Not detected in current instruction set</span></div>`}
                              </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            `;
+            </div>`;
         }).join('');
     }
 
@@ -674,20 +640,11 @@
     function applyFilters() {
         if (!analysisResults) return;
         let filtered = analysisResults.guardrails;
-        
-        // Status Filter
         if (currentStatusFilter === 'active') filtered = filtered.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         else if (currentStatusFilter === 'missing') filtered = filtered.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
-        
-        // Severity Filter
         if (currentSeverityFilter !== 'all') filtered = filtered.filter(g => g.severity?.toLowerCase() === currentSeverityFilter.toLowerCase());
-        
-        // Category Filter
         if (currentCategoryFilter !== 'all') filtered = filtered.filter(g => g.category === currentCategoryFilter);
-        
         renderGuardrails(filtered);
-        
-        // CRITICAL FIX: Update the UI buttons/counts after filtering
         updateFilterUI(); 
     }
 
@@ -706,74 +663,40 @@
     function filterByCategory(category) { currentCategoryFilter = category; applyFilters(); }
     function resetFilters() { currentStatusFilter = 'active'; currentSeverityFilter = 'all'; currentCategoryFilter = 'all'; applyFilters(); }
 
-    // --- UI UPDATES (The Missing Piece) ---
     function updateFilterUI() {
-        // 1. Update Status Buttons State
         const statuses = ['active', 'missing', 'all'];
         statuses.forEach(s => {
             const btn = document.getElementById(`btn-status-${s}`);
             if (btn) {
                 const isActive = currentStatusFilter === s;
-                btn.className = isActive 
-                    ? "px-4 py-1.5 rounded-md text-sm font-bold transition-all shadow-sm bg-white text-blue-700 ring-1 ring-black/5"
-                    : "px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-900 hover:bg-gray-200/50";
+                btn.className = isActive ? "px-4 py-1.5 rounded-md text-sm font-bold transition-all shadow-sm bg-white text-blue-700 ring-1 ring-black/5" : "px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-900 hover:bg-gray-200/50";
             }
         });
-
-        // 2. Update Filter Badge
         const badge = document.getElementById('activeFilterBadge');
         const badgeText = document.getElementById('activeFilterText');
         if (badge && badgeText) {
             if (currentSeverityFilter !== 'all') {
                 badge.classList.remove('hidden');
                 badgeText.textContent = `Filtered by: ${currentSeverityFilter.charAt(0).toUpperCase() + currentSeverityFilter.slice(1)}`;
-                // Color code the badge based on filter type
-                badge.className = currentSeverityFilter === 'critical' 
-                    ? 'ml-auto px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 flex items-center gap-2' 
-                    : 'ml-auto px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800 flex items-center gap-2';
+                badge.className = currentSeverityFilter === 'critical' ? 'ml-auto px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 flex items-center gap-2' : 'ml-auto px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800 flex items-center gap-2';
             } else {
                 badge.classList.add('hidden');
             }
         }
-
-        // 3. Render Category Buttons (Dynamic)
-        // We calculate counts based on the CURRENT status/severity view so empty categories disappear
         let contextGuardrails = analysisResults.guardrails;
-        
-        if (currentStatusFilter === 'active') {
-            contextGuardrails = contextGuardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
-        } else if (currentStatusFilter === 'missing') {
-            contextGuardrails = contextGuardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
-        }
-        
-        if (currentSeverityFilter !== 'all') {
-            contextGuardrails = contextGuardrails.filter(g => g.severity?.toLowerCase() === currentSeverityFilter.toLowerCase());
-        }
-
+        if (currentStatusFilter === 'active') contextGuardrails = contextGuardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
+        else if (currentStatusFilter === 'missing') contextGuardrails = contextGuardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
+        if (currentSeverityFilter !== 'all') contextGuardrails = contextGuardrails.filter(g => g.severity?.toLowerCase() === currentSeverityFilter.toLowerCase());
         const categories = ['all', ...new Set(contextGuardrails.map(g => g.category))].sort();
         const counts = {};
         contextGuardrails.forEach(g => { counts[g.category] = (counts[g.category] || 0) + 1; });
         const total = contextGuardrails.length;
-
         const container = document.getElementById('categoryFilters');
         if (container) {
             container.innerHTML = categories.map(cat => {
                 const count = cat === 'all' ? total : (counts[cat] || 0);
-                if (count === 0 && cat !== 'all') return ''; // Skip empty categories
-                
                 const label = cat === 'all' ? `All (${count})` : `${cat} (${count})`;
-                const isActive = currentCategoryFilter === cat;
-                
-                return `
-                <button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" 
-                        class="px-3 py-1.5 rounded-lg font-medium transition-all text-xs border ${
-                    isActive 
-                        ? 'bg-blue-600 text-white shadow-md border-blue-600' 
-                        : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200 shadow-sm'
-                }">
-                    ${escapeHtml(label)}
-                </button>
-            `;
+                return `<button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" class="px-3 py-1.5 rounded-lg font-medium transition-all text-xs border ${currentCategoryFilter === cat ? 'bg-blue-600 text-white shadow-md border-blue-600' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200 shadow-sm'}">${escapeHtml(label)}</button>`;
             }).join('');
         }
     }
