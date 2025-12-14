@@ -85,7 +85,6 @@
                 controlsContainer.id = 'analysisControlsContainer';
                 controlsContainer.className = "mt-6 space-y-4 p-5 border border-slate-200 rounded-xl bg-slate-50/50";
 
-                // --- NEW DESIGN: Clean Toggles with Grid Layout ---
                 controlsContainer.innerHTML = `
                     <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
                         <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
@@ -93,29 +92,27 @@
                     </h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        
-                        <div class="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-lg shadow-sm hover:border-indigo-100 transition-colors">
+                        <label class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
                             <div class="flex-1 mr-4">
-                                <div class="text-sm font-semibold text-slate-800">Deep Compliance Scan</div>
-                                <div class="text-xs text-slate-500 mt-0.5">Enables stricter regex & RAG checks</div>
+                                <span class="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Deep Compliance Scan</span>
+                                <span class="text-xs text-slate-500 block mt-1 leading-snug">Enables stricter regex & RAG checks</span>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
+                            <div class="relative inline-flex items-center">
                                 <input type="checkbox" id="enableRagDeepScan" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors"></div>
-                            </label>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-lg shadow-sm hover:border-indigo-100 transition-colors">
-                            <div class="flex-1 mr-4">
-                                <div class="text-sm font-semibold text-slate-800">Latency & Cost Profiling</div>
-                                <div class="text-xs text-slate-500 mt-0.5">Activates FinOps Architect agent</div>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="aiProfilingToggle" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors"></div>
-                            </label>
-                        </div>
+                        </label>
 
+                        <label class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
+                            <div class="flex-1 mr-4">
+                                <span class="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Latency & Cost Profiling</span>
+                                <span class="text-xs text-slate-500 block mt-1 leading-snug">Activates FinOps Architect agent</span>
+                            </div>
+                            <div class="relative inline-flex items-center">
+                                <input type="checkbox" id="aiProfilingToggle" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                            </div>
+                        </label>
                     </div>
                 `;
                 btnContainer.parentElement.insertBefore(controlsContainer, btnContainer);
@@ -125,6 +122,9 @@
         setupEventListeners();
         loadCachedApiKey();
         setupToggleButtons();
+        
+        const footerVer = document.getElementById('appVersionDisplay');
+        if(footerVer && window.guardrailAnalyzer.version) footerVer.textContent = window.guardrailAnalyzer.version;
     }
 
     function setupEventListeners() {
@@ -362,155 +362,81 @@
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
 
-        document.getElementById('activeCount').textContent = presentGuardrails.length;
-        document.getElementById('missingTotalCount').textContent = missingGuardrails.length;
-        document.getElementById('missingCriticalCount').textContent = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'critical').length;
-        document.getElementById('missingHighCount').textContent = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'high').length;
+        const missingCritical = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'critical').length;
+        const missingHigh = missingGuardrails.filter(g => g.severity?.toLowerCase() === 'high').length;
 
         // 2. Score Calculation
         const gapAnalysis = performGapAnalysis(analysisResults.guardrails);
-        const scoreEl = document.getElementById('coverageScore');
-        if (scoreEl) {
-            scoreEl.className = 'flex flex-col items-center justify-center py-2 h-full'; 
-            //scoreEl.innerHTML = renderScoreChart(gapAnalysis.score, gapAnalysis.confidence);
 
-          const summaryHTML = `
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 fade-in">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-900">Executive Summary</h2>
-                    <p class="text-sm text-slate-500">Real-time analysis of guardrail coverage and risk exposure.</p>
+        // --- NEW: Inject Bento Grid HTML Dynamically ---
+        const summaryHTML = `
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 fade-in">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Executive Summary</h2>
+                        <p class="text-sm text-slate-500">Real-time analysis of guardrail coverage and risk exposure.</p>
+                    </div>
+                    ${gapAnalysis.confidence ? `
+                    <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full border border-slate-200" title="AI Confidence Level">
+                        <div class="w-2 h-2 rounded-full ${gapAnalysis.confidence.level === 'High' ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
+                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Confidence: ${gapAnalysis.confidence.level}</span>
+                    </div>` : ''}
                 </div>
-                ${gapAnalysis.confidence ? `
-                <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full border border-slate-200" title="AI Confidence Level">
-                    <div class="w-2 h-2 rounded-full ${gapAnalysis.confidence.level === 'High' ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
-                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Confidence: ${gapAnalysis.confidence.level}</span>
-                </div>` : ''}
-            </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                
-                <div class="lg:col-span-1 bg-white rounded-xl border border-slate-200 p-4 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-                    <div id="coverageScore" class="transform scale-90"></div> </div>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    <div class="lg:col-span-1 bg-white rounded-xl border border-slate-200 p-4 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                        <div id="coverageScore" class="transform scale-90 w-full h-full flex items-center justify-center">
+                            ${renderScoreChart(gapAnalysis.score, gapAnalysis.confidence)}
+                        </div> 
+                    </div>
 
-                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('active')" 
-                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Coverage</p>
-                            <div class="text-3xl font-black text-slate-800 group-hover:text-blue-600 transition-colors" id="activeCount">${presentGuardrails.length}</div>
-                            <p class="text-xs text-slate-500 mt-1">Active Guardrails</p>
+                    <div onclick="window.guardrailAnalyzer.filterBySummaryCard('active')" 
+                         class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Coverage</p>
+                                <div class="text-3xl font-black text-slate-800 group-hover:text-blue-600 transition-colors" id="activeCount">${presentGuardrails.length}</div>
+                                <p class="text-xs text-slate-500 mt-1">Active Guardrails</p>
+                            </div>
+                            <div class="p-2 bg-white rounded-lg border border-slate-100 text-blue-500 group-hover:scale-110 transition-transform shadow-sm">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
                         </div>
-                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-blue-500 group-hover:scale-110 transition-transform shadow-sm">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+
+                    <div onclick="window.guardrailAnalyzer.filterBySummaryCard('critical')" 
+                         class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Risk Exposure</p>
+                                <div class="text-3xl font-black text-slate-800 group-hover:text-red-600 transition-colors" id="missingCriticalCount">${missingCritical}</div>
+                                <p class="text-xs text-slate-500 mt-1">Critical Gaps</p>
+                            </div>
+                            <div class="p-2 bg-white rounded-lg border border-slate-100 text-red-500 group-hover:scale-110 transition-transform shadow-sm">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onclick="window.guardrailAnalyzer.filterBySummaryCard('high')" 
+                         class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-orange-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Improvements</p>
+                                <div class="text-3xl font-black text-slate-800 group-hover:text-orange-600 transition-colors" id="missingHighCount">${missingHigh}</div>
+                                <p class="text-xs text-slate-500 mt-1">High Priority</p>
+                            </div>
+                            <div class="p-2 bg-white rounded-lg border border-slate-100 text-orange-500 group-hover:scale-110 transition-transform shadow-sm">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('critical')" 
-                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Risk Exposure</p>
-                            <div class="text-3xl font-black text-slate-800 group-hover:text-red-600 transition-colors" id="missingCriticalCount">${missingCritical}</div>
-                            <p class="text-xs text-slate-500 mt-1">Critical Gaps</p>
-                        </div>
-                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-red-500 group-hover:scale-110 transition-transform shadow-sm">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                        </div>
-                    </div>
-                </div>
-
-                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('high')" 
-                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-orange-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Improvements</p>
-                            <div class="text-3xl font-black text-slate-800 group-hover:text-orange-600 transition-colors" id="missingHighCount">${missingHigh}</div>
-                            <p class="text-xs text-slate-500 mt-1">High Priority</p>
-                        </div>
-                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-orange-500 group-hover:scale-110 transition-transform shadow-sm">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    `;
-        }
-      const summaryHTML = `
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 fade-in">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-900">Executive Summary</h2>
-                    <p class="text-sm text-slate-500">Real-time analysis of guardrail coverage and risk exposure.</p>
-                </div>
-                ${gapAnalysis.confidence ? `
-                <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full border border-slate-200" title="AI Confidence Level">
-                    <div class="w-2 h-2 rounded-full ${gapAnalysis.confidence.level === 'High' ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
-                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Confidence: ${gapAnalysis.confidence.level}</span>
-                </div>` : ''}
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                
-                <div class="lg:col-span-1 bg-white rounded-xl border border-slate-200 p-4 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-                    <div id="coverageScore" class="transform scale-90"></div> </div>
-
-                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('active')" 
-                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Coverage</p>
-                            <div class="text-3xl font-black text-slate-800 group-hover:text-blue-600 transition-colors" id="activeCount">${presentGuardrails.length}</div>
-                            <p class="text-xs text-slate-500 mt-1">Active Guardrails</p>
-                        </div>
-                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-blue-500 group-hover:scale-110 transition-transform shadow-sm">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                    </div>
-                </div>
-
-                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('critical')" 
-                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Risk Exposure</p>
-                            <div class="text-3xl font-black text-slate-800 group-hover:text-red-600 transition-colors" id="missingCriticalCount">${missingCritical}</div>
-                            <p class="text-xs text-slate-500 mt-1">Critical Gaps</p>
-                        </div>
-                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-red-500 group-hover:scale-110 transition-transform shadow-sm">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                        </div>
-                    </div>
-                </div>
-
-                <div onclick="window.guardrailAnalyzer.filterBySummaryCard('high')" 
-                     class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-orange-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Improvements</p>
-                            <div class="text-3xl font-black text-slate-800 group-hover:text-orange-600 transition-colors" id="missingHighCount">${missingHigh}</div>
-                            <p class="text-xs text-slate-500 mt-1">High Priority</p>
-                        </div>
-                        <div class="p-2 bg-white rounded-lg border border-slate-100 text-orange-500 group-hover:scale-110 transition-transform shadow-sm">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    `;
+            </div>`;
 
         // 3. Render Breakdown (Grid)
         const breakdownContainer = document.getElementById('recommendations');
@@ -550,6 +476,54 @@
                 </div>
             </div>`;
         breakdownContainer.innerHTML = checklistHTML + recsHTML;
+
+        // 4. Filters and List
+        const filterHTML = `
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">View:</span>
+                        <div class="flex bg-gray-100 rounded-lg p-1 gap-1">
+                            <button onclick="window.guardrailAnalyzer.filterByStatus('active')" id="btn-status-active" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-blue-700">Active Only</button>
+                            <button onclick="window.guardrailAnalyzer.filterByStatus('missing')" id="btn-status-missing" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900">Missing Only</button>
+                            <button onclick="window.guardrailAnalyzer.filterByStatus('all')" id="btn-status-all" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900">Show All</button>
+                        </div>
+                        <div id="activeFilterBadge" class="hidden ml-auto px-3 py-1 rounded-full text-xs font-bold bg-gray-800 text-white flex items-center gap-2">
+                            <span id="activeFilterText">Filtered</span>
+                            <button onclick="window.guardrailAnalyzer.resetFilters()" class="hover:text-gray-300">✕</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">Category:</span>
+                        <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="guardrailsDisplay" class="space-y-6"></div>
+        `;
+
+        // 5. Latency and Export
+        const latencyHTML = `<div id="latencyReportSection" class="hidden fade-in mb-8"></div>`;
+        const exportHTML = `
+            <div class="bg-white rounded-xl shadow-lg p-6 mt-8 flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-gray-900">Export Analysis Results</h3>
+                    <p class="text-sm text-gray-600 mt-1">Download your guardrail analysis in various formats</p>
+                </div>
+                <div class="flex gap-3">
+                    <button id="exportJson" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">Export JSON</button>
+                    <button id="exportCsv" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Export CSV</button>
+                    <button id="exportPdfBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"><span>📄</span> Export PDF</button>
+                </div>
+            </div>`;
+
+        // INJECT ALL
+        resultsSection.innerHTML = summaryHTML + filterHTML + recsHTML + latencyHTML + exportHTML;
+        
+        // Re-attach listeners manually because we wiped the DOM
+        document.getElementById('exportPdfBtn').addEventListener('click', exportPdf);
+        document.getElementById('exportJson').addEventListener('click', exportJson);
+        document.getElementById('exportCsv').addEventListener('click', exportCsv);
 
         // --- RENDER LATENCY PROFILER (HYBRID MODE) ---
         const latencyContainer = document.getElementById('latencyReportSection');
