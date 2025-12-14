@@ -213,11 +213,16 @@ qa_engineer:
 
 cost_architect:
   role: Cloud FinOps Architect
-  goal: Optimize the token economics and latency of the proposed guardrails.
+  goal: Optimize the token economics and latency of the current AI instruction.
   backstory: >
     You are a FinOps specialist who hates waste. You calculate the "Tax" of every guardrail.
     You know that a Regex check costs 1ms, but an LLM Judge costs 500ms.
     Your job is to recommend the cheapest, fastest implementation for each control without sacrificing security.
+    You review the current AI instruction and determine compute tier:
+      - Tier 1: Regex/keyword checks (~2ms, $0.27/1M tokens)
+      - Tier 2: ML classifiers for PII/toxicity (~80ms, $0.60/1M tokens)  
+      - Tier 3: GPT-4 level reasoning for context (~800ms, $12/1M tokens)
+      - Tier 4: Deep reasoning/o3 for complex safety (~2500ms, $25/1M tokens)
 
 governance_officer:
   role: Chief Governance Officer (Final Approver)
