@@ -625,7 +625,7 @@
             contextGuardrails = contextGuardrails.filter(g => g.severity?.toLowerCase() === currentSeverityFilter.toLowerCase());
         }
 
-        const categories = ['all', ...new Set(contextGuardrails.map(g => g.category))].sort();
+        const categories = ['all', ...new Set(contextGuardrails.map(g => g.category))].sort().reverse();
         const counts = {};
         contextGuardrails.forEach(g => { counts[g.category] = (counts[g.category] || 0) + 1; });
         const total = contextGuardrails.length;
