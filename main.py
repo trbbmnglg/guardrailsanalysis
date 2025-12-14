@@ -174,6 +174,7 @@ async def run_analysis(request: AnalysisRequest):
             async_execution=True
         )
 
+        tiering_note = ""
         agents_list = [strategy_agent, security_agent, privacy_ops_agent, rai_agent, qa_agent]
         tasks_list = [task_strategy, task_security, task_privacy, task_rai, task_qa]
         report_context = [task_security, task_privacy, task_rai, task_qa]
@@ -182,7 +183,6 @@ async def run_analysis(request: AnalysisRequest):
         # PHASE 3: OPTIONAL COST ARCHITECT (PARALLEL)
         # ---------------------------------------------------------
 
-        tiering_note = ""
         if request.enable_profiling:
             tiering_note = "ALSO include a 'tiering_strategy' object with cost/latency analysis."
             tiering_agent = Agent(
