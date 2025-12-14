@@ -159,7 +159,7 @@ async def run_analysis(request: AnalysisRequest):
         # PHASE 4: FINAL CONSOLIDATION
         # ---------------------------------------------------------
 
-        report_agent = Agent(config=agents_config['governance_officer'], llm=llm, allow_delegation=False, verbose=True)
+        report_agent = Agent(config=agents_config['governance_officer'], llm=llm, allow_delegation=True, verbose=True)
         
         # We explicitly tell the Report Agent to ignore/nullify the tiering strategy 
         # because we will inject it manually later.
@@ -180,6 +180,7 @@ async def run_analysis(request: AnalysisRequest):
             agents=agents_list,
             tasks=tasks_list,
             verbose=True,
+            memory=True,
             process=Process.sequential 
         )
         
