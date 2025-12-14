@@ -99,6 +99,7 @@
                       <input type="checkbox" id="aiProfilingToggle" class="mt-1 rounded text-blue-600 focus:ring-blue-500" checked>
                       <div>
                           <span class="text-sm font-medium text-gray-800">Latency & Cost Profiling</span>
+                          <p class="text-xs text-gray-500">Enables the 'Cloud FinOps Architect' agent.</p>
                       </div>
                     </label>
                 `;
@@ -212,7 +213,6 @@
         }
     }
 
-    // GAP ANALYSIS & CONFIDENCE FUNCTIONS
     function performGapAnalysis(foundGuardrails) {
         const expectedDimensions = [
             { id: "security", label: "Security & Compliance", backendCategories: ["Security", "Security & Compliance", "Compliance"], weight: 2.0 },
@@ -430,7 +430,13 @@
 
     function renderGuardrails(guardrails) { 
         const container = document.getElementById('guardrailsDisplay');
+        
+        // 1. Updated Container Class for 2-Column Grid
+        container.className = "grid grid-cols-1 lg:grid-cols-2 gap-6";
+        
         if (guardrails.length === 0) { 
+            // Span full width if empty
+            container.className = "w-full"; 
             container.innerHTML = `<div class="p-8 text-center text-gray-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">No results found for this filter.</div>`; 
             return; 
         }
@@ -465,12 +471,13 @@
              else if (sevLower === 'medium') sevBadgeClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
              else sevBadgeClass = "bg-green-100 text-green-700 border-green-200";
 
+             // 2. Removed mb-4, added h-full for grid height alignment
              return `
-            <div class="relative group rounded-xl border ${borderColor} ${cardBg} ${cardOpacity} shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden mb-4 fade-in" style="animation-delay: ${idx * 0.05}s">
+            <div class="relative group rounded-xl border ${borderColor} ${cardBg} ${cardOpacity} shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden fade-in h-full flex flex-col" style="animation-delay: ${idx * 0.05}s">
                 
                 <div class="absolute left-0 top-0 bottom-0 w-1.5 ${accentColor}"></div>
 
-                <div class="p-5 pl-7">
+                <div class="p-5 pl-7 flex-1 flex flex-col">
                     <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
                         <div class="flex-1">
                             <div class="flex items-center gap-3 mb-1">
@@ -482,7 +489,7 @@
                                 </h3>
                                 ${isMissing ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-100 text-red-600 border border-red-200">Missing</span>` : ''}
                             </div>
-                            <p class="text-sm text-slate-500 leading-relaxed max-w-3xl ml-11">${escapeHtml(g.description)}</p>
+                            <p class="text-sm text-slate-500 leading-relaxed max-w-3xl ml-11 line-clamp-2" title="${escapeHtml(g.description)}">${escapeHtml(g.description)}</p>
                         </div>
                         
                         <div class="flex items-center gap-2 flex-shrink-0 self-start mt-1">
@@ -495,27 +502,28 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-slate-100 border-dashed">
+                    <div class="grid grid-cols-1 gap-4 pt-4 border-t border-slate-100 border-dashed mt-auto">
                         
                         <div>
-                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Enforcement Strategy</div>
-                            <div class="flex items-start gap-3 mb-3">
-                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Strategy</div>
+                            <div class="flex items-center gap-3 mb-2">
+                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
                                     <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                     ${escapeHtml(g.enforcement || "Review")}
                                 </span>
-                                <div class="text-sm text-slate-600 leading-snug pt-0.5 pl-2">
+                                <div class="text-sm text-slate-600 leading-snug truncate" title="${escapeHtml(g.mechanism)}">
                                     ${escapeHtml(g.mechanism)}
                                 </div>
                             </div>
 
                             ${g.triggers && g.triggers.length > 0 ? `
                                 <div class="flex flex-wrap gap-2">
-                                    ${g.triggers.map(t => `
-                                        <span class="px-2 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-slate-500 text-[10px] font-medium">
+                                    ${g.triggers.slice(0, 3).map(t => `
+                                        <span class="px-2 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-slate-500 text-[10px] font-medium truncate max-w-[100px]">
                                             ${escapeHtml(t)}
                                         </span>
                                     `).join('')}
+                                    ${g.triggers.length > 3 ? `<span class="text-[10px] text-slate-400 self-center">+${g.triggers.length - 3} more</span>` : ''}
                                 </div>
                             ` : ''}
                         </div>
@@ -526,11 +534,11 @@
                                  ${!isMissing ? '<span class="text-emerald-600 text-[10px] font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Verified</span>' : ''}
                              </div>
                              
-                             <div class="relative bg-slate-50/50 rounded-lg border border-slate-200 p-3 flex-grow min-h-[60px]">
+                             <div class="relative bg-slate-50/50 rounded-lg border border-slate-200 p-3 h-[80px] overflow-y-auto custom-scrollbar">
                                 ${!isMissing ? `
                                     <div class="font-mono text-xs text-slate-600 leading-relaxed whitespace-pre-wrap select-all">"${escapeHtml(g.location)}"</div>
                                 ` : `
-                                    <div class="flex items-center justify-center h-full gap-2 py-2">
+                                    <div class="flex items-center justify-center h-full gap-2">
                                         <svg class="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                         <span class="text-xs italic text-slate-400">Not detected in current instruction set</span>
                                     </div>
@@ -624,7 +632,7 @@
             contextGuardrails = contextGuardrails.filter(g => g.severity?.toLowerCase() === currentSeverityFilter.toLowerCase());
         }
 
-        const categories = ['all', ...new Set(contextGuardrails.map(g => g.category))].sort().reverse();
+        const categories = ['all', ...new Set(contextGuardrails.map(g => g.category))].sort();
         const counts = {};
         contextGuardrails.forEach(g => { counts[g.category] = (counts[g.category] || 0) + 1; });
         const total = contextGuardrails.length;
