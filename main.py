@@ -184,7 +184,7 @@ async def run_analysis(request: AnalysisRequest):
             process=Process.sequential 
         )
 
-        crew.reset_memories()
+        crew.reset_memories(command_type='short')  
         
         result = crew.kickoff(inputs={
             'instruction': request.instruction,
