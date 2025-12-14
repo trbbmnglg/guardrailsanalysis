@@ -328,12 +328,18 @@ cost_profiling_task:
 
 report_synthesis_task:
   description: >
-    **PHASE 3: FINAL REPORT SYNTHESIS**
+    **PHASE 3: COLLABORATIVE CONSENSUS & REPORTING**
 
     **INPUT:**
-    Findings from ALL Agents (Security, Privacy, RAI, QA, Cost).
+    Draft findings from ALL Agents (Security, Privacy, RAI, QA, Cost).
 
     {tiering_note}
+
+    **COLLABORATION PROTOCOL (EXECUTE FIRST):**
+    1. **Analyze Overlaps:** Look for findings that appear in multiple reports (e.g., "PII Leakage" in both Privacy and Security).
+    2. **Resolve Conflicts:** - If agents disagree on Severity for similar items, use your DELEGATION tool to ask them for a justification.
+       - *Example:* "Security Agent, why is the API Key issue 'Medium'? Privacy marked it 'Critical'."
+    3. **Consolidate:** Merge duplicate findings. Ensure the final "Category" is the most appropriate one (Security > Privacy > RAI > QA).
 
     **YOUR STRICT RULES:**
     1. **DEDUPLICATION:** Compare the 'location' (quote) and 'mechanism' of every finding. If they overlap > 80%, MERGE THEM. Keep the highest severity.
@@ -354,6 +360,9 @@ report_synthesis_task:
        - Prioritize by: (a) Regulatory compliance gaps, (b) Security risks, (c) Quality improvements
        - Format: "Action verb + specific target + expected outcome"
        - Example: "Implement input sanitization layer to prevent PII leakage in tool calls"
+    
+    **FINAL REPORT GENERATION:**
+    After resolving conflicts, generate the final JSON.
     
     **REQUIRED OUTPUT STRUCTURE:**
     
