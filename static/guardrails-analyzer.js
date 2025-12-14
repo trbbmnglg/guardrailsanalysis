@@ -99,7 +99,6 @@
                       <input type="checkbox" id="aiProfilingToggle" class="mt-1 rounded text-blue-600 focus:ring-blue-500" checked>
                       <div>
                           <span class="text-sm font-medium text-gray-800">Latency & Cost Profiling</span>
-                          <p class="text-xs text-gray-500">Enables the 'Cloud FinOps Architect' agent.</p>
                       </div>
                     </label>
                 `;
