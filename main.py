@@ -69,7 +69,6 @@ CATEGORY_GUIDELINES = """
 """
 
 enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
-tiering_note = ""
 
 # --- PYDANTIC MODELS ---
 class Guardrail(BaseModel):
@@ -120,6 +119,8 @@ async def run_analysis(request: AnalysisRequest):
             temperature=0,
             max_tokens=4000,
         )
+
+        tiering_note = ""
 
         agents_config = copy.deepcopy(GLOBAL_AGENTS_CONFIG)
         tasks_config = copy.deepcopy(GLOBAL_TASKS_CONFIG)
