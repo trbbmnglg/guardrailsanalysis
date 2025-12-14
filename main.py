@@ -72,16 +72,9 @@ class TieringStrategy(BaseModel):
     justification: str = Field(description="Reasoning for tier selection")
 
 class GuardrailAnalysis(BaseModel):
-    guardrails: List[Guardrail] = Field(
-        description="List of ALL guardrails - both present and missing"
-    )
-    recommendations: List[str] = Field(
-        description="1-3 high-level strategic recommendations"
-    )
-    tiering_strategy: Optional[TieringStrategy] = Field(
-        default=None, 
-        description="Optional tiering analysis"
-    )
+    guardrails: List[Guardrail] = Field(description="List of ALL guardrails - both present and missing")
+    recommendations: List[str] = Field(description="1-3 high-level strategic recommendations")
+    tiering_strategy: Optional[TieringStrategy] = Field(default=None, description="Optional tiering analysis")
 
 class AnalysisRequest(BaseModel):
     instruction: str
@@ -242,7 +235,9 @@ async def run_analysis(request: AnalysisRequest):
         # Pass dynamic inputs to interpolate into the YAML strings
         result = crew.kickoff(inputs={
             'instruction': request.instruction,
-            'enforcement_list': enforcement_list_str
+            'enforcement_list': enforcement_list_str,
+            'tiering_note': tiering_note,
+            'CATEGORY_GUIDELINES': CATEGORY_GUIDELINES
         })
 
         # --- RESPONSE HANDLING ---
