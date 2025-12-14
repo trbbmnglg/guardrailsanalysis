@@ -180,11 +180,8 @@ async def run_analysis(request: AnalysisRequest):
             agents=agents_list,
             tasks=tasks_list,
             verbose=True,
-            memory=False,
             process=Process.sequential 
         )
-
-        crew.reset_memories(command_type='short')  
         
         result = crew.kickoff(inputs={
             'instruction': request.instruction,
