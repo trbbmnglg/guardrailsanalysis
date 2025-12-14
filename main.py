@@ -18,7 +18,7 @@ def load_config(file_path):
     with open(file_path, 'r') as file:
         return yaml.safe_load(file)
 
-# Load configs at startup (or inside the route if you want hot-reloading)
+# Load configs at startup (Global Templates)
 GLOBAL_AGENTS_CONFIG = load_config('config/agents.yaml')
 GLOBAL_TASKS_CONFIG = load_config('config/tasks.yaml')
 
@@ -59,13 +59,10 @@ CATEGORY_GUIDELINES = """
     NAMING RULES FOR MISSING GUARDRAILS:
     - Start with "MISSING:" followed by specific control name
     - Example: "MISSING: SQL Injection Prevention"
-    - Example: "MISSING: PII Redaction for Email Addresses"
     
     LOCATION FIELD RULES:
     - If guardrail EXISTS: Provide max 5 words exact quote from instruction
     - If guardrail is MISSING: Set location to empty string ""
-    - Never use placeholder text like "Not specified" or "N/A"
-    
 """
 
 enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
@@ -106,7 +103,6 @@ class AnalysisRequest(BaseModel):
 
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
-    
     try:
         # 1. SETUP LLM
         os.environ["OPENAI_API_KEY"] = request.api_key
@@ -120,8 +116,7 @@ async def run_analysis(request: AnalysisRequest):
             max_tokens=4000,
         )
 
-        tiering_note = ""
-
+        # 2. CONFIG DEEP COPY (Crucial for state isolation)
         agents_config = copy.deepcopy(GLOBAL_AGENTS_CONFIG)
         tasks_config = copy.deepcopy(GLOBAL_TASKS_CONFIG)
 
@@ -130,14 +125,14 @@ async def run_analysis(request: AnalysisRequest):
         # ---------------------------------------------------------
 
         strategy_agent = Agent(
-            config=agents_config['audit_strategy_lead'], # NEW: Load from YAML
+            config=agents_config['audit_strategy_lead'],
             llm=llm,
             allow_delegation=False,
             verbose=True
         )
 
         task_strategy = Task(
-            config=tasks_config['strategic_recon_task'], # NEW: Load from YAML
+            config=tasks_config['strategic_recon_task'],
             agent=strategy_agent,
             async_execution=False 
         )
@@ -212,8 +207,17 @@ async def run_analysis(request: AnalysisRequest):
         # PHASE 3: OPTIONAL COST ARCHITECT
         # ---------------------------------------------------------
 
+        # THE FIREWALL LOGIC:
+        # We explicitly instruct the Report Agent on how to handle Cost data
+        # to prevent it from contaminating the Safety/Guardrail analysis.
         if request.enable_profiling:
-            tiering_note = "ALSO include a 'tiering_strategy' object with cost/latency analysis."
+            tiering_note = """
+            8. **TIERING STRATEGY (ISOLATED):**
+               - Locate the 'TieringStrategy' output from the Cost Architect.
+               - Include it exactly as is in the 'tiering_strategy' field.
+               - CRITICAL: Do NOT allow the Cost Architect's opinions to add, remove, or modify any items in the 'guardrails' list. The guardrails list must be derived ONLY from Security, Privacy, RAI, and QA agents.
+            """
+            
             tiering_agent = Agent(
                 config=agents_config['cost_architect'],
                 llm=llm, 
@@ -224,11 +228,17 @@ async def run_analysis(request: AnalysisRequest):
             task_tiering = Task(
                 config=tasks_config['cost_profiling_task'],
                 agent=tiering_agent,
+                context=[task_strategy, task_security, task_qa] # Cost needs context from others
             )
             
             agents_list.append(tiering_agent)
             tasks_list.append(task_tiering)
             report_context.append(task_tiering)
+        else:
+            tiering_note = """
+            8. **TIERING STRATEGY:**
+               - Set 'tiering_strategy' to null.
+            """
 
         # ---------------------------------------------------------
         # PHASE 4: FINAL CONSOLIDATION & APPROVAL
@@ -260,7 +270,6 @@ async def run_analysis(request: AnalysisRequest):
             process=Process.sequential 
         )
         
-        # Pass dynamic inputs to interpolate into the YAML strings
         result = crew.kickoff(inputs={
             'instruction': request.instruction,
             'enforcement_list': enforcement_list_str,
