@@ -56,6 +56,29 @@ CATEGORY_GUIDELINES = """
     - If guardrail is MISSING: Set location to empty string ""
 """
 
+AUDIT_OUTPUT_FORMAT = """
+    For each check, report:
+    - Status: PRESENT or MISSING
+    - For Security Auditor only: If COMPLIANT set Status to PRESENT if NON-COMPLIANT set Status to MISSING
+    - For Privacy Auditor only: If CERTIFIED set Status to PRESENT if REJECTED set Status to MISSING
+    - For QA Auditor only: If PASS set Status to PRESENT if FAIL set Status to MISSING
+    - Location: Specific prompt text demonstrating compliance (or absence)
+    - Severity: Critical | High | Medium | Low
+    - Category: Security | Privacy | Responsible AI | Scope Control | Input Validation | Output Control | QA
+    - Enforcement MUST be one of: {enforcement_list}. If enforcement is not on the list, choose the closest one
+
+    CRITICAL JSON RULES:
+    1. Use double quotes for ALL strings: "key": "value"
+    2. NO single quotes allowed
+    3. NO Python syntax like Guardrail() or keyword=value
+    4. NO trailing commas
+    5. Escape special characters in strings: use \\" for quotes inside strings
+    6. Boolean values: true/false (lowercase)
+    7. Null values: null (lowercase)
+    
+    Your output must be parseable by json.loads() in Python.
+"""
+
 enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
 
 # --- PYDANTIC MODELS ---
@@ -187,7 +210,8 @@ async def run_analysis(request: AnalysisRequest):
             'instruction': request.instruction,
             'enforcement_list': enforcement_list_str,
             'tiering_note': tiering_note,
-            'CATEGORY_GUIDELINES': CATEGORY_GUIDELINES
+            'CATEGORY_GUIDELINES': CATEGORY_GUIDELINES,
+            'AUDIT_OUTPUT_FORMAT': AUDIT_OUTPUT_FORMAT
         })
 
         # --- MANUAL MERGING LOGIC ---
