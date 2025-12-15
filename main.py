@@ -58,6 +58,7 @@ CATEGORY_GUIDELINES = """
 
 AUDIT_OUTPUT_FORMAT = """
     For each check, report:
+    - Name: Guardrails name.
     - Status: PRESENT or MISSING
     - For Security Auditor only: If COMPLIANT set Status to PRESENT if NON-COMPLIANT set Status to MISSING
     - For Privacy Auditor only: If CERTIFIED set Status to PRESENT if REJECTED set Status to MISSING
