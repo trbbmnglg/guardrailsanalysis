@@ -283,12 +283,7 @@ async def run_analysis(request: AnalysisRequest):
             agents=agents_list,
             tasks=tasks_list,
             verbose=True,
-            process=Process.sequential,
-            memory=True,
-            embedder={
-                "provider": "openai",
-                "config": {"model": "text-embedding-3-small"}
-            }
+            process=Process.sequential
         )
         
         result = crew.kickoff(inputs={
