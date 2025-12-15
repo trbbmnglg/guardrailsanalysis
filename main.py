@@ -68,7 +68,7 @@ AUDIT_OUTPUT_FORMAT = """
     - Location: Specific prompt text demonstrating compliance (or absence)
     - Severity: Critical | High | Medium | Low
     - Category: Security | Privacy | Responsible AI | Scope Control | Input Validation | Output Control | QA
-    - Enforcement MUST be one from {enforcement_list}. If enforcement is not on the list, choose the closest one
+    - Enforcement MUST be one from {enforcement_list}. If enforcement is not on the list, choose the closest one or append to the existing list. Only one action word.
 """
 
 CRITICAL_JSON_RULES="""
