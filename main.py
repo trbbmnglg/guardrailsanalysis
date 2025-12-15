@@ -31,14 +31,6 @@ def repair_json(json_str: str) -> str:
     json_str += '}' * open_braces
     return json_str
 
-EnforcementType = Literal[
-    "Sanitize", "Maintain", "Block", "Mask", "Log", "Human Review", "Filter", 
-    "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", 
-    "Identify", "Enforce", "Limit", "Remove", "Test", "Encrypt", "Monitor"
-]
-
-enforcement_list_str = ", ".join([f'"{x}"' for x in EnforcementType.__args__])
-
 CATEGORY_GUIDELINES = """
     CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
     1. "Security" - Authentication, authorization, injection attacks, secure data handling
@@ -68,7 +60,7 @@ AUDIT_OUTPUT_FORMAT = """
     - Location: Specific prompt text demonstrating compliance (or absence)
     - Severity: Critical | High | Medium | Low
     - Category: Security | Privacy | Responsible AI | Scope Control | Input Validation | Output Control | QA
-    - Enforcement MUST be one from {enforcement_list}. If enforcement is not on the list, choose the closest one or append to the existing list. Only one action word.
+    - Enforcement: Action to take. Must be one word only and a verb.
 """
 
 CRITICAL_JSON_RULES="""
@@ -95,7 +87,7 @@ CRITICAL_JSON_RULES="""
           "description": "Concise explanation of what this guardrail prevents or enforces",
           "mechanism": "Technical implementation approach (e.g., 'Input validation', 'Self-reflection loop')",
           "triggers": ["keyword1", "keyword2", "condition3"],
-          "enforcement": "One of: {enforcement_list}",
+          "enforcement": "Action to take}",
           "location": "Short quote from prompt (if PRESENT) or empty string (if MISSING)"
         }}
       ],
@@ -120,7 +112,7 @@ class Guardrail(BaseModel):
     description: str = Field(description="Detailed description (min 15 chars)")
     mechanism: str = Field(description="Technical implementation suggestion")
     triggers: List[str] = Field(description="Patterns that trigger this guardrail")
-    enforcement: EnforcementType = Field(description="Action to take")
+    enforcement: str = Field(description="Action to take")
     location: str = Field(default="", description="Exact quote from instruction or empty string")
 
 class TieringStrategy(BaseModel):
@@ -235,7 +227,6 @@ async def run_analysis(request: AnalysisRequest):
         
         result = crew.kickoff(inputs={
             'instruction': request.instruction,
-            'enforcement_list': enforcement_list_str,
             'tiering_note': tiering_note,
             'CATEGORY_GUIDELINES': CATEGORY_GUIDELINES,
             'AUDIT_OUTPUT_FORMAT': AUDIT_OUTPUT_FORMAT
