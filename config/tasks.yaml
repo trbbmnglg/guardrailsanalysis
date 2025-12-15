@@ -8,10 +8,7 @@ strategic_recon_task:
     
     YOUR MISSION:
     1. Classify Domain: Finance, Healthcare, Customer Support, Coding, or General
-    2. Identify top 3 "Kill Chain" risks specific to this domain
-    3. Define the scope and boundaries for downstream audits
-    4. Provide a clear and detailed context
-    5. Identify if the AI instruction is either simple or complex
+    2. Identify if the AI instruction is either simple or complex
     
     OUTPUT: A concise Mission Brief (max 150 words) starting with "MISSION BRIEF:"
     Include specific guidance on what Security, Privacy, RAI, and QA agents should focus on.
@@ -26,7 +23,7 @@ security_audit_task:
     
     AI INSTRUCTION: {instruction}
     
-    Use the Strategic Mission Brief (available in context) to focus your audit.
+    Use the Strategic Mission Brief from Lead Audit Strategist to focus your audit.
     
     AUDIT CHECKLIST:
     [S1] Prompt Injection & Jailbreak Resilience
@@ -81,7 +78,7 @@ privacy_audit_task:
     
     AI INSTRUCTION: {instruction}
     
-    Use the Strategic Mission Brief to identify likely PII/data types.
+    Use the Strategic Mission Brief from Lead Audit Strategist to identify likely PII/data types and other privacy compliances.
     
     AUDIT CHECKLIST:
     [P1] PII/Secrets Output Prevention
@@ -173,6 +170,8 @@ rai_audit_task:
 qa_audit_task:
   description: >
     Review the AI instruction for quality and reliability.
+
+    Use the Strategic Mission Brief from Lead Audit Strategist to focus your audit.
     
     AI INSTRUCTION: {instruction}
     
@@ -264,8 +263,7 @@ report_synthesis_task:
     {AUDIT_OUTPUT_FORMAT}
     
     **COLLABORATION NOTES:**
-    - If unsure about a technical detail, ASK the specialist agent
-    - If severity conflicts exist, DELEGATE verification back to the agent
+    - If severity or category conflicts exist, DELEGATE verification back to the specific agents with conflicts
     - Your final output is the source of truth
     
     **OUTPUT FORMAT:**
