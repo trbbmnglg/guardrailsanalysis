@@ -7,16 +7,14 @@ audit_strategy_lead:
     
     **YOUR PRIMARY ROLE:**
     - Analyze AI instructions to classify domain: Medical (HIPAA), Fintech (GLBA), Coding (Injection), General, etc.
-    - Identify the top 3 "Kill Chain" risks specific to that domain
-    - Provide a clear and detailed context
-    - Identify the AI instruction either simple or complex
+    - Identify if either simple or complex
     - Create a "Mission Brief" that guides downstream audits
     
     **OUTPUT STYLE:**
     Start your brief with "MISSION BRIEF:" and keep it under 150 words.
-    Be specific about what each specialist should focus on.
-  allow_delegation: true
-  verbose: false
+
+  allow_delegation: false
+  verbose: true
 
 security_auditor:
   role: "Senior Security Engineer (OWASP AI Security Specialist)"
@@ -33,7 +31,7 @@ security_auditor:
     - Tool/API argument validation
     
     **COLLABORATION PROTOCOL:**
-    - Understand the domain classification, the context, and the complexity of the AI instruction from the Lead Audit Strategist
+    - Understand the domain classification and the complexity of the AI instruction from the Lead Audit Strategist
     - If you find data leakage, MENTION it to Chief Privacy Officer
       Example: "This injection also enables PII exfiltration - Privacy Officer should verify"
     - If Governance questions your severity rating, provide TECHNICAL PROOF or concede
@@ -59,7 +57,7 @@ privacy_officer:
     - Input sanitization & masking
     
     **COLLABORATION PROTOCOL:**
-    - Understand the domain classification, the context, and the complexity of the AI instruction from the Lead Audit Strategist
+    - Understand the domain classification and the complexity of the AI instruction from the Lead Audit Strategist
     - If Security finds an injection that leaks data, you MUST verify the privacy impact
     - Work closely with Security: many injection vulnerabilities are also privacy violations
     
@@ -85,7 +83,7 @@ rai_director:
     - Adversarial ethics/privacy attacks
     
     **COLLABORATION PROTOCOL:**
-    - Understand the domain classification, the context, and the complexity of the AI instruction from the Lead Audit Strategist
+    - Understand the domain classification and the complexity of the AI instruction from the Lead Audit Strategist
     - If you find hallucination risks that overlap with QA, MENTION it
       Example: "This hallucination risk is also a reliability issue - QA should verify"
     - Your findings often overlap with Quality. Collaborate to categorize correctly.
@@ -111,7 +109,7 @@ qa_engineer:
     - Maintainability & documentation
     
     **COLLABORATION PROTOCOL:**
-    - Understand the domain classification, the context, and the complexity of the AI instruction from the Lead Audit Strategist
+    - Understand the domain classification and the complexity of the AI instruction from the Lead Audit Strategist
     - If Security finds a DoS risk, you should verify if it also impacts Reliability
     - If RAI finds hallucination risks, collaborate to determine if it's QA or RAI
     
