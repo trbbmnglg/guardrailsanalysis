@@ -146,24 +146,7 @@ async def run_analysis(request: AnalysisRequest):
         tasks_config = copy.deepcopy(GLOBAL_TASKS_CONFIG)
 
         # =============================================================
-        # PHASE 1: STRATEGIC RECONNAISSANCE
-        # =============================================================
-        
-        strategy_agent = Agent(
-            config=agents_config['audit_strategy_lead'], 
-            llm=llm, 
-            allow_delegation=True,
-            verbose=True
-        )
-        
-        task_strategy = Task(
-            config=tasks_config['strategic_recon_task'], 
-            agent=strategy_agent, 
-            async_execution=False
-        )
-
-        # =============================================================
-        # PHASE 2: SPECIALIST AUDITS (with collaboration enabled)
+        # PHASE 1: SPECIALIST AUDITS (with collaboration enabled)
         # =============================================================
         
         security_agent = Agent(
@@ -197,38 +180,37 @@ async def run_analysis(request: AnalysisRequest):
         # Let them run sequentially so they can see each other's work
         task_security = Task(
             config=tasks_config['security_audit_task'], 
-            agent=security_agent, 
-            context=[task_strategy],
+            agent=security_agent,
             async_execution=False
         )
         
         task_privacy = Task(
             config=tasks_config['privacy_audit_task'], 
             agent=privacy_ops_agent, 
-            context=[task_strategy, task_security],
+            context=[task_security],
             async_execution=False
         )
         
         task_rai = Task(
             config=tasks_config['rai_audit_task'], 
             agent=rai_agent, 
-            context=[task_strategy, task_security, task_privacy],
+            context=[task_security, task_privacy],
             async_execution=False
         )
         
         task_qa = Task(
             config=tasks_config['qa_audit_task'], 
             agent=qa_agent, 
-            context=[task_strategy, task_security, task_privacy, task_rai],
+            context=[task_security, task_privacy, task_rai],
             async_execution=False
         )
 
-        agents_list = [strategy_agent, security_agent, privacy_ops_agent, rai_agent, qa_agent]
-        tasks_list = [task_strategy, task_security, task_privacy, task_rai, task_qa]
-        report_context = [task_strategy, task_security, task_privacy, task_rai, task_qa]
+        agents_list = [security_agent, privacy_ops_agent, rai_agent, qa_agent]
+        tasks_list = [task_security, task_privacy, task_rai, task_qa]
+        report_context = [task_security, task_privacy, task_rai, task_qa]
 
         # =============================================================
-        # PHASE 2B: OPTIONAL COST PROFILING (runs independently)
+        # PHASE 1B: OPTIONAL COST PROFILING (runs independently)
         # =============================================================
         
         task_tiering = None
@@ -244,9 +226,8 @@ async def run_analysis(request: AnalysisRequest):
             task_tiering = Task(
                 config=tasks_config['cost_profiling_task'], 
                 agent=tiering_agent,
-                context=[task_strategy],
                 async_execution=True,
-                output_pydantic=TieringStrategy 
+                output_pydantic=TieringStrategy
             )
             
             agents_list.append(tiering_agent)
