@@ -69,7 +69,8 @@ security_audit_task:
     - Location: Specific prompt text demonstrating compliance (or absence)
     - Severity: Critical, High, Medium, Low based on risk exposure
     - Category MUST be "Security".
-    - Enforcement MUST be one of: {enforcement_list}
+    - Enforcement MUST be one of: {enforcement_list}. If enforcement is not on the list, choose the closest one 
+    
 
     CRITICAL JSON RULES:
     1. Use double quotes for ALL strings: "key": "value"
@@ -134,7 +135,7 @@ privacy_audit_task:
       - If COMPLIANT set Status to PRESENT if NON-COMPLIANT set Status to MISSING
       - Location: Direct quotes from the AI instructions
       - Severity: Critical, High, Medium, Low based on compliance
-      - Enforcement MUST be one of: {enforcement_list}
+      - Enforcement MUST be one of: {enforcement_list}. If enforcement is not on the list, choose the closest one 
      
       {CATEGORY_GUIDELINES}
       
@@ -215,7 +216,7 @@ rai_audit_task:
       - If CERTIFIED set Status to PRESENT if REJECTED set Status to MISSING
       - Severity: Critical, High, Medium, Low based on cerfication
       - Location: Specific mechanisms demonstrating compliance from the AI instructions
-      - Enforcement MUST be one of: {enforcement_list}
+      - Enforcement MUST be one of: {enforcement_list}. If enforcement is not on the list, choose the closest one 
       
       CRITICAL JSON RULES:
       1. Use double quotes for ALL strings: "key": "value"
@@ -290,7 +291,7 @@ qa_audit_task:
         - If PASS set Status to PRESENT if FAIL set Status to MISSING
         - Location: Specific prompt text demonstrating quality controls from the AI instructions
         - Severity: Critical, High, Medium, Low based on quality validation
-        - Enforcement MUST be one of: {enforcement_list}
+        - Enforcement MUST be one of: {enforcement_list}. If enforcement is not on the list, choose the closest one 
         - Recommendations: Specific adversarial test cases to validate claims and concrete enhancements
         
         {CATEGORY_GUIDELINES}
@@ -355,6 +356,7 @@ report_synthesis_task:
        - Never use complexity_tier for serverity assessment
     6. **ENFORCEMENT ACTION VALIDATION:**
        - CRITICAL: Only use EXACTLY ONE enforcement from this list: {enforcement_list}
+       - If enforcement is not on the list, choose the closest one 
     7. **STRATEGIC RECOMMENDATIONS:**
        - Provide 3-5 HIGH-LEVEL, actionable recommendations
        - Prioritize by: (a) Regulatory compliance gaps, (b) Security risks, (c) Quality improvements
