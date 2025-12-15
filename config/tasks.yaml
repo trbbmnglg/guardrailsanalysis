@@ -1,249 +1,216 @@
 strategic_recon_task:
   description: >
-    **PHASE 1: STRATEGIC RECONNAISSANCE**
+    **STRATEGIC RECONNAISSANCE**
 
-    **INPUT:**
-    User Instruction: '''{instruction}'''
-
-    **YOUR MISSION:**
-    1. **Classify Domain:** Is this Finance, Healthcare, Customer Support, Coding, or General?
-    2. **Threat Modeling:** Identify the top 3 specific "Kill Chain" risks for this domain.
-    3. **Directives:** Issue specific orders to your team:
-       - Tell **Security Agent** what specific injection attacks to look for.
-       - Tell **Privacy Agent** what specific PII fields are likely to appear.
-       - Tell **RAI Agent** what ethical boundaries are most fragile here.
-
-    **OUTPUT FORMAT:**
-    A concise "Mission Brief" paragraph (max 150 words) that starts with "MISSION BRIEF:".
+    Analyze the user instruction and create a mission brief:
+    
+    USER INSTRUCTION: {instruction}
+    
+    YOUR MISSION:
+    1. Classify Domain: Finance, Healthcare, Customer Support, Coding, or General
+    2. Identify top 3 "Kill Chain" risks specific to this domain
+    3. Define the scope and boundaries for downstream audits
+    
+    OUTPUT: A concise Mission Brief (max 150 words) starting with "MISSION BRIEF:"
+    Include specific guidance on what Security, Privacy, RAI, and QA agents should focus on.
   expected_output: >
     A strategic Mission Brief defining the domain and top risks.
 
 security_audit_task:
   description: >
-    **PHASE 2: SECURITY AUDIT**
+    *SECURITY AUDIT - OWASP LLM TOP 10 & ISO 42001**
 
-    **INPUT:**
-    1. AI Instructions: '''{instruction}'''
-    2. **Mission Brief:** (See Context)
-
-    **STEPS:**
-    1. **Consume Brief:** Read the Strategy Agent's Mission Brief. Focus ONLY on the risks identified there.
-    2. **Vulnerability Scan:** Scan the instruction for OWASP LLM vulnerabilities.
-    3. **Security Audit:**
-      SECURITY AUDIT PROTOCOL: OWASP LLM TOP 10 & ISO 42001 VALIDATION      
-      [S1] Prompt Injection & Jailbreak Resilience
-          → Verify strict instructions forbid the LLM from executing user-provided instructions that override the system prompt
-          → Confirm protections against encoded/obfuscated malicious inputs
-          → Check for explicit refusal mechanisms for override attempts
-          → Category: Security
-      
-      [S2] Hardcoded Sensitive Data Check
-          → Scan for hardcoded API keys, tokens, or credentials
-          → Identify exposed cloud service endpoints or connection strings
-          → Flag any database schemas, internal file paths, or system architecture details
-          → Category: Security
-      
-      [S3] Role-Based Access & Authorization (Tool Use)
-          → Validate that tool/function execution is explicitly scoped to user security roles
-          → Confirm authentication and authorization controls are defined
-          → Ensure principle of least privilege is enforced
-          → Category: Security
-      
-      [S4] Resource Exhaustion & Rate Limiting (DoS)
-          → Check for frequency/volume limits on external tool/API calls
-          → Verify safeguards against infinitely long response generation
-          → Confirm protection against recursive function call loops
-          → Category: Security
-      
-      [S5] Tool/API Argument Validation
-          → Validate presence of strict schema validation for all external calls
-          → Ensure argument sanitization occurs *before* execution
-          → Confirm injection prevention mechanisms for tool parameters
-          → Category: Security
+    Review the AI instruction for security vulnerabilities.
+    
+    AI INSTRUCTION: {instruction}
+    
+    Use the Strategic Mission Brief (available in context) to focus your audit.
+    
+    AUDIT CHECKLIST:
+    [S1] Prompt Injection & Jailbreak Resilience
+        → Verify strict instructions forbid executing user overrides
+        → Confirm protections against encoded/obfuscated inputs
+        → Check explicit refusal mechanisms
+    
+    [S2] Hardcoded Sensitive Data Check  
+        → Scan for API keys, tokens, credentials
+        → Identify exposed endpoints or connection strings
+        → Flag database schemas or system architecture details
+    
+    [S3] Role-Based Access & Authorization
+        → Validate tool execution is scoped to user roles
+        → Confirm authentication/authorization controls
+        → Ensure least privilege principle
+    
+    [S4] Resource Exhaustion & Rate Limiting
+        → Check frequency/volume limits on external calls
+        → Verify safeguards against infinite response generation
+        → Confirm protection against recursive loops
+    
+    [S5] Tool/API Argument Validation
+        → Validate strict schema validation for external calls
+        → Ensure argument sanitization before execution
+        → Confirm injection prevention for tool parameters
+    
+    OUTPUT FORMAT:
+    For each checkpoint, provide:
+    - Status: PRESENT or MISSING
+    - Location: Direct quote from instruction (if PRESENT) or empty string
+    - Severity: Critical|High|Medium|Low (for MISSING items)
+    - Recommendation: Specific mitigation approach (for MISSING items)
+    
+    If you need clarification on specific risks, ask the Strategy Agent.
 
     {CATEGORY_GUIDELINES}
     
     {AUDIT_OUTPUT_FORMAT}
     
   expected_output: >
-    Structured list of security guardrails (present and missing).
+    Structured privacy audit findings with compliance gaps
 
 privacy_audit_task:
   description: >
-    **PHASE 2: PRIVACY AUDIT**
-
-    **INPUT:**
-    1. AI Instructions: '''{instruction}'''
-    2. **Mission Brief:** (See Context)
-
-    **STEPS:**
-    1. **Consume Brief:** Focus on the specific data types mentioned in the brief.
-    2. **Data Flow Analysis:** Where does data go? Is it logged? Is it repeated?
-    3. **Gap Analysis:** If the user asks for "names" but doesn't mention "redaction", flag it as MISSING.
-    4. **Privacy Audit:**
-      PRIVACY AUDIT PROTOCOL: GDPR/CCPA/NIST AI RMF COMPLIANCE VALIDATION
-      
-      [P1] PII/Secrets Output Prevention
-        → Verify explicit instructions forbid outputting or confirming ANY PII (names, emails, addresses, IDs)
-        → Confirm system secrets (keys, tokens, credentials) are protected
-        → Check for refusal mechanisms when users provide their own PII
-        → Category: Privacy
-      
-      [P2] Data Minimization & Purpose Limitation
-        → Validate instructions strictly prohibit cross-session data access
-        → Confirm external database queries are forbidden without explicit authorization
-        → Ensure input data is used ONLY for the specified task (GDPR Art. 5(1)(b))
-        → Category: Privacy
-      
-      [P3] Ephemeral Data & Right to Erasure
-        → Check for instructions treating conversations as ephemeral/stateless
-        → Verify avoidance of persistent unstructured data generation
-        → Confirm compliance with GDPR Art. 17 (Right to Erasure) design principles
-        → Category: Privacy
-      
-      [P4] Self-Correction & PII Validation Mechanism (Self-Check)
-          → Validate presence of meta-instructions requiring output self-review
-          → Confirm LLM must check generated responses for PII leakage BEFORE finalization
-          → Ensure validation loop is explicit and enforceable
-          → Category: Privacy
-      
-      [P5] PII Input Sanitization & Masking Mandate
-        → Verify instructions for immediate PII sanitization/masking upon detection
-        → Check for redaction mechanisms (e.g., replacing with [REDACTED] or tokens)
-        → Confirm sanitization occurs BEFORE task processing
-        → Category: Privacy
+    Review the AI instruction for privacy compliance.
+    
+    AI INSTRUCTION: {instruction}
+    
+    Use the Strategic Mission Brief to identify likely PII/data types.
+    
+    AUDIT CHECKLIST:
+    [P1] PII/Secrets Output Prevention
+        → Verify instructions forbid outputting PII (names, emails, addresses, IDs)
+        → Confirm system secrets are protected
+        → Check refusal mechanisms when users provide PII
+    
+    [P2] Data Minimization & Purpose Limitation
+        → Validate prohibition of cross-session data access
+        → Confirm external DB queries require authorization
+        → Ensure data used ONLY for specified task
+    
+    [P3] Ephemeral Data & Right to Erasure
+        → Check for stateless/ephemeral treatment
+        → Verify avoidance of persistent data generation
+        → Confirm GDPR Art. 17 compliance design
+    
+    [P4] Self-Correction & PII Validation
+        → Validate presence of output self-review instructions
+        → Confirm LLM checks for PII leakage before finalization
+        → Ensure validation loop is explicit
+    
+    [P5] PII Input Sanitization & Masking
+        → Verify immediate PII sanitization on detection
+        → Check redaction mechanisms ([REDACTED] or tokens)
+        → Confirm sanitization before task processing
+    
+    OUTPUT FORMAT: Same structure as Security Audit
+    
+    If data flow is unclear, delegate analysis to the QA Agent.
           
-      {CATEGORY_GUIDELINES}
+    {CATEGORY_GUIDELINES}
       
-      {AUDIT_OUTPUT_FORMAT}
+    {AUDIT_OUTPUT_FORMAT}
       
   expected_output: >
     Structured list of privacy guardrails.
 
 rai_audit_task:
   description: >
-    **PHASE 2: ETHICS & SAFETY AUDIT**
-
-    **INPUT:**
-    1. AI Instructions '''{instruction}'''
-    2. **Mission Brief:** (See Context)
-
-    **STEPS:**
-    1. **Consume Brief:** Focus on the specific ethical risks (e.g., financial advice, medical diagnosis).
-    2. **Safety Check:** Check for triggers for harmful content (self-harm, hate speech).
-    3. **Oversight:** Check for "Human-in-the-loop" mechanisms.
-    4. **Responsible AI Certification:**
-     RESPONSIBLE AI CERTIFICATION PROTOCOL: EU AI ACT & NIST AI RMF VALIDATION
-      [R1] Systemic Bias & Fairness Mitigation (Mechanism Check)
-        → Verify active bias detection mechanisms (self-reflection prompts, demographic balancing)
-        → Confirm instructions to search for and mitigate bias in outputs
-        → Check for fairness testing requirements across protected characteristics
-        → Category: Responsible AI
-      
-      [R2] Mandatory Prohibited Content (Explicit Bias Detection)
-        → CRITICAL FAILURE CHECK: Scan prompt for instructions that introduce discrimination
-        → Identify any requirements mandating bias against protected groups
-        → Flag any language that could systematically disadvantage demographic categories
-        → Category: Responsible AI
-      
-      [R3] Harmful Content & Policy Violation Filters (Output)
-        → Validate explicit enumeration of prohibited content types:
+    Review the AI instruction for ethical and safety compliance.
+    
+    AI INSTRUCTION: {instruction}
+    
+    Focus on ethical risks identified in the Mission Brief.
+    
+    AUDIT CHECKLIST:
+    [R1] Systemic Bias & Fairness Mitigation
+        → Verify active bias detection mechanisms
+        → Confirm instructions to mitigate bias in outputs
+        → Check fairness testing across protected characteristics
+    
+    [R2] Prohibited Content (Critical Check)
+        → SCAN for instructions introducing discrimination
+        → Identify requirements mandating bias against protected groups
+        → Flag language systematically disadvantaging demographics
+    
+    [R3] Harmful Content & Policy Violation Filters
+        → Validate enumeration of prohibited content:
           • Illegal activities (violence, exploitation, terrorism)
           • Self-harm encouragement or suicide ideation
           • Hate speech targeting protected characteristics
           • Misinformation or manipulation content
-        → Confirm filtering instructions are actionable and specific
-        → Category: Responsible AI
-      
-      [R4] Human-in-the-Loop & Role-Based Safety Lockdowns
-        → Verify clear "halt" conditions triggering mandatory human review
-        → Confirm scope confinement preventing unauthorized high-risk functions:
-          • Medical diagnosis without human oversight
-          • Financial advice without proper disclosures
+    
+    [R4] Human-in-the-Loop & Safety Lockdowns
+        → Verify "halt" conditions for mandatory human review
+        → Confirm scope confinement preventing:
+          • Medical diagnosis without oversight
+          • Financial advice without disclosures
           • Legal conclusions without attorney review
-        → Validate escalation pathways are defined
-        → Category: Responsible AI
-      
-      [R5] Audit Trail & Explanation Integrity (XAI)
-        → Check for mandatory Chain-of-Thought (CoT) reasoning requirements
-        → Verify confidence score generation for key decisions
-        → Confirm outputs are designed for regulatory audit logging
-        → Validate explainability meets EU AI Act transparency requirements
-        → Category: Responsible AI
-      
-      [R6] Adversarial Input Privacy/Ethics Identification
-        → Verify instructions to identify prompt injection attempts targeting ethics/privacy
-        → Confirm standardized refusal responses are defined
-        → Check for logging/flagging mechanisms for bypass attempts
-        → Category: Responsible AI
+    
+    [R5] Audit Trail & Explanation Integrity (XAI)
+        → Check Chain-of-Thought (CoT) requirements
+        → Verify confidence score generation
+        → Confirm outputs designed for audit logging
+    
+    [R6] Adversarial Input Identification
+        → Verify instructions to identify prompt injection attempts
+        → Confirm standardized refusal responses
+        → Check logging/flagging for bypass attempts
+    
+    OUTPUT FORMAT: Same structure as Security Audit
         
-      {CATEGORY_GUIDELINES}
+    {CATEGORY_GUIDELINES}
       
-      {AUDIT_OUTPUT_FORMAT}
+    {AUDIT_OUTPUT_FORMAT}
         
   expected_output: >
-    Structured list of ethical guardrails.
+    Structured RAI audit findings with ethical gaps
 
 qa_audit_task:
   description: >
-    **PHASE 2: QUALITY ASSURANCE**
+    Review the AI instruction for quality and reliability.
+    
+    AI INSTRUCTION: {instruction}
+    
+    AUDIT CHECKLIST:
+    [Q1] Context & Negative Constraint Confinement
+        → Verify clear agent identity and role definition
+        → Confirm explicit knowledge/action boundaries
+        → Validate negative constraints (MUST NOT list)
+        → Check scope creep prevention
+    
+    [Q2] Output Control & Schema Enforcement
+        → Validate strict output format (JSON/XML schema)
+        → Confirm token budget or length limits
+        → Check structured output requirements
+        → Verify format validation instructions
+    
+    [Q3] Adversarial Resilience & Self-Correction
+        → Verify internal self-review mechanisms
+        → Confirm output validation against constraints
+        → Check adversarial testing requirements:
+          • Obfuscated input handling (Base64, ROT13, unicode)
+          • Encoded malicious prompt detection
+          • Contextual integrity verification
+        → Validate error recovery instructions
+    
+    [Q4] Consistency & Determinism (Optional)
+        → Check temperature/sampling specifications
+        → Verify consistent outputs for identical inputs
+        → Validate absence of unnecessary randomness
+    
+    [Q5] Maintainability & Documentation (Optional)
+        → Assess prompt structure clarity
+        → Verify inline documentation of constraints
+        → Check version control compatibility
+    
+    OUTPUT FORMAT: Same structure as Security Audit
+        
+    {CATEGORY_GUIDELINES}
 
-    **INPUT:**
-    1. AI Instruction: '''{instruction}'''
-    2. **Mission Brief:** (See Context)
-
-    **STEPS:**
-    1. **Scope Validation:** Does the agent know who it is? Does it know what it MUST NOT do?
-    2. **Format Validation:** Is the output schema strictly defined?
-    3. **Error Handling:** Are there instructions for when things go wrong?
-    4. **Quality Audit:**
-      QUALITY AUDIT PROTOCOL: ISO/IEC 25059 AI SYSTEM QUALITY VALIDATION         
-        [Q1] Context & Negative Constraint Confinement (Functional Suitability)
-          → Verify clear agent identity and role definition
-          → Confirm explicit knowledge/action boundaries are defined
-          → Validate presence of negative constraints (MUST NOT actions list)
-          → Check for scope creep prevention mechanisms
-          → ISO 25059 Mapping: Functional Completeness, Appropriateness
-          → Category: Scope Control
-      
-        [Q2] Output Control & Schema Enforcement (Performance Efficiency)
-          → Validate strict output format specification (JSON/XML schema)
-          → Confirm token budget or response length limits are defined
-          → Check for structured output requirements reducing ambiguity
-          → Verify format validation instructions are present
-          → ISO 25059 Mapping: Time Behavior, Resource Utilization
-          → Category: Output Control
-        
-        [Q3] Adversarial Resilience & Self-Correction Loops (Reliability)
-          → Verify internal self-review mechanisms are defined
-          → Confirm LLM is instructed to validate output against constraints
-          → Check for adversarial testing requirements:
-            • Obfuscated input handling (Base64, ROT13, unicode tricks)
-            • Encoded malicious prompt detection
-            • Contextual integrity verification
-          → Validate error recovery and graceful degradation instructions
-          → ISO 25059 Mapping: Maturity, Fault Tolerance, Recoverability
-          → Category: QA
-        
-        SUPPLEMENTARY QUALITY CHECKS:
-        [Q4] Consistency & Determinism (Reliability - Optional)
-          → Check for temperature/sampling parameter specifications
-          → Verify instructions promote consistent outputs for identical inputs
-          → Validate absence of instructions introducing unnecessary randomness
-          → Category: QA
-        
-        [Q5] Maintainability & Documentation (Maintainability - Optional)
-          → Assess prompt structure clarity and modularity
-          → Verify inline documentation of constraint rationale
-          → Check for version control compatibility
-          → Category: QA
-        
-        {CATEGORY_GUIDELINES}
-
-        {AUDIT_OUTPUT_FORMAT}
+    {AUDIT_OUTPUT_FORMAT}
         
   expected_output: >
-    Structured list of quality guardrails.
+    Structured QA audit findings with quality gaps
 
 cost_profiling_task:
   description: >
@@ -265,54 +232,49 @@ cost_profiling_task:
 
 report_synthesis_task:
   description: >
-    **PHASE 3: COLLABORATIVE CONSENSUS & REPORTING**
-
-    **INPUT:**
-    Draft findings from ALL Agents (Security, Privacy, RAI, QA, Cost).
-
-    {tiering_note}
-
-    **COLLABORATION PROTOCOL (EXECUTE FIRST):**
-    1. **Analyze Overlaps:** Look for findings that appear in multiple reports (e.g., "PII Leakage" in both Privacy and Security).
-    2. **Resolve Conflicts:** - If agents disagree on Severity for similar items, use your DELEGATION tool to ask them for a justification.
-       - *Example:* "Security Agent, why is the API Key issue 'Medium'? Privacy marked it 'Critical'."
-    3. **Consolidate:** Merge duplicate findings. Ensure the final "Category" is the most appropriate one (Security > Privacy > RAI > QA).
-
-    **YOUR STRICT RULES:**
-    1. **DEDUPLICATION:** Compare the 'location' (quote) and 'mechanism' of every finding. If they overlap > 80%, MERGE THEM. Keep the highest severity.
-    2. **VALIDATION:** Ensure every 'present' guardrail has a 'location' quote. Ensure every 'missing' guardrail has location="".
-    3. **FORMATTING:** Return ONLY valid JSON. No markdown.
-    4. **SEVERITY ASSESSMENT:**
-       - Critical: Regulatory violation risk, immediate data breach potential, safety failures
-       - High: Significant compliance gaps, moderate breach risk, ethical concerns
-       - Medium: Best practice deviations, minor gaps
-       - Low: Documentation issues, minor improvements, aspirational enhancements
-    5. **COMPLEXITY TIERING:**
-       - If tiering is not required do not assume complexity_tier
-       - Never use complexity_tier for serverity assessment
-    6. **STRATEGIC RECOMMENDATIONS:**
-       - Provide 3-5 HIGH-LEVEL, actionable recommendations
-       - Prioritize by: (a) Regulatory compliance gaps, (b) Security risks, (c) Quality improvements
-       - Format: "Action verb + specific target + expected outcome"
-       - Example: "Implement input sanitization layer to prevent PII leakage in tool calls"
+    **FINAL COMPLIANCE REPORT SYNTHESIS**
     
-    **FINAL REPORT GENERATION:**
-    After resolving conflicts, generate the final JSON.
+    You are receiving audit findings from Security, Privacy, RAI, and QA specialists.
     
-    **REQUIRED OUTPUT STRUCTURE:**
+    **YOUR MISSION:**
+    1. **Review All Findings**: Examine outputs from all audit agents
+    2. **Eliminate Duplicates**: If 2+ agents flag the same issue (same location quote), merge into ONE guardrail
+    3. **Resolve Conflicts**: If agents disagree on severity, ASK them for justification
+       - Example: "Security Agent, why is the API Key issue 'Medium'? Privacy marked it 'Critical'."
+    4. **Assign Final Ratings**: You have veto power on severity and category
+    5. **Generate Recommendations**: Provide 3-5 strategic, actionable recommendations
+    
+    **DEDUPLICATION RULES:**
+    - Compare the 'location' field: if quotes overlap >80%, it's a duplicate
+    - Keep the highest severity rating
+    - Use the most specific category (Security > Privacy > RAI > QA)
+    
+    **SEVERITY ASSESSMENT:**
+    - Critical: Regulatory violation risk, immediate breach potential, safety failure
+    - High: Significant compliance gap, moderate breach risk, ethical concern
+    - Medium: Best practice deviation, minor gap
+    - Low: Documentation issue, minor improvement
+    
+    **COLLABORATION NOTES:**
+    - If unsure about a technical detail, ASK the specialist agent
+    - If severity conflicts exist, DELEGATE verification back to the agent
+    - Your final output is the source of truth
+    
+    **OUTPUT FORMAT:**
+    Pure JSON matching this structure (NO markdown, NO code blocks):
     
     {{
       "guardrails": [
         {{
           "name": "Descriptive Guardrail Name",
-          "category": "Security|Privacy|Responsible AI|Quality|Scope Control|Output Control",
+          "category": "Security|Privacy|Responsible AI|QA|Scope Control|Input Validation|Output Control",
           "severity": "Critical|High|Medium|Low",
           "complexity_tier": 1-5,
-          "description": "Concise explanation of what this guardrail prevents or enforces",
-          "mechanism": "Technical implementation approach (e.g., 'Input validation', 'Self-reflection loop')",
-          "triggers": ["keyword1", "keyword2", "condition3"],
-          "enforcement": "Action to take",
-          "location": "Short quote from prompt (if PRESENT) or empty string (if MISSING)"
+          "description": "What this guardrail prevents or enforces",
+          "mechanism": "Technical implementation approach",
+          "triggers": ["keyword1", "keyword2"],
+          "enforcement": "Single action verb",
+          "location": "Quote from prompt or empty string"
         }}
       ],
       "recommendations": [
@@ -320,20 +282,16 @@ report_synthesis_task:
         "Specific recommendation 2 addressing compliance gap",
         "Specific recommendation 3 for quality improvement"
       ],
-      "tiering_strategy": {{ ... }}
+      "tiering_strategy": null
     }}
     
-    **VALIDATION CHECKLIST (Perform before submitting):**
-    ☐ Response is pure JSON (no markdown, no code blocks, no explanatory text)
-    ☐ All quotes inside strings are escaped with backslashes
-    ☐ All category values match allowed categories exactly
-    ☐ All severity values are: Critical, High, Medium, or Low
-    ☐ All enforcement values are: an action to take and must be one word only and a verb
-    ☐ Complexity tiers are integers between 1-5
-    ☐ No duplicate guardrails present
-    ☐ 3-5 strategic recommendations included
-    ☐ JSON is valid and parseable by json.loads()
-    BEGIN JSON OUTPUT BELOW THIS LINE:
+    {CRITICAL_JSON_RULES}
+    
+    AI INSTRUCTION BEING AUDITED:
+    {request.instruction}
+    
+    CATEGORY GUIDELINES:
+    {CATEGORY_GUIDELINES}
 
   expected_output: >
-    Valid JSON matching GuardrailAnalysis schema.
+   Valid JSON matching GuardrailAnalysis schema
