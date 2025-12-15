@@ -411,9 +411,11 @@
 
         // --- DYNAMIC HTML CONSTRUCTION (Bento Grid) ---
         const summaryHTML = `
+            <div id="executive-summary">
+            </div>
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 fade-in">
                 <div class="flex items-center justify-between mb-6">
-                    <div id="executive-summary">
+                    <div>
                         <h2 class="text-xl font-bold text-slate-900">Executive Summary</h2>
                         <p class="text-sm text-slate-500">Real-time analysis of guardrail coverage and risk exposure.</p>
                     </div>
