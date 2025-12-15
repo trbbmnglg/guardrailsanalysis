@@ -331,6 +331,7 @@ report_synthesis_task:
     ☐ All quotes inside strings are escaped with backslashes
     ☐ All category values match allowed categories exactly
     ☐ All severity values are: Critical, High, Medium, or Low
+    ☐ All enforcement values are: an action to take and must be one word only and a verb
     ☐ Complexity tiers are integers between 1-5
     ☐ No duplicate guardrails present
     ☐ 3-5 strategic recommendations included
