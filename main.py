@@ -31,11 +31,11 @@ def repair_json(json_str: str) -> str:
     json_str += '}' * open_braces
     return json_str
 
-ALLOWED_ENFORCEMENT_ACTIONS = Literal[
+ENFORCEMENT_ACTIONS = """
     "Sanitize", "Maintain", "Block", "Mask", "Log", "Human Review", "Filter", 
     "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", 
     "Identify", "Enforce", "Limit", "Remove", "Test", "Encrypt", "Monitor"
-]
+"""
 
 CATEGORY_GUIDELINES = """
     CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
@@ -65,8 +65,10 @@ AUDIT_OUTPUT_FORMAT = """
     - Location: Specific prompt text demonstrating compliance (or absence)
     - Severity: Critical | High | Medium | Low
     - Category: Security | Privacy | Responsible AI | Scope Control | Input Validation | Output Control | QA
-    - Enforcement MUST be one of: {enforcement_list}. If enforcement is not on the list, choose the closest one
+    - Enforcement MUST be one from {enforcement_list}. If enforcement is not on the list, choose the closest one
+"""
 
+CRITICAL_JSON_RULES="""
     CRITICAL JSON RULES:
     1. Use double quotes for ALL strings: "key": "value"
     2. NO single quotes allowed
@@ -80,8 +82,8 @@ AUDIT_OUTPUT_FORMAT = """
 
     **REQUIRED OUTPUT STRUCTURE:**
     
-    {{
-        "guardrails": [
+{{
+      "guardrails": [
         {{
           "name": "Descriptive Guardrail Name",
           "category": "Security|Privacy|Responsible AI|Quality|Scope Control|Output Control",
@@ -93,11 +95,15 @@ AUDIT_OUTPUT_FORMAT = """
           "enforcement": "One of: {enforcement_list}",
           "location": "Short quote from prompt (if PRESENT) or empty string (if MISSING)"
         }}
-        ]
+      ],
+      "recommendations": [
+        "Specific recommendation 1 with measurable outcome",
+        "Specific recommendation 2 addressing compliance gap",
+        "Specific recommendation 3 for quality improvement"
+      ],
+      "tiering_strategy": {{ ... }}
     }}
 """
-
-enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
 
 # --- PYDANTIC MODELS ---
 class Guardrail(BaseModel):
@@ -226,7 +232,7 @@ async def run_analysis(request: AnalysisRequest):
         
         result = crew.kickoff(inputs={
             'instruction': request.instruction,
-            'enforcement_list': enforcement_list_str,
+            'enforcement_list': ENFORCEMENT_ACTIONS,
             'tiering_note': tiering_note,
             'CATEGORY_GUIDELINES': CATEGORY_GUIDELINES,
             'AUDIT_OUTPUT_FORMAT': AUDIT_OUTPUT_FORMAT
