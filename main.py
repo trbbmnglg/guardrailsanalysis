@@ -31,11 +31,13 @@ def repair_json(json_str: str) -> str:
     json_str += '}' * open_braces
     return json_str
 
-ENFORCEMENT_ACTIONS = """
+EnforcementType = Literal[
     "Sanitize", "Maintain", "Block", "Mask", "Log", "Human Review", "Filter", 
     "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", 
     "Identify", "Enforce", "Limit", "Remove", "Test", "Encrypt", "Monitor"
-"""
+]
+
+enforcement_list_str = ", ".join([f'"{x}"' for x in EnforcementType.__args__])
 
 CATEGORY_GUIDELINES = """
     CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
@@ -118,7 +120,7 @@ class Guardrail(BaseModel):
     description: str = Field(description="Detailed description (min 15 chars)")
     mechanism: str = Field(description="Technical implementation suggestion")
     triggers: List[str] = Field(description="Patterns that trigger this guardrail")
-    enforcement: ENFORCEMENT_ACTIONS = Field(description="Action to take")
+    enforcement: EnforcementType = Field(description="Action to take")
     location: str = Field(default="", description="Exact quote from instruction or empty string")
 
 class TieringStrategy(BaseModel):
@@ -233,7 +235,7 @@ async def run_analysis(request: AnalysisRequest):
         
         result = crew.kickoff(inputs={
             'instruction': request.instruction,
-            'enforcement_list': ENFORCEMENT_ACTIONS,
+            'enforcement_list': enforcement_list_str,
             'tiering_note': tiering_note,
             'CATEGORY_GUIDELINES': CATEGORY_GUIDELINES,
             'AUDIT_OUTPUT_FORMAT': AUDIT_OUTPUT_FORMAT
