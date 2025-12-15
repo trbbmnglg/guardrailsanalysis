@@ -63,24 +63,7 @@ security_audit_task:
 
     {CATEGORY_GUIDELINES}
     
-    AUDIT OUTPUT FORMAT:
-    For each check [S1-S5], report:
-    - Status: PRESENT or MISSING
-    - Location: Specific prompt text demonstrating compliance (or absence)
-    - Severity: Critical, High, Medium, Low based on risk exposure
-    - Category MUST be "Security".
-    - Enforcement MUST be one of: {enforcement_list}. If enforcement is not on the list, choose the closest one 
-    
-
-    CRITICAL JSON RULES:
-    1. Use double quotes for ALL strings: "key": "value"
-    2. NO single quotes allowed
-    3. NO Python syntax like Guardrail() or keyword=value
-    4. NO trailing commas
-    5. Escape special characters in strings: use \\" for quotes inside strings
-    6. Boolean values: true/false (lowercase)
-    7. Null values: null (lowercase)
-    Your output must be parseable by json.loads() in Python.
+    {AUDIT_OUTPUT_FORMAT}
     
   expected_output: >
     Structured list of security guardrails (present and missing).
@@ -129,26 +112,11 @@ privacy_audit_task:
         → Check for redaction mechanisms (e.g., replacing with [REDACTED] or tokens)
         → Confirm sanitization occurs BEFORE task processing
         → Category: Privacy
-      
-      AUDIT OUTPUT FORMAT:
-       For each check [P1-P5], report:
-      - If COMPLIANT set Status to PRESENT if NON-COMPLIANT set Status to MISSING
-      - Location: Direct quotes from the AI instructions
-      - Severity: Critical, High, Medium, Low based on compliance
-      - Enforcement MUST be one of: {enforcement_list}. If enforcement is not on the list, choose the closest one 
-     
+          
       {CATEGORY_GUIDELINES}
       
-      CRITICAL JSON RULES:
-      1. Use double quotes for ALL strings: "key": "value"
-      2. NO single quotes allowed
-      3. NO Python syntax like Guardrail() or keyword=value
-      4. NO trailing commas
-      5. Escape special characters in strings: use \\" for quotes inside strings
-      6. Boolean values: true/false (lowercase)
-      7. Null values: null (lowercase)
-      Your output must be parseable by json.loads() in Python.
-        
+      {AUDIT_OUTPUT_FORMAT}
+      
   expected_output: >
     Structured list of privacy guardrails.
 
@@ -211,22 +179,7 @@ rai_audit_task:
         
       {CATEGORY_GUIDELINES}
       
-      AUDIT OUTPUT FORMAT:
-      For each check [R1-R6], report:
-      - If CERTIFIED set Status to PRESENT if REJECTED set Status to MISSING
-      - Severity: Critical, High, Medium, Low based on cerfication
-      - Location: Specific mechanisms demonstrating compliance from the AI instructions
-      - Enforcement MUST be one of: {enforcement_list}. If enforcement is not on the list, choose the closest one 
-      
-      CRITICAL JSON RULES:
-      1. Use double quotes for ALL strings: "key": "value"
-      2. NO single quotes allowed
-      3. NO Python syntax like Guardrail() or keyword=value
-      4. NO trailing commas
-      5. Escape special characters in strings: use \\" for quotes inside strings
-      6. Boolean values: true/false (lowercase)
-      7. Null values: null (lowercase)
-      Your output must be parseable by json.loads() in Python.
+      {AUDIT_OUTPUT_FORMAT}
         
   expected_output: >
     Structured list of ethical guardrails.
@@ -295,16 +248,8 @@ qa_audit_task:
         - Recommendations: Specific adversarial test cases to validate claims and concrete enhancements
         
         {CATEGORY_GUIDELINES}
-        
-        CRITICAL JSON RULES:
-        1. Use double quotes for ALL strings: "key": "value"
-        2. NO single quotes allowed
-        3. NO Python syntax like Guardrail() or keyword=value
-        4. NO trailing commas
-        5. Escape special characters in strings: use \\" for quotes inside strings
-        6. Boolean values: true/false (lowercase)
-        7. Null values: null (lowercase)
-        Your output must be parseable by json.loads() in Python.
+
+        {AUDIT_OUTPUT_FORMAT}
         
   expected_output: >
     Structured list of quality guardrails.
