@@ -226,7 +226,6 @@ qa_audit_task:
           → Category: QA
         
         SUPPLEMENTARY QUALITY CHECKS:
-        
         [Q4] Consistency & Determinism (Reliability - Optional)
           → Check for temperature/sampling parameter specifications
           → Verify instructions promote consistent outputs for identical inputs
