@@ -118,7 +118,7 @@ class Guardrail(BaseModel):
     description: str = Field(description="Detailed description (min 15 chars)")
     mechanism: str = Field(description="Technical implementation suggestion")
     triggers: List[str] = Field(description="Patterns that trigger this guardrail")
-    enforcement: ALLOWED_ENFORCEMENT_ACTIONS = Field(description="Action to take")
+    enforcement: ENFORCEMENT_ACTIONS = Field(description="Action to take")
     location: str = Field(default="", description="Exact quote from instruction or empty string")
 
 class TieringStrategy(BaseModel):
