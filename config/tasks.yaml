@@ -1,20 +1,3 @@
-strategic_recon_task:
-  description: >
-    **STRATEGIC RECONNAISSANCE**
-
-    Analyze the user instruction and create a mission brief:
-    
-    AI INSTRUCTION: {instruction}
-    
-    YOUR MISSION:
-    1. Classify Domain: Finance, Healthcare, Customer Support, Coding, or General
-    2. Identify if the AI instruction is either simple or complex
-    
-    OUTPUT: A concise Mission Brief (max 150 words) starting with "MISSION BRIEF:"
-    Include specific guidance on what Security, Privacy, RAI, and QA agents should focus on.
-  expected_output: >
-    A strategic Mission Brief defining the domain and top risks.
-
 security_audit_task:
   description: >
     *SECURITY AUDIT - OWASP LLM TOP 10 & ISO 42001**
@@ -22,9 +5,7 @@ security_audit_task:
     Review the AI instruction for security vulnerabilities.
     
     AI INSTRUCTION: {instruction}
-    
-    Use the Strategic Mission Brief from Lead Audit Strategist to focus your audit.
-    
+       
     AUDIT CHECKLIST:
     [S1] Prompt Injection & Jailbreak Resilience
         → Verify strict instructions forbid executing user overrides
@@ -66,8 +47,8 @@ security_audit_task:
     - Triggers: List of keywords/patterns that activate this guardrail
     
     Focus mainly on your security audit.
-    If the Lead Audit Strategist says that the AI instruction is simple, don't over complicate and don't ask other Specialists.
-    If the Lead Audit Strategist says its complex, and you think it overlaps with privacy, delegate to Chief Privacy Officer.
+    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    If its complex, and you think it overlaps with privacy, delegate to Chief Privacy Officer.
     
   expected_output: >
     Structured privacy audit findings with compliance gaps
@@ -77,8 +58,6 @@ privacy_audit_task:
     Review the AI instruction for privacy compliance.
     
     AI INSTRUCTION: {instruction}
-    
-    Use the Strategic Mission Brief from Lead Audit Strategist to identify likely PII/data types and other privacy compliances.
     
     AUDIT CHECKLIST:
     [P1] PII/Secrets Output Prevention
@@ -107,8 +86,8 @@ privacy_audit_task:
         → Confirm sanitization before task processing
         
     Focus mainly on your privacy audit.
-    If the Lead Audit Strategist says that the AI instruction is simple, don't over complicate and don't ask other Specialists.
-    If the Lead Audit Strategist says its complex, and you think it overlaps with security, collaborate and come up with final decision.
+    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    If its complex, and you think it overlaps with security, collaborate and come up with final decision.
           
     OUTPUT FORMAT: Same structure as Security Audit
       
@@ -119,9 +98,7 @@ rai_audit_task:
   description: >
     Review the AI instruction for ethical and safety compliance.
     
-    AI INSTRUCTION: {instruction}
-    
-    Focus on ethical risks identified in the Mission Brief.
+    AI INSTRUCTION: {instruction}    
     
     AUDIT CHECKLIST:
     [R1] Systemic Bias & Fairness Mitigation
@@ -159,8 +136,8 @@ rai_audit_task:
         → Check logging/flagging for bypass attempts
     
     Focus mainly on your ethical and safety audit.
-    If the Lead Audit Strategist says that the AI instruction is simple, don't over complicate and don't ask other Specialists.
-    If the Lead Audit Strategist says its complex, and you think it overlaps with privacy, collaborate with Chief Privacy Officer and come up with final decision.
+    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    If its complex, and you think it overlaps with privacy, collaborate with Chief Privacy Officer and come up with final decision.
           
     OUTPUT FORMAT: Same structure as Security Audit
         
@@ -170,8 +147,6 @@ rai_audit_task:
 qa_audit_task:
   description: >
     Review the AI instruction for quality and reliability.
-
-    Use the Strategic Mission Brief from Lead Audit Strategist to focus your audit.
     
     AI INSTRUCTION: {instruction}
     
@@ -208,8 +183,8 @@ qa_audit_task:
         → Check version control compatibility
     
     Focus mainly on QA audit.
-    If the Lead Audit Strategist says that the AI instruction is simple, don't over complicate and don't ask other Specialists.
-    If the Lead Audit Strategist says its complex, and you think it overlaps with security, collaborate with Senior Security Engineer and come up with final decision.
+    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    If its complex, and you think it overlaps with security, collaborate with Senior Security Engineer and come up with final decision.
           
     OUTPUT FORMAT: Same structure as Security Audit
         
