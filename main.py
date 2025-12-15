@@ -34,7 +34,7 @@ def repair_json(json_str: str) -> str:
 ALLOWED_ENFORCEMENT_ACTIONS = Literal[
     "Sanitize", "Maintain", "Block", "Mask", "Log", "Human Review", "Filter", 
     "Reject", "Refuse", "Redact", "Implement", "Validate", "Detect", 
-    "Identify", "Enforce", "Limit", "Remove", "Test", "Encrypt"
+    "Identify", "Enforce", "Limit", "Remove", "Test", "Encrypt", "Monitor"
 ]
 
 CATEGORY_GUIDELINES = """
