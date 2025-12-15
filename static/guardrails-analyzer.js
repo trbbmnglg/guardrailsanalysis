@@ -323,7 +323,6 @@
         hideError();
         hideResults();
         showLoading();
-        scrollToSummary();
     
         try {
             const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
@@ -370,7 +369,8 @@
             
             setTimeout(() => { 
                 hideLoading(); 
-                displayResults(); 
+                displayResults();
+                scrollToSummary();
             }, 500);
     
         } catch (error) {
