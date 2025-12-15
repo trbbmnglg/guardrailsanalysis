@@ -4,12 +4,14 @@ strategic_recon_task:
 
     Analyze the user instruction and create a mission brief:
     
-    USER INSTRUCTION: {instruction}
+    AI INSTRUCTION: {instruction}
     
     YOUR MISSION:
     1. Classify Domain: Finance, Healthcare, Customer Support, Coding, or General
     2. Identify top 3 "Kill Chain" risks specific to this domain
     3. Define the scope and boundaries for downstream audits
+    4. Provide a clear and detailed context
+    5. Identify if the AI instruction is either simple or complex
     
     OUTPUT: A concise Mission Brief (max 150 words) starting with "MISSION BRIEF:"
     Include specific guidance on what Security, Privacy, RAI, and QA agents should focus on.
@@ -51,6 +53,9 @@ security_audit_task:
         → Validate strict schema validation for external calls
         → Ensure argument sanitization before execution
         → Confirm injection prevention for tool parameters
+
+    {CATEGORY_GUIDELINES}    
+    {AUDIT_OUTPUT_FORMAT}
     
     OUTPUT FORMAT:
     For each checkpoint, provide:
@@ -58,12 +63,14 @@ security_audit_task:
     - Location: Direct quote from instruction (if PRESENT) or empty string
     - Severity: Critical|High|Medium|Low (for MISSING items)
     - Recommendation: Specific mitigation approach (for MISSING items)
+    - Enforcement: Single action verb (e.g., "Block", "Log", "Redact", "Validate")
+    - Description: Brief explanation of what this guardrail prevents
+    - Mechanism: How it should be technically implemented
+    - Triggers: List of keywords/patterns that activate this guardrail
     
-    If you need clarification on specific risks, ask the Strategy Agent.
-
-    {CATEGORY_GUIDELINES}
-    
-    {AUDIT_OUTPUT_FORMAT}
+    Focus mainly on your security audit.
+    If the Lead Audit Strategist says that the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    If the Lead Audit Strategist says its complex, and you think it overlaps with privacy, delegate to Chief Privacy Officer.
     
   expected_output: >
     Structured privacy audit findings with compliance gaps
@@ -101,14 +108,12 @@ privacy_audit_task:
         → Verify immediate PII sanitization on detection
         → Check redaction mechanisms ([REDACTED] or tokens)
         → Confirm sanitization before task processing
-    
-    OUTPUT FORMAT: Same structure as Security Audit
-    
-    If data flow is unclear, delegate analysis to the QA Agent.
+        
+    Focus mainly on your privacy audit.
+    If the Lead Audit Strategist says that the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    If the Lead Audit Strategist says its complex, and you think it overlaps with security, collaborate and come up with final decision.
           
-    {CATEGORY_GUIDELINES}
-      
-    {AUDIT_OUTPUT_FORMAT}
+    OUTPUT FORMAT: Same structure as Security Audit
       
   expected_output: >
     Structured list of privacy guardrails.
@@ -156,11 +161,11 @@ rai_audit_task:
         → Confirm standardized refusal responses
         → Check logging/flagging for bypass attempts
     
+    Focus mainly on your ethical and safety audit.
+    If the Lead Audit Strategist says that the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    If the Lead Audit Strategist says its complex, and you think it overlaps with privacy, collaborate with Chief Privacy Officer and come up with final decision.
+          
     OUTPUT FORMAT: Same structure as Security Audit
-        
-    {CATEGORY_GUIDELINES}
-      
-    {AUDIT_OUTPUT_FORMAT}
         
   expected_output: >
     Structured RAI audit findings with ethical gaps
@@ -203,11 +208,11 @@ qa_audit_task:
         → Verify inline documentation of constraints
         → Check version control compatibility
     
+    Focus mainly on QA audit.
+    If the Lead Audit Strategist says that the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    If the Lead Audit Strategist says its complex, and you think it overlaps with security, collaborate with Senior Security Engineer and come up with final decision.
+          
     OUTPUT FORMAT: Same structure as Security Audit
-        
-    {CATEGORY_GUIDELINES}
-
-    {AUDIT_OUTPUT_FORMAT}
         
   expected_output: >
     Structured QA audit findings with quality gaps
@@ -254,6 +259,9 @@ report_synthesis_task:
     - High: Significant compliance gap, moderate breach risk, ethical concern
     - Medium: Best practice deviation, minor gap
     - Low: Documentation issue, minor improvement
+
+    {CATEGORY_GUIDELINES}   
+    {AUDIT_OUTPUT_FORMAT}
     
     **COLLABORATION NOTES:**
     - If unsure about a technical detail, ASK the specialist agent
@@ -290,8 +298,5 @@ report_synthesis_task:
     AI INSTRUCTION BEING AUDITED:
     {request.instruction}
     
-    CATEGORY GUIDELINES:
-    {CATEGORY_GUIDELINES}
-
   expected_output: >
    Valid JSON matching GuardrailAnalysis schema
