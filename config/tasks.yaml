@@ -239,14 +239,6 @@ qa_audit_task:
           → Check for version control compatibility
           → Category: QA
         
-        AUDIT OUTPUT FORMAT:
-        For each check [Q1-Q5], report:
-        - If PASS set Status to PRESENT if FAIL set Status to MISSING
-        - Location: Specific prompt text demonstrating quality controls from the AI instructions
-        - Severity: Critical, High, Medium, Low based on quality validation
-        - Enforcement MUST be one of: {enforcement_list}. If enforcement is not on the list, choose the closest one 
-        - Recommendations: Specific adversarial test cases to validate claims and concrete enhancements
-        
         {CATEGORY_GUIDELINES}
 
         {AUDIT_OUTPUT_FORMAT}
