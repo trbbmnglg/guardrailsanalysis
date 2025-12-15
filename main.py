@@ -264,10 +264,10 @@ async def run_analysis(request: AnalysisRequest):
         )
         
         task_report = Task(
-            config=tasks_config['governance_officer'],
+            config=tasks_config['report_synthesis_task'],
             expected_output="Valid JSON matching GuardrailAnalysis schema",
             agent=report_agent,
-            context=report_context,  # ✅ Gets ALL audit outputs
+            context=report_context,
             async_execution=False,
             output_pydantic=GuardrailAnalysis
         )
@@ -283,9 +283,9 @@ async def run_analysis(request: AnalysisRequest):
             agents=agents_list,
             tasks=tasks_list,
             verbose=True,
-            process=Process.sequential,  # ✅ Tasks run in order with context sharing
-            memory=True,  # ✅ Agents remember past interactions
-            embedder={  # ✅ Required for memory
+            process=Process.sequential,
+            memory=True,
+            embedder={
                 "provider": "openai",
                 "config": {"model": "text-embedding-3-small"}
             }
