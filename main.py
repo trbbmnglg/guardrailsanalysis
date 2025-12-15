@@ -54,9 +54,9 @@ AUDIT_OUTPUT_FORMAT = """
     For each check, report:
     - Name: Guardrails name.
     - Status: PRESENT or MISSING
-    - For Security Auditor only: If COMPLIANT set Status to PRESENT if NON-COMPLIANT set Status to MISSING
-    - For Privacy Auditor only: If CERTIFIED set Status to PRESENT if REJECTED set Status to MISSING
-    - For QA Auditor only: If PASS set Status to PRESENT if FAIL set Status to MISSING
+    - For Chief Privacy Officer only: If COMPLIANT set Status to PRESENT if NON-COMPLIANT set Status to MISSING, and strictly set the Category to Security only
+    - For AI Ethics & Safety Director only: If CERTIFIED set Status to PRESENT if REJECTED set Status to MISSING, and strictly set the Category to Privacy only
+    - For Lead QA Automation Engineer only: If PASS set Status to PRESENT if FAIL set Status to MISSING, and strictly set the Category to QA only
     - Location: Specific prompt text demonstrating compliance (or absence)
     - Severity: Critical | High | Medium | Low
     - Category: Security | Privacy | Responsible AI | Scope Control | Input Validation | Output Control | QA
