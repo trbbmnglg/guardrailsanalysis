@@ -314,7 +314,7 @@ report_synthesis_task:
           "description": "Concise explanation of what this guardrail prevents or enforces",
           "mechanism": "Technical implementation approach (e.g., 'Input validation', 'Self-reflection loop')",
           "triggers": ["keyword1", "keyword2", "condition3"],
-          "enforcement": "One of: {enforcement_list}",
+          "enforcement": "Action to take",
           "location": "Short quote from prompt (if PRESENT) or empty string (if MISSING)"
         }}
       ],
@@ -330,7 +330,6 @@ report_synthesis_task:
     ☐ Response is pure JSON (no markdown, no code blocks, no explanatory text)
     ☐ All quotes inside strings are escaped with backslashes
     ☐ All category values match allowed categories exactly
-    ☐ All enforcement values match the EXACT list: {enforcement_list}. If enforcement is not on the list, choose the closest one
     ☐ All severity values are: Critical, High, Medium, or Low
     ☐ Complexity tiers are integers between 1-5
     ☐ No duplicate guardrails present
