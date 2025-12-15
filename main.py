@@ -43,54 +43,54 @@ def repair_json(json_str: str) -> str:
     return json_str
 
 CATEGORY_GUIDELINES = """
-CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
-1. "Security" - Authentication, authorization, injection attacks, secure data handling
-2. "Privacy" - PII handling, GDPR/CCPA, data residency, consent mechanisms
-3. "Responsible AI" - Bias, fairness, toxicity, harmful content, ethical boundaries
-4. "QA" - Quality checks, error handling, testing, monitoring
-5. "Scope Control" - Task limitations, out-of-scope detection, capability boundaries
-6. "Input Validation" - Input sanitization, format checks, type validation
-7. "Output Control" - Response filtering, length limits, format enforcement
-
-NAMING RULES FOR MISSING GUARDRAILS:
-- Start with "MISSING:" followed by specific control name
-- Example: "MISSING: SQL Injection Prevention"
-
-LOCATION FIELD RULES:
-- If guardrail EXISTS: Provide max 10 words exact quote from instruction
-- If guardrail is MISSING: Set location to empty string ""
+    CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
+    1. "Security" - Authentication, authorization, injection attacks, secure data handling
+    2. "Privacy" - PII handling, GDPR/CCPA, data residency, consent mechanisms
+    3. "Responsible AI" - Bias, fairness, toxicity, harmful content, ethical boundaries
+    4. "QA" - Quality checks, error handling, testing, monitoring
+    5. "Scope Control" - Task limitations, out-of-scope detection, capability boundaries
+    6. "Input Validation" - Input sanitization, format checks, type validation
+    7. "Output Control" - Response filtering, length limits, format enforcement
+    
+    NAMING RULES FOR MISSING GUARDRAILS:
+    - Start with "MISSING:" followed by specific control name
+    - Example: "MISSING: SQL Injection Prevention"
+    
+    LOCATION FIELD RULES:
+    - If guardrail EXISTS: Provide max 10 words exact quote from instruction
+    - If guardrail is MISSING: Set location to empty string ""
 """
 
 AUDIT_OUTPUT_FORMAT = """
-For each checkpoint, provide:
-- Name: Specific guardrail name
-- Status: PRESENT or MISSING
-- Location: Exact quote from instruction (if PRESENT) or empty string (if MISSING)
-- Severity: Critical | High | Medium | Low (for MISSING items, explain risk)
-- Category: Use EXACT category names from guidelines
-- Enforcement: Single action verb (e.g., "Block", "Log", "Redact", "Validate")
-- Description: Brief explanation of what this guardrail prevents
-- Mechanism: How it should be technically implemented
-- Triggers: List of keywords/patterns that activate this guardrail
-
-COLLABORATION GUIDELINES:
-- If you're unsure about domain-specific risks, ASK the Strategy Lead
-- If a finding overlaps with another agent's domain, MENTION it naturally
-  Example: "This SQL injection risk also impacts Privacy - Privacy Officer should verify"
-- Focus on YOUR domain but be aware of others
+    For each checkpoint, provide:
+    - Name: Specific guardrail name
+    - Status: PRESENT or MISSING
+    - Location: Exact quote from instruction (if PRESENT) or empty string (if MISSING)
+    - Severity: Critical | High | Medium | Low (for MISSING items, explain risk)
+    - Category: Use EXACT category names from guidelines
+    - Enforcement: Single action verb (e.g., "Block", "Log", "Redact", "Validate")
+    - Description: Brief explanation of what this guardrail prevents
+    - Mechanism: How it should be technically implemented
+    - Triggers: List of keywords/patterns that activate this guardrail
+    
+    COLLABORATION GUIDELINES:
+    - If you're unsure about domain-specific risks, ASK the Strategy Lead
+    - If a finding overlaps with another agent's domain, MENTION it naturally
+      Example: "This SQL injection risk also impacts Privacy - Privacy Officer should verify"
+    - Focus on YOUR domain but be aware of others
 """
 
 CRITICAL_JSON_RULES = """
-CRITICAL JSON RULES:
-1. Use double quotes for ALL strings: "key": "value"
-2. NO single quotes allowed
-3. NO Python syntax like Guardrail() or keyword=value
-4. NO trailing commas
-5. Escape special characters in strings: use \\" for quotes inside strings
-6. Boolean values: true/false (lowercase)
-7. Null values: null (lowercase)
-
-Your output must be parseable by json.loads() in Python.
+    CRITICAL JSON RULES:
+    1. Use double quotes for ALL strings: "key": "value"
+    2. NO single quotes allowed
+    3. NO Python syntax like Guardrail() or keyword=value
+    4. NO trailing commas
+    5. Escape special characters in strings: use \\" for quotes inside strings
+    6. Boolean values: true/false (lowercase)
+    7. Null values: null (lowercase)
+    
+    Your output must be parseable by json.loads() in Python.
 """
 
 # --- PYDANTIC MODELS ---
@@ -152,14 +152,14 @@ async def run_analysis(request: AnalysisRequest):
         strategy_agent = Agent(
             config=agents_config['audit_strategy_lead'], 
             llm=llm, 
-            allow_delegation=True,  # ✅ FIXED: Can answer questions from specialists
+            allow_delegation=True,
             verbose=True
         )
         
         task_strategy = Task(
             config=tasks_config['strategic_recon_task'], 
             agent=strategy_agent, 
-            async_execution=False  # ✅ Must complete before Phase 2
+            async_execution=False
         )
 
         # =============================================================
@@ -169,58 +169,57 @@ async def run_analysis(request: AnalysisRequest):
         security_agent = Agent(
             config=agents_config['security_auditor'], 
             llm=llm, 
-            allow_delegation=True,  # ✅ FIXED: Can ask Strategy/Privacy for clarification
+            allow_delegation=True,
             verbose=True
         )
         
         privacy_ops_agent = Agent(
             config=agents_config['privacy_officer'], 
             llm=llm, 
-            allow_delegation=True,  # ✅ FIXED: Can coordinate with Security
+            allow_delegation=True,
             verbose=True
         )
         
         rai_agent = Agent(
             config=agents_config['rai_director'], 
             llm=llm, 
-            allow_delegation=True,  # ✅ FIXED: Can collaborate with QA on overlaps
+            allow_delegation=True,
             verbose=True
         )
         
         qa_agent = Agent(
             config=agents_config['qa_engineer'], 
             llm=llm, 
-            allow_delegation=True,  # ✅ FIXED: Can coordinate with RAI
+            allow_delegation=True,
             verbose=True
         )
 
-        # ✅ CRITICAL FIX: Remove async_execution from audit tasks
         # Let them run sequentially so they can see each other's work
         task_security = Task(
             config=tasks_config['security_audit_task'], 
             agent=security_agent, 
-            context=[task_strategy],  # Gets strategy output
-            async_execution=False  # ✅ Sequential for collaboration
+            context=[task_strategy],
+            async_execution=False
         )
         
         task_privacy = Task(
             config=tasks_config['privacy_audit_task'], 
             agent=privacy_ops_agent, 
-            context=[task_strategy, task_security],  # ✅ Can see security findings
+            context=[task_strategy, task_security],
             async_execution=False
         )
         
         task_rai = Task(
             config=tasks_config['rai_audit_task'], 
             agent=rai_agent, 
-            context=[task_strategy, task_security, task_privacy],  # ✅ Full context
+            context=[task_strategy, task_security, task_privacy],
             async_execution=False
         )
         
         task_qa = Task(
             config=tasks_config['qa_audit_task'], 
             agent=qa_agent, 
-            context=[task_strategy, task_security, task_privacy, task_rai],  # ✅ Full context
+            context=[task_strategy, task_security, task_privacy, task_rai],
             async_execution=False
         )
 
@@ -238,15 +237,15 @@ async def run_analysis(request: AnalysisRequest):
             tiering_agent = Agent(
                 config=agents_config['cost_architect'], 
                 llm=llm, 
-                allow_delegation=False,  # ✅ Focused specialist, no delegation needed
+                allow_delegation=False,
                 verbose=True
             )
             
             task_tiering = Task(
                 config=tasks_config['cost_profiling_task'], 
                 agent=tiering_agent,
-                context=[task_strategy],  # ✅ Gets strategy brief for context
-                async_execution=True,  # ✅ Can run in parallel
+                context=[task_strategy],
+                async_execution=True,
                 output_pydantic=TieringStrategy 
             )
             
@@ -260,73 +259,12 @@ async def run_analysis(request: AnalysisRequest):
         report_agent = Agent(
             config=agents_config['governance_officer'], 
             llm=llm, 
-            allow_delegation=True,  # ✅ CRITICAL: Must be True for interrogation
+            allow_delegation=True,
             verbose=True
         )
         
-        # ✅ FIXED: Simplified instructions for Governance Officer
         task_report = Task(
-            description=f"""**FINAL COMPLIANCE REPORT SYNTHESIS**
-
-You are receiving audit findings from Security, Privacy, RAI, and QA specialists.
-
-**YOUR MISSION:**
-1. **Review All Findings**: Examine outputs from all audit agents
-2. **Eliminate Duplicates**: If 2+ agents flag the same issue (same location quote), merge into ONE guardrail
-3. **Resolve Conflicts**: If agents disagree on severity, ASK them for justification
-   - Example: "Security Agent, why is the API Key issue 'Medium'? Privacy marked it 'Critical'."
-4. **Assign Final Ratings**: You have veto power on severity and category
-5. **Generate Recommendations**: Provide 3-5 strategic, actionable recommendations
-
-**DEDUPLICATION RULES:**
-- Compare the 'location' field: if quotes overlap >80%, it's a duplicate
-- Keep the highest severity rating
-- Use the most specific category (Security > Privacy > RAI > QA)
-
-**SEVERITY ASSESSMENT:**
-- Critical: Regulatory violation risk, immediate breach potential, safety failure
-- High: Significant compliance gap, moderate breach risk, ethical concern
-- Medium: Best practice deviation, minor gap
-- Low: Documentation issue, minor improvement
-
-**COLLABORATION NOTES:**
-- If unsure about a technical detail, ASK the specialist agent
-- If severity conflicts exist, DELEGATE verification back to the agent
-- Your final output is the source of truth
-
-**OUTPUT FORMAT:**
-Pure JSON matching this structure (NO markdown, NO code blocks):
-
-{{
-  "guardrails": [
-    {{
-      "name": "Descriptive Guardrail Name",
-      "category": "Security|Privacy|Responsible AI|QA|Scope Control|Input Validation|Output Control",
-      "severity": "Critical|High|Medium|Low",
-      "complexity_tier": 1-5,
-      "description": "What this guardrail prevents or enforces",
-      "mechanism": "Technical implementation approach",
-      "triggers": ["keyword1", "keyword2"],
-      "enforcement": "Single action verb",
-      "location": "Quote from prompt or empty string"
-    }}
-  ],
-  "recommendations": [
-    "Specific recommendation 1 with measurable outcome",
-    "Specific recommendation 2 addressing compliance gap",
-    "Specific recommendation 3 for quality improvement"
-  ],
-  "tiering_strategy": null
-}}
-
-{CRITICAL_JSON_RULES}
-
-AI INSTRUCTION BEING AUDITED:
-{request.instruction}
-
-CATEGORY GUIDELINES:
-{CATEGORY_GUIDELINES}
-""",
+            config=tasks_config['governance_officer'],
             expected_output="Valid JSON matching GuardrailAnalysis schema",
             agent=report_agent,
             context=report_context,  # ✅ Gets ALL audit outputs
