@@ -77,6 +77,24 @@ AUDIT_OUTPUT_FORMAT = """
     7. Null values: null (lowercase)
     
     Your output must be parseable by json.loads() in Python.
+
+    **REQUIRED OUTPUT STRUCTURE:**
+    
+    {{
+        "guardrails": [
+        {{
+          "name": "Descriptive Guardrail Name",
+          "category": "Security|Privacy|Responsible AI|Quality|Scope Control|Output Control",
+          "severity": "Critical|High|Medium|Low",
+          "complexity_tier": 1-5,
+          "description": "Concise explanation of what this guardrail prevents or enforces",
+          "mechanism": "Technical implementation approach (e.g., 'Input validation', 'Self-reflection loop')",
+          "triggers": ["keyword1", "keyword2", "condition3"],
+          "enforcement": "One of: {enforcement_list}",
+          "location": "Short quote from prompt (if PRESENT) or empty string (if MISSING)"
+        }}
+        ]
+    }}
 """
 
 enforcement_list_str = str(ALLOWED_ENFORCEMENT_ACTIONS.__args__).replace("(", "").replace(")", "").replace("'", "")
