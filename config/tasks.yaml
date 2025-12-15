@@ -290,10 +290,7 @@ report_synthesis_task:
     5. **COMPLEXITY TIERING:**
        - If tiering is not required do not assume complexity_tier
        - Never use complexity_tier for serverity assessment
-    6. **ENFORCEMENT ACTION VALIDATION:**
-       - CRITICAL: Only use EXACTLY ONE enforcement from this list: {enforcement_list}
-       - If enforcement is not on the list, choose the closest one 
-    7. **STRATEGIC RECOMMENDATIONS:**
+    6. **STRATEGIC RECOMMENDATIONS:**
        - Provide 3-5 HIGH-LEVEL, actionable recommendations
        - Prioritize by: (a) Regulatory compliance gaps, (b) Security risks, (c) Quality improvements
        - Format: "Action verb + specific target + expected outcome"
