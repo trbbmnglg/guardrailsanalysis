@@ -568,6 +568,10 @@
         document.getElementById('exportJson').addEventListener('click', exportJson);
         document.getElementById('exportCsv').addEventListener('click', exportCsv);
 
+        if (analysisResults.green_ai_analysis && window.greenAIMonitor) {
+            window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'greenAISection');
+        }
+
         // --- RENDER LATENCY PROFILER (HYBRID MODE) ---
         const latencyContainer = document.getElementById('latencyReportSection');
         if (window.latencyProfiler) {
