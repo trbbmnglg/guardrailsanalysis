@@ -15,7 +15,6 @@ class GreenAIAnalysis(BaseModel):
     @field_validator('status')
     @classmethod
     def validate_status(cls, v: str) -> str:
-        # Sinisiguro nito na laging Capitalized ang babalik sa frontend
         valid = ["Green", "Amber", "Red"]
         normalized = v.strip().capitalize()
         return normalized if normalized in valid else "Green"
@@ -31,7 +30,7 @@ class GreenAIPlugin:
                 "You analyze prompts for *compute intensity*. "
                 "You know that 'Chain of Thought' or 'System 2' thinking consumes significantly more energy. "
                 "You flag potential for infinite loops or unnecessary massive context windows. "
-                "Laging mag-output sa tamang JSON format."
+                "Always output correct JSON format."
             ),
             llm=llm,
             verbose=True,
