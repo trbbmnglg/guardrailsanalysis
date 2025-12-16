@@ -5,7 +5,7 @@ from typing import Literal, Optional, Union
 
 # --- Data Model ---
 class GreenAIAnalysis(BaseModel):
-    # Ginawang mas flexible ang status para sa case sensitivity
+    # Made status flexible to handle case sensitivity automatically
     status: str = Field(description="Energy efficiency status: Green, Amber, or Red")
     energy_score: int = Field(description="0-100 efficiency score (100 is best)")
     estimated_kwh_per_1k_req: float = Field(description="Estimated kWh per 1000 requests")
@@ -17,6 +17,7 @@ class GreenAIAnalysis(BaseModel):
     def validate_status(cls, v: str) -> str:
         valid = ["Green", "Amber", "Red"]
         normalized = v.strip().capitalize()
+        # Fallback to 'Green' if the LLM outputs something weird, preventing a crash
         return normalized if normalized in valid else "Green"
 
 # --- Agent & Task Configuration ---
@@ -51,7 +52,7 @@ class GreenAIPlugin:
                 Rules:
                 - energy_score: 100 (efficient) to 0 (wasteful).
                 - estimated_kwh_per_1k_req: Tier 1=0.001 to Tier 4=0.05.
-                - output_pydantic: Siguraduhin na lahat ng fields ay may laman.
+                - Ensure all fields in the output schema are populated.
             """,
             expected_output="A GreenAIAnalysis JSON object with status, energy_score, kwh, reasoning, and tip.",
             agent=agent,
