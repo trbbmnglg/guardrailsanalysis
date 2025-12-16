@@ -189,6 +189,24 @@ cost_profiling_task:
   expected_output: >
     Tier recommendation with cost/latency estimates.
 
+green_ai_analysis_task:
+  description: >
+    Analyze the following AI instruction for Energy Consumption impact:
+    '''{instruction}'''
+
+    Determine the 'Green AI' status:
+    1. GREEN: Simple, direct tasks, low token output.
+    2. AMBER: Moderate reasoning, large context, or multiple steps.
+    3. RED: Deep recursive reasoning, o1/o3 models, or massive generation.
+
+    Rules:
+    - energy_score: 100 (efficient) to 0 (wasteful).
+    - estimated_kwh_per_1k_req: Tier 1=0.001 to Tier 4=0.05.
+    - Ensure all fields in the output schema are populated.
+
+  expected_output: >
+    A GreenAIAnalysis JSON object with status, energy_score, kwh, reasoning, and tip.
+
 report_synthesis_task:
   description: >
     **FINAL COMPLIANCE REPORT SYNTHESIS**
