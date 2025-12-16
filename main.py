@@ -175,7 +175,7 @@ async def run_analysis(request: AnalysisRequest):
             model="openai/meta-llama/Llama-3.3-70B-Instruct",
             base_url="https://router.huggingface.co/v1",
             api_key=request.api_key,
-            temperature=0.1,
+            temperature=0.0,
             max_tokens=8000,
         )
 
