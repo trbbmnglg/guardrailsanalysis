@@ -10,9 +10,6 @@
     let currentCategoryFilter = 'all';
     let currentStatusFilter = 'active'; 
     let currentSeverityFilter = 'all';
-    const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
-    const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
-    const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
 
     // DOM elements
     let apiKeyInput, instructionInput, charCount, analyzeBtn;
@@ -326,6 +323,10 @@
         hideError();
         hideResults();
         showLoading();
+
+        const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
+        const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
+        const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
     
         try {
           
@@ -371,7 +372,7 @@
             
             setTimeout(() => { 
                 hideLoading(); 
-                displayResults();
+                displayResults(enableProfiling, enableRagDeepScan, enableGreenAI);
                 scrollToSummary();
             }, 500);
     
@@ -398,7 +399,7 @@
         }
     }
   
-    function displayResults() {
+    function displayResults(enableProfiling, enableRagDeepScan, enableGreenAI) {
         if (!analysisResults) return;
   
         // 1. Calculate Stats
