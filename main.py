@@ -72,12 +72,6 @@ AUDIT_OUTPUT_FORMAT = """
     - Description: Brief explanation of what this guardrail prevents
     - Mechanism: How it should be technically implemented
     - Triggers: List of keywords/patterns that activate this guardrail
-    
-    COLLABORATION GUIDELINES:
-    - If you're unsure about domain-specific risks, ASK the Strategy Lead
-    - If a finding overlaps with another agent's domain, MENTION it naturally
-      Example: "This SQL injection risk also impacts Privacy - Privacy Officer should verify"
-    - Focus on YOUR domain but be aware of others
 """
 
 CRITICAL_JSON_RULES = """
@@ -178,8 +172,15 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         # Let them run sequentially so they can see each other's work
+        task_huddle = Task(
+            config=tasks_config['team_huddle'],
+            agent=[security_agent, privacy_ops_agent, rai_agent, qa_agent, report_agent],
+            async_execution=False
+        )
+        
         task_security = Task(
-            config=tasks_config['security_audit_task'], 
+            config=tasks_config['security_audit_task'],
+            context=[task_huddle],
             agent=security_agent,
             async_execution=False
         )
@@ -187,26 +188,26 @@ async def run_analysis(request: AnalysisRequest):
         task_privacy = Task(
             config=tasks_config['privacy_audit_task'], 
             agent=privacy_ops_agent, 
-            context=[task_security],
+            context=[task_huddle, task_security],
             async_execution=False
         )
         
         task_rai = Task(
             config=tasks_config['rai_audit_task'], 
             agent=rai_agent, 
-            context=[task_security, task_privacy],
+            context=[task_huddle],
             async_execution=False
         )
         
         task_qa = Task(
             config=tasks_config['qa_audit_task'], 
             agent=qa_agent, 
-            context=[task_security, task_privacy, task_rai],
+            context=[task_huddle, task_security],
             async_execution=False
         )
 
         agents_list = [security_agent, privacy_ops_agent, rai_agent, qa_agent]
-        tasks_list = [task_security, task_privacy, task_rai, task_qa]
+        tasks_list = [task_huddle, task_huddle, task_security, task_privacy, task_rai, task_qa]
         report_context = [task_security, task_privacy, task_rai, task_qa]
 
         # =============================================================
@@ -240,7 +241,7 @@ async def run_analysis(request: AnalysisRequest):
         report_agent = Agent(
             config=agents_config['governance_officer'], 
             llm=llm, 
-            allow_delegation=True,
+            allow_delegation=False,
             verbose=True
         )
         
