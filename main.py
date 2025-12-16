@@ -353,7 +353,6 @@ async def run_analysis(request: AnalysisRequest):
                      green_data = task_green.output.dict()
                 else:
                      # Fallback for raw string
-                     import json
                      raw_green = str(task_green.output).replace("```json", "").replace("```", "").strip()
                      green_data = json.loads(raw_green)
             
