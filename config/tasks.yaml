@@ -18,9 +18,7 @@ security_audit_task:
     
     *SECURITY AUDIT - OWASP LLM TOP 10 & ISO 42001**
 
-    Review the AI instruction for security vulnerabilities.
-    
-    AI INSTRUCTION: {instruction}
+    Review the AI instruction for security vulnerabilities: {instruction}
        
     AUDIT CHECKLIST:
     [S1] Prompt Injection & Jailbreak Resilience
@@ -59,9 +57,7 @@ privacy_audit_task:
 
     Focus mainly on your privacy audit.
     
-    Review the AI instruction for privacy compliance.
-    
-    AI INSTRUCTION: {instruction}
+    Review the AI instruction for privacy compliance: {instruction}
     
     AUDIT CHECKLIST:
     [P1] PII/Secrets Output Prevention
@@ -91,8 +87,6 @@ privacy_audit_task:
           
     {CATEGORY_GUIDELINES}    
     {AUDIT_OUTPUT_FORMAT}
-
-    senior security engineer (owasp ai security specialist) might ask you about security audit that overlaps with privacy, provide your perspective and help decide final category and severity.
       
   expected_output: >
     Structured list of privacy guardrails.
@@ -190,8 +184,6 @@ qa_audit_task:
           
     {CATEGORY_GUIDELINES}    
     {AUDIT_OUTPUT_FORMAT}
-
-    senior security engineer (owasp ai security specialist) might ask you about security audit that overlaps with QA, provide your perspective and help decide final category and severity.
         
   expected_output: >
     Structured QA audit findings with quality gaps
