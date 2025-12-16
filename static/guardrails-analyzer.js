@@ -1,4 +1,4 @@
-// AI Agent Guardrail Analyzer - Enterprise Agentic Edition
+// AI Agent Guardrails Analysis
 // Author: Robert Bumanglag
 // Backend: Python CrewAI (FastAPI)
 
@@ -327,6 +327,7 @@
         try {
             const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
             const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
+            const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
           
             updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
     
@@ -337,7 +338,8 @@
                     instruction: instruction, 
                     api_key: apiKey,
                     enable_profiling: enableProfiling, 
-                    enable_rag_deep_scan: enableRagDeepScan
+                    enable_rag_deep_scan: enableRagDeepScan,
+                    enable_greenai_analysis: enableGreenAI
                 })
             });
     
@@ -545,9 +547,12 @@
         
         const fullBreakdownHTML = `<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mt-8 fade-in" id="recommendations">${checklistHTML + recsHTML}</div>`;
 
-        // Latency & Export
+        // Latency, Green AI & Export
         const latencyHTML = `<div id="latencyReportSection" class="hidden fade-in mb-8"></div>`;
-        const greenAIHTML = `<div id="greenAISection" class="hidden fade-in mb-8"></div>`;
+        const greenAIHTML  = ``;
+        if(enableGreenAI){
+          const greenAIHTML = `<div id="greenAISection" class="hidden fade-in mb-8"></div>`;
+        }
         const exportHTML = `
             <div class="bg-white rounded-xl shadow-lg p-6 mt-8 flex items-center justify-between">
                 <div>
