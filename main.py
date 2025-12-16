@@ -136,7 +136,7 @@ async def run_analysis(request: AnalysisRequest):
             base_url="https://router.huggingface.co/v1",
             api_key=request.api_key,
             temperature=0.1,
-            max_tokens=4000,
+            max_tokens=5000,
         )
 
         agents_config = copy.deepcopy(GLOBAL_AGENTS_CONFIG)
