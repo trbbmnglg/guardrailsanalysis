@@ -10,6 +10,9 @@
     let currentCategoryFilter = 'all';
     let currentStatusFilter = 'active'; 
     let currentSeverityFilter = 'all';
+    let enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
+    let enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
+    let enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
 
     // DOM elements
     let apiKeyInput, instructionInput, charCount, analyzeBtn;
@@ -325,9 +328,6 @@
         showLoading();
     
         try {
-            const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
-            const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
-            const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
           
             updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
     
@@ -399,7 +399,6 @@
     }
   
     function displayResults() {
-        const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
         if (!analysisResults) return;
   
         // 1. Calculate Stats
