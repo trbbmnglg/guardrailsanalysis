@@ -22,8 +22,8 @@ class GreenAIAnalysis(BaseModel):
 
 # --- Agent & Task Configuration ---
 class GreenAIPlugin:
-    def get_agent(self, llm,agents_config[]):
+    def get_agent(self, llm,agents_config):
         return Agent(config=agents_config['green_ai_officer'], llm=llm, verbose=True, allow_delegation=False)
 
-    def get_task(self, agent, instruction, tasks_config[]):
+    def get_task(self, agent, instruction, tasks_config):
         return Task(config=tasks_config['green_ai_analysis_task'], agent=agent, output_pydantic=GreenAIAnalysis)
