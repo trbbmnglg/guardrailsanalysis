@@ -178,11 +178,13 @@ async def run_analysis(request: AnalysisRequest):
             verbose=True
         )
 
-        # Let them run sequentially so they can see each other's work
-
+        # 2. Define the Huddle Task FIRST (must exist before being used as context)
+        # NOTE: 'agent' must be a SINGLE agent instance, not a list.
+        # We assign the Governance Officer (report_agent) to facilitate the huddle.
+        
         task_huddle = Task(
             config=tasks_config['team_huddle'],
-            agent=[security_agent, privacy_ops_agent, rai_agent, qa_agent, report_agent],
+            agent=report_agent, 
             async_execution=False
         )
         
