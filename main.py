@@ -131,7 +131,7 @@ class AnalysisRequest(BaseModel):
     enable_profiling: bool = False 
     enable_rag_deep_scan: bool = False
 
-# --- HELPER: Safely Extract Data from CrewAI Tasks ---
+
 def extract_data(task_output):
     """
     Robustly extracts dictionary data from a TaskOutput, 
@@ -167,8 +167,6 @@ def extract_data(task_output):
 
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
-    import json 
-    
     try:
         os.environ["OPENAI_API_KEY"] = request.api_key
         os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
