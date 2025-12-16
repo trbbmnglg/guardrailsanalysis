@@ -1,4 +1,3 @@
-from green_ai_plugin import GreenAIPlugin, GreenAIAnalysis
 import os
 import json
 import re
@@ -11,6 +10,7 @@ from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
+from green_ai_plugin import GreenAIPlugin, GreenAIAnalysis
 
 app = FastAPI()
 
