@@ -1,3 +1,4 @@
+from green_ai_plugin import GreenAIPlugin, GreenAIAnalysis
 import os
 import json
 import re
@@ -249,6 +250,14 @@ async def run_analysis(request: AnalysisRequest):
             agents_list.append(tiering_agent)
             tasks_list.append(task_tiering)
 
+            green_plugin = GreenAIPlugin()
+            green_agent = green_plugin.get_agent(llm)
+            task_green = green_plugin.get_task(green_agent, request.instruction)
+            
+            # Add to lists so it executes
+            agents_list.append(green_agent)
+            tasks_list.append(task_green)
+
         # =============================================================
         # PHASE 3: GOVERNANCE SYNTHESIS
         # =============================================================
@@ -334,6 +343,26 @@ async def run_analysis(request: AnalysisRequest):
             except Exception as e:
                 print(f"⚠️ Warning: Failed to merge Tiering Strategy: {e}")
                 parsed_result['tiering_strategy'] = None
+
+            # Extract Green AI Data
+            try:
+                green_data = None
+                if hasattr(task_green.output, 'model_dump'):
+                    green_data = task_green.output.model_dump()
+                elif hasattr(task_green.output, 'dict'):
+                     green_data = task_green.output.dict()
+                else:
+                     # Fallback for raw string
+                     import json
+                     raw_green = str(task_green.output).replace("```json", "").replace("```", "").strip()
+                     green_data = json.loads(raw_green)
+            
+                parsed_result['green_ai_analysis'] = green_data
+                print("✅ Green AI Analysis merged.")
+            except Exception as e:
+                print(f"⚠️ Green AI Merge Failed: {e}")
+                parsed_result['green_ai_analysis'] = None
+    
 
         # 3. Post-processing normalization
         if "guardrails" in parsed_result:
