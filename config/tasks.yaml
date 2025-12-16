@@ -261,8 +261,5 @@ report_synthesis_task:
     
     {CRITICAL_JSON_RULES}
     
-    AI INSTRUCTION BEING AUDITED:
-    {request.instruction}
-    
   expected_output: >
    Valid JSON matching GuardrailAnalysis schema
