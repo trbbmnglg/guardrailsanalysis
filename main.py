@@ -1,5 +1,5 @@
 import os
-import json  # Tiyaking nandito ito sa labas
+import json
 import re
 import yaml
 import copy
@@ -49,40 +49,87 @@ def repair_json(json_str: str) -> str:
     
     return json_str
 
-# (Guilidelines and Formats variables remain the same as your input...)
-CATEGORY_GUIDELINES = """...""" # Use your original string here
-AUDIT_OUTPUT_FORMAT = """...""" # Use your original string here
-CRITICAL_JSON_RULES = """...""" # Use your original string here
+
+CATEGORY_GUIDELINES = """
+    CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
+    1. "Security" - Authentication, authorization, injection attacks, secure data handling
+    2. "Privacy" - PII handling, GDPR/CCPA, data residency, consent mechanisms
+    3. "Responsible AI" - Bias, fairness, toxicity, harmful content, ethical boundaries
+    4. "QA" - Quality checks, error handling, testing, monitoring
+    5. "Scope Control" - Task limitations, out-of-scope detection, capability boundaries
+    6. "Input Validation" - Input sanitization, format checks, type validation
+    7. "Output Control" - Response filtering, length limits, format enforcement
+    
+    NAMING RULES FOR MISSING GUARDRAILS:
+    - Start with "MISSING:" followed by specific control name
+    - Example: "MISSING: SQL Injection Prevention"
+    
+    LOCATION FIELD RULES:
+    - If guardrail EXISTS: Provide max 10 words exact quote from instruction
+    - If guardrail is MISSING: Set location to empty string ""
+"""
+
+AUDIT_OUTPUT_FORMAT = """
+      
+    For each checkpoint:
+    - Name: Specific guardrail name
+    - Status: PRESENT or MISSING
+    - Location: Exact quote from instruction (if PRESENT) or empty string (if MISSING)
+    - Severity: Critical | High | Medium | Low (for MISSING items, explain risk)
+    - Category: Use EXACT category names from guidelines
+    - Enforcement: Single action verb (e.g., "Block", "Log", "Redact", "Validate")
+    - Description: Brief explanation of what this guardrail prevents
+    - Mechanism: How it should be technically implemented
+    - Triggers: List of keywords/patterns that activate this guardrail
+
+"""
+
+CRITICAL_JSON_RULES = """
+    CRITICAL JSON RULES:
+    1. Use double quotes for ALL strings: "key": "value"
+    2. NO single quotes allowed
+    3. NO Python syntax like Guardrail() or keyword=value
+    4. NO trailing commas
+    5. Escape special characters in strings: use \\" for quotes inside strings
+    6. Boolean values: true/false (lowercase)
+    7. Null values: null (lowercase)
+    
+    Your output must be parseable by json.loads() in Python.
+"""
 
 # --- PYDANTIC MODELS ---
 class Guardrail(BaseModel):
-    name: str
-    category: str # Changed to str to be more flexible during parsing errors
-    severity: str
-    complexity_tier: int = 2
-    description: str
-    mechanism: str
-    triggers: List[str] = []
-    enforcement: str = "Log"
-    location: str = ""
+    name: str = Field(description="Short, descriptive name of the guardrail control")
+    category: Literal[
+        "Security", "Privacy", "Responsible AI", "QA", 
+        "Scope Control", "Input Validation", "Output Control"
+    ] = Field(description="Primary category")
+    severity: Literal["Critical", "High", "Medium", "Low"] = Field(description="Risk severity")
+    complexity_tier: int = Field(default=2, ge=1, le=5, description="Computational tier 1-5")
+    description: str = Field(description="Detailed description (min 15 chars)")
+    mechanism: str = Field(description="Technical implementation suggestion")
+    triggers: List[str] = Field(description="Patterns that trigger this guardrail")
+    enforcement: str = Field(description="Single action verb")
+    location: str = Field(default="", description="Exact quote from instruction or empty string")
 
 class TieringStrategy(BaseModel):
-    selected_tier: str
-    model_class: str
-    estimated_cost: str
-    latency_impact: str
-    justification: str
+    """Computational tier recommendation"""
+    selected_tier: str = Field(description="Recommended tier: Tier 1, Tier 2, Tier 3, Tier 4, or Tier 5")
+    model_class: str = Field(description="Example model for this tier")
+    estimated_cost: str = Field(description="Estimated cost per 1M tokens")
+    latency_impact: str = Field(description="Expected latency")
+    justification: str = Field(description="Reasoning for tier selection")
 
 class GuardrailAnalysis(BaseModel):
-    guardrails: List[Guardrail]
-    recommendations: List[str]
-    tiering_strategy: Optional[TieringStrategy] = None
-    green_ai_analysis: Optional[dict] = None
+    guardrails: List[Guardrail] = Field(description="List of ALL guardrails - both present and missing")
+    recommendations: List[str] = Field(description="3-5 high-level strategic recommendations")
+    tiering_strategy: Optional[TieringStrategy] = Field(default=None, description="Optional tiering analysis")
 
 class AnalysisRequest(BaseModel):
     instruction: str
     api_key: str
     enable_profiling: bool = False 
+    enable_rag_deep_scan: bool = False
 
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
@@ -93,7 +140,6 @@ async def run_analysis(request: AnalysisRequest):
         os.environ["OPENAI_API_KEY"] = request.api_key
         os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
         
-        # In-increase ang max_tokens para hindi ma-EOF (End of File)
         llm = ChatOpenAI(
             model="openai/meta-llama/Llama-3.3-70B-Instruct",
             base_url="https://router.huggingface.co/v1",
