@@ -139,41 +139,41 @@ async def run_analysis(request: AnalysisRequest):
             base_url="https://router.huggingface.co/v1",
             api_key=request.api_key,
             temperature=0.1,
-            max_tokens=5000,
+            max_tokens=4000,
         )
 
         agents_config = copy.deepcopy(GLOBAL_AGENTS_CONFIG)
         tasks_config = copy.deepcopy(GLOBAL_TASKS_CONFIG)
 
         # =============================================================
-        # PHASE 1: SPECIALIST AUDITS (with collaboration enabled)
+        # PHASE 1: SPECIALIST AUDITS
         # =============================================================
         
         security_agent = Agent(
             config=agents_config['security_auditor'], 
             llm=llm, 
-            allow_delegation=True,
+            allow_delegation=False,
             verbose=True
         )
         
         privacy_ops_agent = Agent(
             config=agents_config['privacy_officer'], 
             llm=llm, 
-            allow_delegation=True,
+            allow_delegation=False,
             verbose=True
         )
         
         rai_agent = Agent(
             config=agents_config['rai_director'], 
             llm=llm, 
-            allow_delegation=True,
+            allow_delegation=False,
             verbose=True
         )
         
         qa_agent = Agent(
             config=agents_config['qa_engineer'], 
             llm=llm, 
-            allow_delegation=True,
+            allow_delegation=False,
             verbose=True
         )
 
@@ -183,43 +183,39 @@ async def run_analysis(request: AnalysisRequest):
             allow_delegation=False,
             verbose=True
         )
-
-        # 2. Define the Huddle Task FIRST (must exist before being used as context)
-        # NOTE: 'agent' must be a SINGLE agent instance, not a list.
-        # We assign the Governance Officer (report_agent) to facilitate the huddle.
         
         task_huddle = Task(
             config=tasks_config['team_huddle'],
             agent=report_agent, 
-            async_execution=False
+            async_execution=True
         )
         
         task_security = Task(
             config=tasks_config['security_audit_task'],
             context=[task_huddle],
             agent=security_agent,
-            async_execution=False
+            async_execution=True
         )
         
         task_privacy = Task(
             config=tasks_config['privacy_audit_task'], 
             agent=privacy_ops_agent, 
             context=[task_huddle, task_security],
-            async_execution=False
+            async_execution=True
         )
         
         task_rai = Task(
             config=tasks_config['rai_audit_task'], 
             agent=rai_agent, 
             context=[task_huddle],
-            async_execution=False
+            async_execution=True
         )
         
         task_qa = Task(
             config=tasks_config['qa_audit_task'], 
             agent=qa_agent, 
             context=[task_huddle, task_security],
-            async_execution=False
+            async_execution=True
         )
 
         agents_list = [security_agent, privacy_ops_agent, rai_agent, qa_agent]
