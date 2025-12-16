@@ -547,7 +547,7 @@
 
         // Latency & Export
         const latencyHTML = `<div id="latencyReportSection" class="hidden fade-in mb-8"></div>`;
-        const greenAIHTML`<div id="greenAISection" class="hidden fade-in mb-8"></div>`;
+        const greenAIHTML = `<div id="greenAISection" class="hidden fade-in mb-8"></div>`;
         const exportHTML = `
             <div class="bg-white rounded-xl shadow-lg p-6 mt-8 flex items-center justify-between">
                 <div>
