@@ -208,8 +208,8 @@ async def run_analysis(request: AnalysisRequest):
             
             # Green AI Logic
             green_plugin = GreenAIPlugin()
-            green_agent = green_plugin.get_agent(llm, agents_config[])
-            task_green = green_plugin.get_task(task_config[],green_agent, request.instruction)
+            green_agent = green_plugin.get_agent(llm, agents_config)
+            task_green = green_plugin.get_task(tasks_config,green_agent, request.instruction)
             
             # Add to lists
             agents_list.extend([tiering_agent, green_agent])
