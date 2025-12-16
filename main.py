@@ -91,6 +91,7 @@ async def run_analysis(request: AnalysisRequest):
     
     try:
         os.environ["OPENAI_API_KEY"] = request.api_key
+        os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
         
         # In-increase ang max_tokens para hindi ma-EOF (End of File)
         llm = ChatOpenAI(
