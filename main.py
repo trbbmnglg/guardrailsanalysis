@@ -130,6 +130,7 @@ class AnalysisRequest(BaseModel):
     api_key: str
     enable_profiling: bool = False 
     enable_rag_deep_scan: bool = False
+    enable_greenai_analysis: bool = False
 
 
 def extract_data(task_output):
@@ -202,18 +203,19 @@ async def run_analysis(request: AnalysisRequest):
         task_green = None
 
         if request.enable_profiling:
-            # Tiering Logic
             tiering_agent = Agent(config=agents_config['cost_architect'], llm=llm, verbose=True)
             task_tiering = Task(config=tasks_config['cost_profiling_task'], agent=tiering_agent, async_execution=True)
             
-            # Green AI Logic
+            agents_list.extend([tiering_agent])
+            tasks_list.extend([task_tiering])
+
+        if request.enable_greenai_analysis:
             green_plugin = GreenAIPlugin()
             green_agent = green_plugin.get_agent(llm, agents_config)
             task_green = green_plugin.get_task(green_agent, request.instruction, tasks_config)
-            
-            # Add to lists
-            agents_list.extend([tiering_agent, green_agent])
-            tasks_list.extend([task_tiering, task_green])
+
+            agents_list.extend([green_agent])
+            tasks_list.extend([task_green])
 
         # Synthesis Task
         task_report = Task(
