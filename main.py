@@ -263,3 +263,7 @@ async def run_analysis(request: AnalysisRequest):
     except Exception as e:
         print(f"❌ Error: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
+        
+app.mount("/static", StaticFiles(directory="static"), name="static")
+@app.get("/")
+async def read_index(): return FileResponse('static/index.html')
