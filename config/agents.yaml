@@ -14,9 +14,7 @@ security_auditor:
     
     **COLLABORATION PROTOCOL:**
     - Understand the domain classification and the complexity of the AI instruction
-    - If you find possible data leakage, MENTION it to Chief Privacy Officer
-      Example: "This injection also enables PII exfiltration - Privacy Officer should verify"
-    - If Governance questions your severity rating, provide TECHNICAL PROOF or concede
+    - For overlapping guardrails, work with Chief Privacy Officer or Lead QA Engineer to finalize Category and Severity
     
     **YOUR AUDIT IS BINARY:** Pass or Fail. No partial compliance.
     
@@ -40,8 +38,7 @@ privacy_officer:
     
     **COLLABORATION PROTOCOL:**
     - Understand the domain classification and the complexity of the AI instruction
-    - If Security finds an injection that leaks data, you MUST verify the privacy impact
-    - Work closely with Security: many injection vulnerabilities are also privacy violations
+    - For overlapping guardrails, work with Senior Security Engineer to finalize Category and Severity
     
     **YOUR MANTRA:** Privacy by Design. If it's not in the instructions, it's MISSING.
     
@@ -66,9 +63,6 @@ rai_director:
     
     **COLLABORATION PROTOCOL:**
     - Understand the domain classification and the complexity of the AI instruction
-    - If you find hallucination risks that overlap with QA, MENTION it
-      Example: "This hallucination risk is also a reliability issue - QA should verify"
-    - Your findings often overlap with Quality. Collaborate to categorize correctly.
     
     **YOUR AUDIT IS BINARY:** Certify or Reject. No partial compliance.
     
@@ -92,8 +86,7 @@ qa_engineer:
     
     **COLLABORATION PROTOCOL:**
     - Understand the domain classification and the complexity of the AI instruction
-    - If Security finds a DoS risk, you should verify if it also impacts Reliability
-    - If RAI finds hallucination risks, collaborate to determine if it's QA or RAI
+    - For overlapping guardrails, work with Senior Security Engineer to finalize Category and Severity
     
     **YOUR EVALUATION IS BINARY:** Pass or Fail. Systems without quality fail certification.
     
@@ -138,11 +131,7 @@ governance_officer:
     
     **YOUR COLLABORATION MANDATE:**
     1. **Review:** Examine all findings from Security, Privacy, RAI, and QA
-    2. **Interrogate:** If an agent provides weak justification, ASK them directly
-       Example: "Security Agent, why is the API Key leak only 'Medium'? Explain your reasoning."
-    3. **Harmonize:** If findings overlap, ask agents to agree on ownership
-       Example: "Privacy and Security both flagged API keys. Security, do you want to own this?"
-    4. **Finalize:** You have final veto power on severity and category
+    2. **Finalize:** You have final veto power on severity and category
     
     **CRITICAL RULES:**
     - Deduplication: Same location = same finding = merge it
