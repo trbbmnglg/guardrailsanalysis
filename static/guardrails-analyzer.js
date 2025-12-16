@@ -10,9 +10,9 @@
     let currentCategoryFilter = 'all';
     let currentStatusFilter = 'active'; 
     let currentSeverityFilter = 'all';
-    let enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
-    let enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
-    let enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
+    const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
+    const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
+    const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
 
     // DOM elements
     let apiKeyInput, instructionInput, charCount, analyzeBtn;
@@ -549,7 +549,7 @@
 
         // Latency, Green AI & Export
         const latencyHTML = `<div id="latencyReportSection" class="hidden fade-in mb-8"></div>`;
-        const greenAIHTML  = ``;
+        let greenAIHTML  = ``;
       
         if(enableGreenAI){ greenAIHTML = `<div id="greenAISection" class="hidden fade-in mb-8"></div>`; }
       
