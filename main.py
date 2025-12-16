@@ -65,7 +65,7 @@ AUDIT_OUTPUT_FORMAT = """
       
     For each checkpoint:
     - If the AI instruction is simple, don't over complicate and don't ask other Specialists about a check.
-    - For Security Auditor only: If the the AI instruction is complex, and you think a present guardrails overlaps with privacy or QA:
+    - For Senior Security Engineer only: If the the AI instruction is complex, and you think a present guardrails overlaps with privacy or QA:
       - ask the chief privacy officer (gdpr/ccpa/hipaa expert) or lead qa engineer (iso/iec 25059 quality specialist)
       - discuss what is the final category and severity
     - Name: Specific guardrail name
