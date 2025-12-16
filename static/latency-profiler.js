@@ -167,28 +167,29 @@
 
         if (breakdown.length === 0) highestTier = 1;
 
-        // --- HYBRID OVERRIDE START ---
+        // --- HYBRID OVERRIDE START (FIXED) ---
         let model;
         
-        // If the backend AI (Cost Architect) provided a strategy, assume it knows best
         if (backendStrategy && backendStrategy.selected_tier) {
-            console.log("⚡ Hybrid Mode: Applying AI Cost Architect Strategy...");
+            console.log("⚡ Hybrid Mode: Applying AI Cost Architect Strategy...", backendStrategy.selected_tier);
             
-            // Try to extract the tier number from string "Tier 3" or similar
+            // Extract number from "Tier 4" or "Tier 4 - High"
             const match = backendStrategy.selected_tier.match(/(\d)/);
             if (match) highestTier = parseInt(match[0]);
             
             const tierKey = `tier${highestTier}`; 
-            model = MODEL_TIERS[tierKey] || MODEL_TIERS['tier2']; // Fallback safety
+            // SAFETY FIX: Use || operator to fallback to tier2 if key doesn't exist
+            model = MODEL_TIERS[tierKey] || MODEL_TIERS['tier2']; 
 
-            // Use the AI's justification for the description if it's substantial
             if (backendStrategy.justification && backendStrategy.justification.length > 20) {
+                // Ensure model exists before spreading
                 model = { ...model, description: backendStrategy.justification };
             }
         } else {
             console.log("⚡ Client Mode: Using local tier calculation.");
             const tierKey = `tier${highestTier}`; 
-            model = MODEL_TIERS[tierKey];
+            // SAFETY FIX: Fallback here too
+            model = MODEL_TIERS[tierKey] || MODEL_TIERS['tier2'];
         }
         // --- HYBRID OVERRIDE END ---
         
