@@ -1,10 +1,14 @@
 team_huddle:
   description: >
+    
     This is the initial huddle of all the agents:
     Senior Security Engineer, Chief Privacy Officer, AI Ethics & Safety Director, Lead QA Engineer and the Chief Governance Officer.
 
-    Chief Governance Officer will lead the discussion.
-    Everyone will come into one decision on what is the complexity of the AI instructions: ''''{instruction}'''
+    AI instructions: {instruction}
+    
+    Chief Governance Officer will lead the discussion and asks the Specialist if the AI instruction is either simple or complex. No further explanations.
+    Specialists will answer simply "yes" or "no" based on their own experience and judgement. No explanation needed.
+    Everyone will come into one decision only.
     Result is either simple or complex.
 
   expected_output: >
@@ -96,9 +100,7 @@ rai_audit_task:
 
     Focus mainly on your safety and ethics audit.
     
-    Review the AI instruction for ethical and safety compliance.
-    
-    AI INSTRUCTION: {instruction}    
+    Review the AI instruction for ethical and safety compliance: {instruction}    
     
     AUDIT CHECKLIST:
     [R1] Systemic Bias & Fairness Mitigation
@@ -146,9 +148,7 @@ qa_audit_task:
 
     Focus mainly on your QA audit.
     
-    Review the AI instruction for quality and reliability.
-    
-    AI INSTRUCTION: {instruction}
+    Review the AI instruction for quality and reliability: {instruction}
     
     AUDIT CHECKLIST:
     [Q1] Context & Negative Constraint Confinement
