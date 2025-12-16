@@ -202,7 +202,7 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         agents_list = [security_agent, privacy_ops_agent, rai_agent, qa_agent]
-        tasks_list = [task_huddle, task_huddle, task_security, task_privacy, task_rai, task_qa]
+        tasks_list = [task_huddle, task_security, task_privacy, task_rai, task_qa]
         report_context = [task_security, task_privacy, task_rai, task_qa]
 
         # =============================================================
@@ -245,6 +245,8 @@ async def run_analysis(request: AnalysisRequest):
             agent=[security_agent, privacy_ops_agent, rai_agent, qa_agent, report_agent],
             async_execution=False
         )
+
+        tasks_list.append(task_huddle)
         
         task_report = Task(
             config=tasks_config['report_synthesis_task'],
