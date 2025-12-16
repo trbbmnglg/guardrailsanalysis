@@ -9,8 +9,8 @@ class GreenAIAnalysis(BaseModel):
     status: str = Field(description="Energy efficiency status: Green, Amber, or Red")
     energy_score: int = Field(description="0-100 efficiency score (100 is best)")
     estimated_kwh_per_1k_req: float = Field(description="Estimated kWh per 1000 requests")
-    reasoning: str = Field(description="Why this status was assigned. Not more than 30 characters.")
-    optimization_tip: str = Field(description="One tip to reduce compute usage. Not more than 30 characters.")
+    reasoning: str = Field(description="Summarize score and provide reasoning. Keep it 2-3 sentences.")
+    optimization_tip: str = Field(description="1-2 tips to reduce compute usage. Start with action verb. Keep it 1-2 sentences.")
 
     @field_validator('status')
     @classmethod
