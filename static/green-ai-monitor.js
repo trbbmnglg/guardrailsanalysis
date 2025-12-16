@@ -1,18 +1,62 @@
 (function() {
     'use strict';
 
-    // Bold, recognizable Leaf/Sprout Icons
-    const LEAF_SVGS = {
-        green: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-full h-full text-emerald-600 drop-shadow-sm"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19.5v-15m0 0l-6.75 6.75M12 4.5l6.75 6.75M12 4.5v15" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 12a3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3z" /><path d="M2.05 13.5a9 9 0 0 1 19.9 0" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/></svg>`,
-        
-        // Using a distinct "Withered/Warning" leaf shape for Amber/Red
-        amber: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-full h-full text-amber-500"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0-18C7.5 3 4 6.5 4 10.5c0 2.5 1.5 4.5 3.5 5.5M12 3c4.5 0 8 3.5 8 7.5 0 2.5-1.5 4.5-3.5 5.5" /></svg>`,
-        
-        red: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-full h-full text-red-700"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>`
-    };
+    // --- CUSTOM PLANT ILLUSTRATIONS (SVG) ---
+    // These paths mimic the "Peace Lily" style images provided.
+    
+    const PLANT_SVGS = {
+        // 🌿 GREEN: Healthy, Upright Plant
+        green: `
+        <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-md">
+            <path d="M35 65 L40 90 L60 90 L65 65 Z" fill="#E6D5C3" stroke="#D4B59E" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M32 65 L68 65" stroke="#D4B59E" stroke-width="2" stroke-linecap="round"/>
+            
+            <path d="M50 65 Q 50 45 50 30" stroke="#10B981" stroke-width="2" stroke-linecap="round" />
+            <path d="M50 30 Q 35 20 30 35 Q 40 50 50 30" fill="#34D399" stroke="#10B981" stroke-width="1.5"/>
+            
+            <path d="M50 65 Q 70 50 80 40" stroke="#10B981" stroke-width="2" stroke-linecap="round" />
+            <path d="M80 40 Q 90 25 70 25 Q 65 35 80 40" fill="#34D399" stroke="#10B981" stroke-width="1.5"/>
+            
+            <path d="M50 65 Q 30 50 20 40" stroke="#10B981" stroke-width="2" stroke-linecap="round" />
+            <path d="M20 40 Q 10 25 30 25 Q 35 35 20 40" fill="#34D399" stroke="#10B981" stroke-width="1.5"/>
+            
+            <path d="M50 65 Q 45 40 45 20" stroke="#10B981" stroke-width="2" />
+            <path d="M45 20 Q 40 5 50 5 Q 60 5 55 20" fill="#FEF3C7" stroke="#FDE68A" />
+            <line x1="50" y1="10" x2="50" y2="18" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+        </svg>`,
 
-    // Simple Leaf Path for general use
-    const SIMPLE_LEAF = `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full"><path d="M11 20a7 7 0 0 1-1.2-13.9C15.5 5 17 4.48 19 2c1 2 2 6.5-2 11a7 7 0 0 1-6 7z"></path><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M11 20v-6"></path></svg>`;
+        // 🍂 AMBER: Wilting, Drooping Plant
+        amber: `
+        <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-sm">
+            <path d="M35 65 L40 90 L60 90 L65 65 Z" fill="#E6D5C3" stroke="#D4B59E" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M32 65 L68 65" stroke="#D4B59E" stroke-width="2" stroke-linecap="round"/>
+            
+            <path d="M50 65 Q 80 60 85 75" stroke="#D97706" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <path d="M85 75 Q 95 85 80 90 Q 75 80 85 75" fill="#FBBF24" stroke="#D97706" stroke-width="1.5"/>
+
+            <path d="M50 65 Q 20 60 15 75" stroke="#D97706" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <path d="M15 75 Q 5 85 20 90 Q 25 80 15 75" fill="#FBBF24" stroke="#D97706" stroke-width="1.5"/>
+            
+            <path d="M50 65 Q 50 50 60 55" stroke="#D97706" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <path d="M60 55 Q 70 60 65 70 Q 55 65 60 55" fill="#F59E0B" stroke="#D97706" stroke-width="1.5"/>
+        </svg>`,
+
+        // 🥀 RED: Dead, Withered Brown Plant
+        red: `
+        <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-sm opacity-90">
+            <path d="M35 65 L40 90 L60 90 L65 65 Z" fill="#E6D5C3" stroke="#D4B59E" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M32 65 L68 65" stroke="#D4B59E" stroke-width="2" stroke-linecap="round"/>
+            
+            <path d="M50 65 Q 85 65 90 90" stroke="#78350F" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <path d="M90 90 Q 95 95 85 98 Q 80 90 90 90" fill="#92400E" stroke="#78350F" stroke-width="1.5"/>
+
+            <path d="M50 65 Q 15 65 10 90" stroke="#78350F" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <path d="M10 90 Q 5 95 15 98 Q 20 90 10 90" fill="#92400E" stroke="#78350F" stroke-width="1.5"/>
+            
+            <path d="M65 92 Q 75 92 80 95" stroke="#78350F" stroke-width="1"/>
+            <path d="M80 95 Q 85 98 75 98 Q 70 95 80 95" fill="#78350F" opacity="0.6"/>
+        </svg>`
+    };
 
     function render(data, containerId) {
         const container = document.getElementById(containerId);
@@ -23,36 +67,29 @@
         // Configuration per status
         const config = {
             green: {
-                icon: LEAF_SVGS.green, // Or switch to SIMPLE_LEAF and add class text-emerald-500
+                svg: PLANT_SVGS.green,
                 bg: "bg-emerald-50",
-                border: "border-emerald-200",
                 text: "text-emerald-900",
                 badge: "bg-emerald-100 text-emerald-700",
                 bar: "bg-emerald-500"
             },
             amber: {
-                icon: LEAF_SVGS.amber,
+                svg: PLANT_SVGS.amber,
                 bg: "bg-amber-50",
-                border: "border-amber-200",
                 text: "text-amber-900",
                 badge: "bg-amber-100 text-amber-700",
                 bar: "bg-amber-500"
             },
             red: {
-                icon: LEAF_SVGS.red,
-                bg: "bg-red-50",
-                border: "border-red-200",
-                text: "text-red-900",
-                badge: "bg-red-100 text-red-700",
-                bar: "bg-red-600"
+                svg: PLANT_SVGS.red,
+                bg: "bg-stone-50", // Withered/Dead look
+                text: "text-stone-800",
+                badge: "bg-stone-200 text-stone-700",
+                bar: "bg-stone-500"
             }
         };
 
         const theme = config[statusLower] || config.green;
-        
-        // Icon Logic: Use simple leaf for Green/Amber, Alert for Red
-        const visualIcon = statusLower === 'red' ? LEAF_SVGS.red : SIMPLE_LEAF;
-        const iconColor = statusLower === 'green' ? 'text-emerald-500' : (statusLower === 'amber' ? 'text-amber-500' : 'text-red-500');
 
         const html = `
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in">
@@ -71,14 +108,14 @@
                 <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                     
                     <div class="md:col-span-2 flex flex-col items-center justify-center text-center">
-                        <div class="w-16 h-16 ${iconColor} drop-shadow-sm mb-2 transform hover:scale-110 transition-transform duration-500">
-                            ${visualIcon}
+                        <div class="w-24 h-24 mb-2 transition-transform duration-700 hover:scale-105">
+                            ${theme.svg}
                         </div>
                         <span class="text-[10px] font-mono text-slate-400 uppercase">Est. Footprint</span>
                         <span class="text-xs font-bold text-slate-600">${data.estimated_kwh_per_1k_req || '0'} kWh / 1k</span>
                     </div>
 
-                    <div class="md:col-span-7 border-l border-r border-slate-100 px-6 border-dashed">
+                    <div class="md:col-span-6 border-l border-r border-slate-100 px-6 border-dashed">
                         <div class="mb-4">
                             <div class="flex justify-between items-end mb-1">
                                 <h4 class="text-sm font-bold text-slate-700">Efficiency Score</h4>
@@ -90,13 +127,13 @@
                         </div>
                         
                         <div class="relative">
-                            <p class="text-sm text-slate-600 leading-relaxed line-clamp-2" title="${data.reasoning}">
+                            <p class="text-sm text-slate-600 leading-relaxed line-clamp-3" title="${data.reasoning}">
                                 ${data.reasoning}
                             </p>
                         </div>
                     </div>
 
-                    <div class="md:col-span-3 bg-slate-50 rounded-lg p-4 border border-slate-100">
+                    <div class="md:col-span-4 bg-slate-50 rounded-lg p-4 border border-slate-100 h-full flex flex-col justify-center">
                         <div class="flex items-center gap-2 mb-2">
                             <span class="text-green-600">🌱</span>
                             <span class="text-xs font-bold text-slate-500 uppercase">Quick Tip</span>
