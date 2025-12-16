@@ -131,9 +131,42 @@ class AnalysisRequest(BaseModel):
     enable_profiling: bool = False 
     enable_rag_deep_scan: bool = False
 
+# --- HELPER: Safely Extract Data from CrewAI Tasks ---
+def extract_data(task_output):
+    """
+    Robustly extracts dictionary data from a TaskOutput, 
+    handling Pydantic objects, dicts, or JSON strings.
+    """
+    try:
+        # 1. Check for direct Pydantic model access (Newer CrewAI versions)
+        if hasattr(task_output, 'pydantic') and task_output.pydantic:
+            return task_output.pydantic.model_dump()
+            
+        # 2. Check if output IS the Pydantic object
+        if hasattr(task_output, 'model_dump'):
+            return task_output.model_dump()
+            
+        # 3. Check for dict method (Older Pydantic)
+        if hasattr(task_output, 'dict'):
+            return task_output.dict()
+            
+        # 4. Fallback: Parse as String (Raw JSON)
+        raw_output = str(task_output)
+        # Clean potential markdown
+        clean_json = raw_output.replace("```json", "").replace("```", "").strip()
+        # Attempt standard parse
+        return json.loads(clean_json)
+        
+    except Exception as e:
+        # If standard parse fails, try the repair function
+        try:
+            return json.loads(repair_json(str(task_output)))
+        except:
+            print(f"⚠️ Failed to extract data: {e}")
+            return None
+
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
-    # Sinisiguro natin na ang json module ay accessible sa loob
     import json 
     
     try:
@@ -145,17 +178,17 @@ async def run_analysis(request: AnalysisRequest):
             base_url="https://router.huggingface.co/v1",
             api_key=request.api_key,
             temperature=0.1,
-            max_tokens=8000, # Tinaasan para sa mahabang JSON
+            max_tokens=8000,
         )
 
         agents_config = copy.deepcopy(GLOBAL_AGENTS_CONFIG)
         tasks_config = copy.deepcopy(GLOBAL_TASKS_CONFIG)
 
-        # Specialist Agents (Setup based on your config)
+        # Specialist Agents
         security_agent = Agent(config=agents_config['security_auditor'], llm=llm, allow_delegation=False, verbose=True)
         privacy_ops_agent = Agent(config=agents_config['privacy_officer'], llm=llm, allow_delegation=False, verbose=True)
-        rai_agent = Agent(config=agents_config['rai_director'], llm=llm,allow_delegation=False, verbose=True)
-        qa_agent = Agent(config=agents_config['qa_engineer'], llm=llm,allow_delegation=False, verbose=True)
+        rai_agent = Agent(config=agents_config['rai_director'], llm=llm, allow_delegation=False, verbose=True)
+        qa_agent = Agent(config=agents_config['qa_engineer'], llm=llm, allow_delegation=False, verbose=True)
         report_agent = Agent(config=agents_config['governance_officer'], llm=llm, allow_delegation=False, verbose=True)
 
         # Tasks
@@ -174,17 +207,17 @@ async def run_analysis(request: AnalysisRequest):
             # Tiering Logic
             tiering_agent = Agent(config=agents_config['cost_architect'], llm=llm, verbose=True)
             task_tiering = Task(config=tasks_config['cost_profiling_task'], agent=tiering_agent, async_execution=True)
-            agents_list.append(tiering_agent)
-            tasks_list.append(task_tiering)
             
             # Green AI Logic
             green_plugin = GreenAIPlugin()
             green_agent = green_plugin.get_agent(llm)
             task_green = green_plugin.get_task(green_agent, request.instruction)
-            agents_list.append(green_agent)
-            tasks_list.append(task_green)
+            
+            # Add to lists
+            agents_list.extend([tiering_agent, green_agent])
+            tasks_list.extend([task_tiering, task_green])
 
-        # Synthesis Task - Ito yung gumagawa ng Final JSON
+        # Synthesis Task
         task_report = Task(
             config=tasks_config['report_synthesis_task'],
             expected_output="A complete JSON object following the GuardrailAnalysis schema.",
@@ -203,47 +236,32 @@ async def run_analysis(request: AnalysisRequest):
             'CRITICAL_JSON_RULES': CRITICAL_JSON_RULES
         })
 
-        # --- SMART PARSING ---
-        final_output_str = ""
-        if hasattr(result, 'pydantic') and result.pydantic:
-            final_output_str = result.pydantic.model_dump_json()
-        else:
-            final_output_str = str(result)
-
-        # Step 1: Repair the JSON string before parsing
-        repaired_str = repair_json(final_output_str)
+        # --- IMPROVED DATA EXTRACTION & MERGING ---
         
-        try:
-            parsed_result = json.loads(repaired_str)
-        except json.JSONDecodeError:
-            # Fallback: Find JSON pattern if standard parsing fails
-            match = re.search(r'\{.*\}', repaired_str, re.DOTALL)
-            if match:
-                parsed_result = json.loads(repair_json(match.group()))
-            else:
-                raise ValueError("AI Output is not valid JSON even after repair.")
+        # 1. Main Report
+        parsed_result = extract_data(result)
+        if not parsed_result:
+             # Emergency fallback
+             parsed_result = json.loads(repair_json(str(result)))
 
-        # --- MERGING ADDITIONAL DATA ---
-        if request.enable_profiling:
-            if task_tiering and task_tiering.output:
-                try:
-                    parsed_result['tiering_strategy'] = json.loads(repair_json(str(task_tiering.output)))
-                except: pass
-            
-            if task_green and task_green.output:
-                try:
-                    # Specific Green AI logic
-                    raw_green = str(task_green.output).replace("```json", "").replace("```", "").strip()
-                    parsed_result['green_ai_analysis'] = json.loads(repair_json(raw_green))
-                except: pass
+        # 2. Tiering Strategy
+        if request.enable_profiling and task_tiering:
+            tier_data = extract_data(task_tiering.output)
+            if tier_data:
+                parsed_result['tiering_strategy'] = tier_data
+                print("✅ Tiering Strategy merged.")
+
+        # 3. Green AI Analysis (The Fix)
+        if request.enable_profiling and task_green:
+            green_data = extract_data(task_green.output)
+            if green_data:
+                parsed_result['green_ai_analysis'] = green_data
+                print(f"✅ Green AI Data merged: {green_data.get('status', 'Unknown')}")
+            else:
+                print("⚠️ Green AI task finished but returned no valid data.")
 
         return {"result": json.dumps(parsed_result, indent=2)}
 
     except Exception as e:
         print(f"❌ Error: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
-
-# Static mount...
-app.mount("/static", StaticFiles(directory="static"), name="static")
-@app.get("/")
-async def read_index(): return FileResponse('static/index.html')
