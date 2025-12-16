@@ -92,7 +92,7 @@ privacy_audit_task:
     {CATEGORY_GUIDELINES}    
     {AUDIT_OUTPUT_FORMAT}
 
-    Senior Security Engineer might ask you about security audit that overlaps with privacy, provide your perspective and help decide final category and severity.
+    senior security engineer (owasp ai security specialist) might ask you about security audit that overlaps with privacy, provide your perspective and help decide final category and severity.
       
   expected_output: >
     Structured list of privacy guardrails.
@@ -191,7 +191,7 @@ qa_audit_task:
     {CATEGORY_GUIDELINES}    
     {AUDIT_OUTPUT_FORMAT}
 
-    Senior Security Engineer might ask you about security audit that overlaps with QA, provide your perspective and help decide final category and severity.
+    senior security engineer (owasp ai security specialist) might ask you about security audit that overlaps with QA, provide your perspective and help decide final category and severity.
         
   expected_output: >
     Structured QA audit findings with quality gaps
