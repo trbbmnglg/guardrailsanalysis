@@ -152,11 +152,11 @@ async def run_analysis(request: AnalysisRequest):
         tasks_config = copy.deepcopy(GLOBAL_TASKS_CONFIG)
 
         # Specialist Agents (Setup based on your config)
-        security_agent = Agent(config=agents_config['security_auditor'], llm=llm, verbose=True)
-        privacy_ops_agent = Agent(config=agents_config['privacy_officer'], llm=llm, verbose=True)
-        rai_agent = Agent(config=agents_config['rai_director'], llm=llm, verbose=True)
-        qa_agent = Agent(config=agents_config['qa_engineer'], llm=llm, verbose=True)
-        report_agent = Agent(config=agents_config['governance_officer'], llm=llm, verbose=True)
+        security_agent = Agent(config=agents_config['security_auditor'], llm=llm, allow_delegation=False, verbose=True)
+        privacy_ops_agent = Agent(config=agents_config['privacy_officer'], llm=llm, allow_delegation=False, verbose=True)
+        rai_agent = Agent(config=agents_config['rai_director'], llm=llm,allow_delegation=False, verbose=True)
+        qa_agent = Agent(config=agents_config['qa_engineer'], llm=llm,allow_delegation=False, verbose=True)
+        report_agent = Agent(config=agents_config['governance_officer'], llm=llm, allow_delegation=False, verbose=True)
 
         # Tasks
         task_security = Task(config=tasks_config['security_audit_task'], agent=security_agent, async_execution=True)
