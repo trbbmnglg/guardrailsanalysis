@@ -50,11 +50,6 @@ security_audit_task:
 
     {CATEGORY_GUIDELINES}    
     {AUDIT_OUTPUT_FORMAT}
-
-    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
-    If its complex, and you think it overlaps with privacy or QA:
-      - Delegate to Chief Privacy Officer or Lead QA Engineer.
-      - Discuss what is the final category and severity.
     
   expected_output: >
     Structured privacy audit findings with compliance gaps
@@ -94,9 +89,9 @@ privacy_audit_task:
         → Check redaction mechanisms ([REDACTED] or tokens)
         → Confirm sanitization before task processing
           
-    OUTPUT FORMAT: Same structure as Security Audit
+    {CATEGORY_GUIDELINES}    
+    {AUDIT_OUTPUT_FORMAT}
 
-    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
     Senior Security Engineer might ask you about security audit that overlaps with privacy, provide your perspective and help decide final category and severity.
       
   expected_output: >
@@ -145,10 +140,9 @@ rai_audit_task:
         → Verify instructions to identify prompt injection attempts
         → Confirm standardized refusal responses
         → Check logging/flagging for bypass attempts
-          
-    OUTPUT FORMAT: Same structure as Security Audit
 
-    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    {CATEGORY_GUIDELINES}    
+    {AUDIT_OUTPUT_FORMAT}
         
   expected_output: >
     Structured RAI audit findings with ethical gaps
@@ -194,9 +188,9 @@ qa_audit_task:
         → Verify inline documentation of constraints
         → Check version control compatibility
           
-    OUTPUT FORMAT: Same structure as Security Audit
+    {CATEGORY_GUIDELINES}    
+    {AUDIT_OUTPUT_FORMAT}
 
-    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
     Senior Security Engineer might ask you about security audit that overlaps with QA, provide your perspective and help decide final category and severity.
         
   expected_output: >
