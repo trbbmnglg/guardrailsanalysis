@@ -1,20 +1,3 @@
-team_huddle:
-  description: >
-    
-    This is the initial huddle of all the agents:
-    Senior Security Engineer, Chief Privacy Officer, AI Ethics & Safety Director, Lead QA Engineer and the Chief Governance Officer.
-
-    AI instructions: {instruction}
-    
-    Chief Governance Officer will lead the discussion and asks the Specialist if the AI instruction is either simple or complex. No further explanations.
-    Specialists will answer simply "yes" or "no" based on their own experience and judgement. No explanation needed.
-    Everyone will come into one decision only.
-    Result is either simple or complex.
-
-  expected_output: >
-    The complexity of the AI instruction.
-
-
 security_audit_task:
   description: >
     
