@@ -172,11 +172,6 @@ async def run_analysis(request: AnalysisRequest):
         )
 
         # Let them run sequentially so they can see each other's work
-        task_huddle = Task(
-            config=tasks_config['team_huddle'],
-            agent=[security_agent, privacy_ops_agent, rai_agent, qa_agent, report_agent],
-            async_execution=False
-        )
         
         task_security = Task(
             config=tasks_config['security_audit_task'],
@@ -243,6 +238,12 @@ async def run_analysis(request: AnalysisRequest):
             llm=llm, 
             allow_delegation=False,
             verbose=True
+        )
+
+        task_huddle = Task(
+            config=tasks_config['team_huddle'],
+            agent=[security_agent, privacy_ops_agent, rai_agent, qa_agent, report_agent],
+            async_execution=False
         )
         
         task_report = Task(
