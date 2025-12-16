@@ -399,8 +399,9 @@
     }
   
     function displayResults() {
+        const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
         if (!analysisResults) return;
-
+  
         // 1. Calculate Stats
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
