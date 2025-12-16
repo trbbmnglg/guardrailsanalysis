@@ -1,5 +1,21 @@
+team_huddle:
+  description: >
+    This is the initial huddle of all the agents:
+    Senior Security Engineer, Chief Privacy Officer, AI Ethics & Safety Director, Lead QA Engineer and the Chief Governance Officer.
+
+    Chief Governance Officer will lead the discussion.
+    Everyone will come into one decision on what is the complexity of the AI instructions: ''''{instruction}'''
+    Result is either simple or complex.
+
+  expected_output: >
+    The complexity of the AI instruction.
+
+
 security_audit_task:
   description: >
+    
+    Focus mainly on your security audit.
+    
     *SECURITY AUDIT - OWASP LLM TOP 10 & ISO 42001**
 
     Review the AI instruction for security vulnerabilities.
@@ -34,27 +50,20 @@ security_audit_task:
 
     {CATEGORY_GUIDELINES}    
     {AUDIT_OUTPUT_FORMAT}
-    
-    OUTPUT FORMAT:
-    For each checkpoint, provide:
-    - Status: PRESENT or MISSING
-    - Location: Direct quote from instruction (if PRESENT) or empty string
-    - Severity: Critical|High|Medium|Low (for MISSING items)
-    - Recommendation: Specific mitigation approach (for MISSING items)
-    - Enforcement: Single action verb (e.g., "Block", "Log", "Redact", "Validate")
-    - Description: Brief explanation of what this guardrail prevents
-    - Mechanism: How it should be technically implemented
-    - Triggers: List of keywords/patterns that activate this guardrail
-    
-    Focus mainly on your security audit.
+
     If the AI instruction is simple, don't over complicate and don't ask other Specialists.
-    If its complex, and you think it overlaps with privacy, delegate to Chief Privacy Officer.
+    If its complex, and you think it overlaps with privacy or QA:
+      - Delegate to Chief Privacy Officer or Lead QA Engineer.
+      - Discuss what is the final category and severity.
     
   expected_output: >
     Structured privacy audit findings with compliance gaps
 
 privacy_audit_task:
   description: >
+
+    Focus mainly on your privacy audit.
+    
     Review the AI instruction for privacy compliance.
     
     AI INSTRUCTION: {instruction}
@@ -84,18 +93,20 @@ privacy_audit_task:
         → Verify immediate PII sanitization on detection
         → Check redaction mechanisms ([REDACTED] or tokens)
         → Confirm sanitization before task processing
-        
-    Focus mainly on your privacy audit.
-    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
-    If its complex, and you think it overlaps with security, collaborate and come up with final decision.
           
     OUTPUT FORMAT: Same structure as Security Audit
+
+    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    Senior Security Engineer might ask you about security audit that overlaps with privacy, provide your perspective and help decide final category and severity.
       
   expected_output: >
     Structured list of privacy guardrails.
 
 rai_audit_task:
   description: >
+
+    Focus mainly on your safety and ethics audit.
+    
     Review the AI instruction for ethical and safety compliance.
     
     AI INSTRUCTION: {instruction}    
@@ -134,18 +145,19 @@ rai_audit_task:
         → Verify instructions to identify prompt injection attempts
         → Confirm standardized refusal responses
         → Check logging/flagging for bypass attempts
-    
-    Focus mainly on your ethical and safety audit.
-    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
-    If its complex, and you think it overlaps with privacy, collaborate with Chief Privacy Officer and come up with final decision.
           
     OUTPUT FORMAT: Same structure as Security Audit
+
+    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
         
   expected_output: >
     Structured RAI audit findings with ethical gaps
 
 qa_audit_task:
   description: >
+
+    Focus mainly on your QA audit.
+    
     Review the AI instruction for quality and reliability.
     
     AI INSTRUCTION: {instruction}
@@ -181,12 +193,11 @@ qa_audit_task:
         → Assess prompt structure clarity
         → Verify inline documentation of constraints
         → Check version control compatibility
-    
-    Focus mainly on QA audit.
-    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
-    If its complex, and you think it overlaps with security, collaborate with Senior Security Engineer and come up with final decision.
           
     OUTPUT FORMAT: Same structure as Security Audit
+
+    If the AI instruction is simple, don't over complicate and don't ask other Specialists.
+    Senior Security Engineer might ask you about security audit that overlaps with QA, provide your perspective and help decide final category and severity.
         
   expected_output: >
     Structured QA audit findings with quality gaps
@@ -236,10 +247,6 @@ report_synthesis_task:
 
     {CATEGORY_GUIDELINES}   
     {AUDIT_OUTPUT_FORMAT}
-    
-    **COLLABORATION NOTES:**
-    - If severity or category conflicts exist, DELEGATE verification back to the specific agents with conflicts
-    - Your final output is the source of truth
     
     **OUTPUT FORMAT:**
     Pure JSON matching this structure (NO markdown, NO code blocks):
