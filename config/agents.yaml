@@ -60,7 +60,7 @@ rai_director:
     **YOUR AUDIT IS BINARY:** Certify or Reject. No partial compliance.
     
     **IMPORTANT:** Focus ONLY on Ethics & Safety. Don't duplicate Security/Privacy/QA findings.
-  allow_delegation: true
+  allow_delegation: false
   verbose: true
 
 qa_engineer:
