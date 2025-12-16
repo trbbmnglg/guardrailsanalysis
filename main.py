@@ -74,9 +74,6 @@ AUDIT_OUTPUT_FORMAT = """
     - Description: Brief explanation of what this guardrail prevents
     - Mechanism: How it should be technically implemented
     - Triggers: List of keywords/patterns that activate this guardrail
-       
-    CRITICAL: [Only for the Security Auditor] If the the AI instruction identified as complex, and the present guardrail overlaps with privacy or QA:
-      - Finalize and agree with chief privacy officer (gdpr/ccpa/hipaa expert) or lead qa engineer (iso/iec 25059 quality specialist) on what is the final Category and Severity
 
 """
 
@@ -184,15 +181,8 @@ async def run_analysis(request: AnalysisRequest):
             verbose=True
         )
         
-        task_huddle = Task(
-            config=tasks_config['team_huddle'],
-            agent=report_agent, 
-            async_execution=True
-        )
-        
         task_security = Task(
             config=tasks_config['security_audit_task'],
-            context=[task_huddle],
             agent=security_agent,
             async_execution=True
         )
@@ -200,26 +190,23 @@ async def run_analysis(request: AnalysisRequest):
         task_privacy = Task(
             config=tasks_config['privacy_audit_task'], 
             agent=privacy_ops_agent, 
-            context=[task_huddle, task_security],
             async_execution=True
         )
         
         task_rai = Task(
             config=tasks_config['rai_audit_task'], 
             agent=rai_agent, 
-            context=[task_huddle],
             async_execution=True
         )
         
         task_qa = Task(
             config=tasks_config['qa_audit_task'], 
             agent=qa_agent, 
-            context=[task_huddle, task_security],
             async_execution=True
         )
 
         agents_list = [security_agent, privacy_ops_agent, rai_agent, qa_agent]
-        tasks_list = [task_huddle, task_security, task_privacy, task_rai, task_qa]
+        tasks_list = [task_security, task_privacy, task_rai, task_qa]
         report_context = [task_security, task_privacy, task_rai, task_qa]
 
         # =============================================================
