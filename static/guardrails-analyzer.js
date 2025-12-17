@@ -241,6 +241,22 @@
             </div>
         </div>`;
 
+        let performanceRowHTML = '';
+        
+        if (enableProfiling) {
+            performanceRowHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12 fade-in">
+                <div id="slot-latency-engine" class="${enableGreenAI ? 'lg:col-span-4 xl:col-span-3' : 'lg:col-span-4'} h-full"></div>
+
+                ${enableGreenAI ? `<div id="slot-green-ai" class="lg:col-span-4 xl:col-span-3 h-full"></div>` : ''}
+
+                <div id="slot-latency-waterfall" class="${enableGreenAI ? 'lg:col-span-4 xl:col-span-6' : 'lg:col-span-8'} h-full"></div>
+            </div>`;
+        } else if (enableGreenAI) {
+            // Fallback: If only Green AI is on, center it or show it full width
+            performanceRowHTML = `<div id="slot-green-ai" class="max-w-md mx-auto mb-12 fade-in"></div>`;
+        }
+
         // 3. Category Filter Bar (Glass Chips)
         const filterHTML = `
             <div class="sticky top-0 z-40 bg-slate-50/90 dark:bg-[#0f111a]/90 backdrop-blur-md py-4 mb-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4 overflow-x-auto custom-scroll px-2" id="categoryFilters">
@@ -251,11 +267,22 @@
         let greenAIHTML = enableGreenAI ? `<div id="greenAISection" class="hidden fade-in mb-12"></div>` : ``;
 
         // 5. Build Layout
-        container.innerHTML = summaryHTML + filterHTML + latencyHTML + greenAIHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>';
+        ccontainer.innerHTML = summaryHTML + performanceRowHTML + filterHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>';
 
-        // 6. Initialize Modules
-        if (enableGreenAI && window.greenAIMonitor) window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'greenAISection');
-        if (enableProfiling && window.latencyProfiler) window.latencyProfiler.analyze(analysisResults.guardrails, analysisResults.tiering_strategy);
+        // 5. Initialize Modules with Specific Targets
+        if (enableGreenAI && window.greenAIMonitor) {
+            // Render Green AI into the specific slot
+            window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'slot-green-ai');
+        }
+        
+        if (enableProfiling && window.latencyProfiler) {
+            // Render Latency components into their split slots
+            window.latencyProfiler.analyze(
+                analysisResults.guardrails, 
+                analysisResults.tiering_strategy,
+                { engine: 'slot-latency-engine', waterfall: 'slot-latency-waterfall' } // <--- Passing specific IDs
+            );
+        }
 
         container.classList.remove('hidden');
         applyFilters();
