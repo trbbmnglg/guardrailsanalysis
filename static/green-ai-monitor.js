@@ -1,48 +1,32 @@
 (function() {
     'use strict';
+
     // --- CUSTOM "BIG LEAF" ILLUSTRATIONS (SVG) ---
-    // A single, large leaf that changes health state.
-    
     const PLANT_SVGS = {
-        // 🌿 GREEN: Vibrant, Healthy, Upright Leaf
         green: `
         <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-xl filter saturate-110">
             <path d="M50 95 Q 50 80 50 65" stroke="#059669" stroke-width="4" stroke-linecap="round" />
-            
             <path d="M50 75 Q 5 55 5 35 Q 20 5 50 15 Q 80 5 95 35 Q 95 55 50 75 Z" fill="#34D399" stroke="#059669" stroke-width="2" />
-            
             <path d="M50 75 Q 50 45 50 20" stroke="#059669" stroke-width="2" stroke-linecap="round" />
-            
             <path d="M50 60 L 25 45" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
             <path d="M50 60 L 75 45" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
             <path d="M50 45 L 30 30" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
             <path d="M50 45 L 70 30" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
-            
             <circle cx="30" cy="35" r="3" fill="#E0F2FE" stroke="#BAE6FD" />
         </svg>`,
-
-        // 🍂 AMBER: Yellowing, Curling Tip, Slightly Drooping
         amber: `
         <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-md">
             <path d="M50 95 Q 55 80 60 70" stroke="#D97706" stroke-width="3" stroke-linecap="round" />
-            
             <path d="M60 70 Q 20 60 20 40 Q 30 15 60 30 Q 90 25 90 50 Q 85 70 60 70 Z" fill="#FBBF24" stroke="#D97706" stroke-width="2" />
-            
             <path d="M60 70 Q 55 50 60 30" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6" />
-            
             <circle cx="40" cy="45" r="4" fill="#B45309" opacity="0.6" />
             <circle cx="75" cy="55" r="2" fill="#B45309" opacity="0.5" />
         </svg>`,
-
-        // 🥀 RED: Withered, Brown, Crinkled, Holes
         red: `
         <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-sm opacity-90 filter sepia">
             <path d="M50 95 Q 60 90 65 85" stroke="#78350F" stroke-width="3" stroke-linecap="round" />
-            
             <path d="M65 85 Q 35 80 40 60 Q 30 40 50 45 Q 60 20 80 40 Q 95 45 90 70 Q 85 85 65 85 Z" fill="#92400E" stroke="#78350F" stroke-width="2" stroke-linejoin="round" />
-            
             <path d="M65 85 Q 60 65 65 50" stroke="#78350F" stroke-width="1" />
-            
             <path d="M55 55 L 60 60 L 52 65" stroke="#78350F" stroke-width="1" fill="none" />
             <circle cx="75" cy="55" r="3" fill="#78350F" opacity="0.3" />
         </svg>`
@@ -78,9 +62,9 @@
 
         const theme = config[statusLower] || config.green;
 
-        // Note: We use h-full to ensure it fills the slot in the new 3-column layout
+        // UPDATED: 'rounded-none' and fixed 'border-slate-200'
         const html = `
-            <div class="h-full bg-white dark:bg-[#1e2130] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden fade-in flex flex-col hover:shadow-lg transition-shadow duration-300 hover:border-slate-300 dark:hover:border-slate-600">
+            <div class="h-full bg-white dark:bg-[#1e2130] rounded-none shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden fade-in flex flex-col">
                 <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
                     <div class="flex items-center gap-2">
                         <span class="${theme.text}">
@@ -109,7 +93,7 @@
                             Efficiency Score
                         </div>
                         
-                        <div class="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div class="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-none border border-slate-200 dark:border-slate-700">
                              <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                              <span class="text-xs font-mono font-bold text-slate-600 dark:text-slate-300">
                                 ~${data.estimated_kwh_per_1k_req || '0'} kWh <span class="text-slate-400 font-normal">/ 1k</span>
