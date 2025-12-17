@@ -132,7 +132,7 @@
       // Logic for RAG colors in the circle chart
       let color = '#ef4444'; // Red (Default)
       let textColor = 'text-red-600 dark:text-red-400'; 
-      let label = 'Critical';
+      let label = 'High Risk';
       
       if (score >= 80) { 
           color = '#10b981'; // Emerald Green
@@ -141,7 +141,7 @@
       } else if (score >= 50) { 
           color = '#f59e0b'; // Amber
           textColor = 'text-amber-600 dark:text-amber-400';
-          label = 'Warning';
+          label = 'Moderate Risk';
       }
         
       const radius = 45; 
@@ -157,6 +157,7 @@
                 </svg>
                 <div class="absolute inset-0 flex flex-col items-center justify-center">
                     <span class="text-4xl font-black ${textColor} tracking-tight">${score}</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider ${textColor} mt-1">${label}</span>
                 </div>
             </div>
         </div>`;
@@ -231,16 +232,22 @@
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
 
+        // Determine Theme for Score Card based on score
+        let scoreTheme = { border: "border-red-500", bg: "bg-red-500", text: "text-red-500" };
+        if (gapData.score >= 80) {
+            scoreTheme = { border: "border-emerald-500", bg: "bg-emerald-500", text: "text-emerald-500" };
+        } else if (gapData.score >= 50) {
+            scoreTheme = { border: "border-amber-500", bg: "bg-amber-500", text: "text-amber-500" };
+        }
+
         // 2. Render Executive Summary (SQUARE Cards, Flat Design)
-        // Card 1: Safety Score (Circle Chart + Green Logic)
-        // Card 2: Active Guardrails (Blue Logic)
-        // Card 3: Risk Exposure (Red Logic)
         const summaryHTML = `
         <div id="executive-summary" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 fade-in">
             
-            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
-                <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div> <div class="flex items-center gap-2 mb-2 absolute top-6 left-6">
-                    <span class="px-2 py-0.5 rounded-none text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white">Score</span>
+            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border ${scoreTheme.border} shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
+                <div class="absolute top-0 left-0 w-full h-1 ${scoreTheme.bg}"></div>
+                <div class="flex items-center gap-2 mb-2 absolute top-6 left-6">
+                    <span class="px-2 py-0.5 rounded-none text-[10px] font-black uppercase tracking-widest ${scoreTheme.bg} text-white">Score</span>
                 </div>
                 <div class="mt-4">
                     ${renderScoreChart(gapData.score)}
@@ -249,7 +256,8 @@
             </div>
 
             <div onclick="window.guardrailAnalyzer.filterByStatus('active')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
-                <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div> <div class="flex items-center gap-2 mb-2 absolute top-6 left-6">
+                <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div> 
+                <div class="flex items-center gap-2 mb-2 absolute top-6 left-6">
                     <span class="px-2 py-0.5 rounded-none text-[10px] font-black uppercase tracking-widest bg-blue-500 text-white">Active</span>
                 </div>
                 <div class="text-center mt-2">
@@ -259,7 +267,8 @@
             </div>
 
             <div onclick="window.guardrailAnalyzer.filterByStatus('missing')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
-                <div class="absolute top-0 left-0 w-full h-1 bg-red-500"></div> <div class="flex items-center gap-2 mb-2 absolute top-6 left-6">
+                <div class="absolute top-0 left-0 w-full h-1 bg-red-500"></div> 
+                <div class="flex items-center gap-2 mb-2 absolute top-6 left-6">
                     <span class="px-2 py-0.5 rounded-none text-[10px] font-black uppercase tracking-widest bg-red-500 text-white">Risks</span>
                 </div>
                 <div class="text-center mt-2">
