@@ -87,7 +87,7 @@
             if (!instructionInput.value.trim()) { showError('Please enter an instruction.'); return; }
             await analyzeInstruction(apiKeyInput.value.trim(), instructionInput.value.trim());
         });
-        document.getElementById('exportPdfBtn')?.addEventListener('click', () => alert("PDF Export ready."));
+        document.getElementById('exportPdfBtn')?.addEventListener('click', exportPdf);
         document.getElementById('exportJson')?.addEventListener('click', () => { if(analysisResults) saveAsJson(analysisResults); });
     }
 
@@ -110,7 +110,7 @@
         }
     }
 
-    // --- GAP ANALYSIS ENGINE (Restored) ---
+    // --- GAP ANALYSIS ENGINE ---
     function performGapAnalysis(foundGuardrails) {
         const expectedDimensions = [
             { id: "security", weight: 2.0, categories: ["Security", "Compliance"] },
@@ -186,7 +186,10 @@
         }
     }
 
-    function scrollToSummary() { document.getElementById("executive-summary").scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    function scrollToSummary() { 
+        const el = document.getElementById("executive-summary");
+        if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+    }
   
     // --- DISPLAY ENGINE ---
     function displayResults(enableProfiling, enableGreenAI) {
@@ -198,12 +201,10 @@
         const gapData = performGapAnalysis(analysisResults.guardrails);
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
-        const criticalRisks = missingGuardrails.filter(g => (g.severity||'').toLowerCase() === 'critical').length;
 
-        // 2. Render Executive Summary (Cards Style)
+        // 2. Render Executive Summary (Bio-Cards)
         const summaryHTML = `
         <div id="executive-summary" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 fade-in">
-            
             <div class="relative group bg-gradient-to-b from-indigo-50 to-white dark:from-indigo-900/20 dark:to-[#1e2130] rounded-[2rem] border border-white/50 dark:border-slate-700 shadow-lg p-6 overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1">
                 <div class="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
                 <div class="flex items-center justify-between mb-4">
@@ -241,8 +242,9 @@
             </div>
         </div>`;
 
+        // 3. UNIFIED PERFORMANCE DASHBOARD ROW
+        // Creates a seamless 3-column grid for Latency | Green AI | Waterfall
         let performanceRowHTML = '';
-        
         if (enableProfiling) {
             performanceRowHTML = `
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12 fade-in">
@@ -253,25 +255,20 @@
                 <div id="slot-latency-waterfall" class="${enableGreenAI ? 'lg:col-span-4 xl:col-span-6' : 'lg:col-span-8'} h-full"></div>
             </div>`;
         } else if (enableGreenAI) {
-            // Fallback: If only Green AI is on, center it or show it full width
-            performanceRowHTML = `<div id="slot-green-ai" class="max-w-md mx-auto mb-12 fade-in"></div>`;
+            // Fallback: If only Green AI is on, center it
+            performanceRowHTML = `<div id="slot-green-ai" class="max-w-md mx-auto mb-12 fade-in h-96"></div>`;
         }
 
-        // 3. Category Filter Bar (Glass Chips)
+        // 4. Category Filter Bar
         const filterHTML = `
             <div class="sticky top-0 z-40 bg-slate-50/90 dark:bg-[#0f111a]/90 backdrop-blur-md py-4 mb-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4 overflow-x-auto custom-scroll px-2" id="categoryFilters">
                 </div>`;
 
-        // 4. Modules
-        let latencyHTML = enableProfiling ? `<div id="latencyReportSection" class="hidden fade-in mb-12"></div>` : ``;
-        let greenAIHTML = enableGreenAI ? `<div id="greenAISection" class="hidden fade-in mb-12"></div>` : ``;
+        // 5. Build Final Layout
+        container.innerHTML = summaryHTML + performanceRowHTML + filterHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>';
 
-        // 5. Build Layout
-        ccontainer.innerHTML = summaryHTML + performanceRowHTML + filterHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>';
-
-        // 5. Initialize Modules with Specific Targets
+        // 6. Initialize Modules into specific slots
         if (enableGreenAI && window.greenAIMonitor) {
-            // Render Green AI into the specific slot
             window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'slot-green-ai');
         }
         
@@ -280,7 +277,7 @@
             window.latencyProfiler.analyze(
                 analysisResults.guardrails, 
                 analysisResults.tiering_strategy,
-                { engine: 'slot-latency-engine', waterfall: 'slot-latency-waterfall' } // <--- Passing specific IDs
+                { engine: 'slot-latency-engine', waterfall: 'slot-latency-waterfall' }
             );
         }
 
@@ -288,7 +285,7 @@
         applyFilters();
     }
 
-    // --- CARD RENDERER (The Vertical Green AI Style) ---
+    // --- CARD RENDERER (Vertical Bio-Card) ---
     function renderGuardrails(guardrails) { 
         const container = document.getElementById('guardrailsDisplay');
         if (guardrails.length === 0) { 
@@ -306,7 +303,6 @@
                  if (catLower.includes(key)) { theme = style; break; }
              }
 
-             // Visuals
              const badgeClass = isMissing ? "bg-red-500 shadow-red-200 dark:shadow-none" : "bg-emerald-500 shadow-emerald-200 dark:shadow-none";
              const statusText = isMissing ? "MISSING" : "ACTIVE";
              
@@ -348,7 +344,6 @@
                         <div class="w-10 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-4 shrink-0"></div>
 
                         <div class="overflow-y-auto custom-scroll pr-1 space-y-4 text-left">
-                            
                             <div>
                                 <h4 class="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-1">Mechanism</h4>
                                 <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-2 text-xs font-medium text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50">
@@ -402,7 +397,6 @@
                 const count = cat === 'all' ? analysisResults.guardrails.length : counts[cat];
                 const isSelected = currentCategoryFilter === cat;
                 
-                // Style: Glass Chip
                 const activeClass = "bg-indigo-600 text-white shadow-lg ring-2 ring-indigo-200 dark:ring-indigo-900 border-transparent";
                 const inactiveClass = "bg-white dark:bg-[#151925] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700";
                 
@@ -416,6 +410,47 @@
                 </button>`;
             }).join('');
         }
+    }
+
+    // --- ROBUST PDF EXPORT ---
+    function exportPdf() {
+        const element = document.getElementById('resultsSection');
+        if (!element || element.classList.contains('hidden')) { 
+            showError("No analysis results to export."); 
+            return; 
+        }
+
+        const btn = document.getElementById('exportPdfBtn');
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...`;
+        btn.disabled = true;
+
+        const opt = {
+            margin:       [0.3, 0.3, 0.3, 0.3],
+            filename:     `Guardrail_Audit_${new Date().toISOString().slice(0,10)}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2, 
+                useCORS: true, 
+                letterRendering: true,
+                scrollY: 0,
+                windowWidth: 1400 
+            },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+        };
+
+        setTimeout(() => {
+            window.html2pdf().set(opt).from(element).save().then(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(err => {
+                console.error("PDF Export failed:", err);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showError("PDF Export failed. Check console for details.");
+            });
+        }, 500);
     }
 
     function showLoading() { loadingState.classList.remove('hidden'); analyzeBtn.disabled = true; }
