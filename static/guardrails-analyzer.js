@@ -17,7 +17,6 @@
     let progressBar, progressText;
 
     // --- CONFIG: Flat UI Colors & Icons ---
-    // UPDATED: Icons are now w-full h-full to fill their containers properly
     const categoryStyles = {
         "responsible ai": { 
             border: "border-purple-200 dark:border-purple-800/50", 
@@ -71,7 +70,7 @@
             accent: "bg-pink-600", 
             iconBg: "bg-pink-100 dark:bg-pink-900/30", 
             iconColor: "text-pink-600 dark:text-pink-300",
-            icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>`
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>`
         },
         "qa": { 
             border: "border-blue-200 dark:border-blue-800/50", 
@@ -80,7 +79,7 @@
             accent: "bg-blue-600", 
             iconBg: "bg-blue-100 dark:bg-blue-900/30", 
             iconColor: "text-blue-600 dark:text-blue-300",
-            icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
         },
         "default": { 
             border: "border-slate-200 dark:border-slate-700", 
@@ -89,7 +88,7 @@
             accent: "bg-slate-500", 
             iconBg: "bg-slate-100 dark:bg-slate-700", 
             iconColor: "text-slate-500 dark:text-slate-400",
-            icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
         }
     };
 
@@ -104,9 +103,20 @@
         const saveKeyCheckbox = document.getElementById('saveApiKey');
         if (saveKeyCheckbox && saveKeyCheckbox.parentElement && saveKeyCheckbox.type === 'checkbox' && !saveKeyCheckbox.classList.contains('sr-only')) {
              const parent = saveKeyCheckbox.parentElement;
-             const toggleHTML = `<label class="flex items-center gap-3 cursor-pointer group select-none"><div class="relative inline-flex items-center"><input type="checkbox" id="saveApiKey" class="sr-only peer"><div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div></div><span class="text-sm text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors font-medium">Remember API key</span></label>`;
-             const tempDiv = document.createElement('div'); tempDiv.innerHTML = toggleHTML;
-             if (tempDiv.firstElementChild) parent.parentNode.replaceChild(tempDiv.firstElementChild, parent);
+             const toggleHTML = `
+                <label class="flex items-center gap-3 cursor-pointer group select-none">
+                    <div class="relative inline-flex items-center">
+                        <input type="checkbox" id="saveApiKey" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600 transition-colors"></div>
+                    </div>
+                    <span class="text-sm text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors font-medium">Remember API key for this session</span>
+                </label>
+             `;
+             const tempDiv = document.createElement('div');
+             tempDiv.innerHTML = toggleHTML;
+             if (tempDiv.firstElementChild) {
+                parent.parentNode.replaceChild(tempDiv.firstElementChild, parent);
+             }
         }
         
         apiKeyInput = document.getElementById('apiKey');
@@ -134,14 +144,26 @@
         document.getElementById('exportJson')?.addEventListener('click', exportJson);
         document.getElementById('exportCsv')?.addEventListener('click', exportCsv);
         
-        document.getElementById('clearApiKey')?.addEventListener('click', () => {
-            apiKeyInput.value = ''; sessionStorage.removeItem('hf_api_key');
-            showError('API key cleared.'); setTimeout(hideError, 2000);
-        });
-        document.getElementById('saveApiKey')?.addEventListener('change', (e) => {
-            if (e.target.checked && apiKeyInput.value.trim()) sessionStorage.setItem('hf_api_key', apiKeyInput.value.trim());
-            else sessionStorage.removeItem('hf_api_key');
-        });
+        const clearKeyBtn = document.getElementById('clearApiKey');
+        if (clearKeyBtn) {
+            clearKeyBtn.addEventListener('click', () => {
+                apiKeyInput.value = '';
+                sessionStorage.removeItem('hf_api_key');
+                showError('API key cleared from memory.');
+                setTimeout(hideError, 2000);
+            });
+        }
+
+        const saveKeyCheckbox = document.getElementById('saveApiKey');
+        if (saveKeyCheckbox) {
+            saveKeyCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked && apiKeyInput.value.trim()) {
+                    sessionStorage.setItem('hf_api_key', apiKeyInput.value.trim());
+                } else {
+                    sessionStorage.removeItem('hf_api_key');
+                }
+            });
+        }
     }
 
     function loadCachedApiKey() {
@@ -182,12 +204,13 @@
     }
 
     function renderScoreChart(score) {
-      let color = '#ef4444'; // Red
+      // Logic for RAG colors
+      let color = '#ef4444'; // Red (Default)
       let textColor = 'text-red-600 dark:text-red-400'; 
       let label = 'High Risk';
       
       if (score >= 80) { 
-          color = '#10b981'; // Emerald
+          color = '#10b981'; // Emerald Green
           textColor = 'text-emerald-600 dark:text-emerald-400'; 
           label = 'Secure';
       } else if (score >= 50) { 
@@ -224,7 +247,7 @@
             const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
             const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
           
-            updateProgress(10, 'Initializing Analysis Crew...');
+            updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
     
             const response = await fetch('/analyze', {
                 method: 'POST',
@@ -238,16 +261,23 @@
                 })
             });
     
-            if (!response.ok) throw new Error(`Backend Error: ${response.status}`);
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.detail || `Backend Error: ${response.status}`);
+            }
+    
+            updateProgress(75, 'Generating Report...');
             const data = await response.json();
-            if (!data.result) throw new Error("Empty result.");
+            
+            if (!data.result) throw new Error("Backend returned empty result.");
             
             let parsed = cleanAndParseJSON(data.result); 
+            
             if (parsed.guardrails) {
                 parsed.guardrails = parsed.guardrails.map(g => ({
                     ...g,
                     severity: g.risk_level || g.severity || "Medium", 
-                    mechanism: g.recommendation || g.mechanism || "Standard check",
+                    mechanism: g.recommendation || g.mechanism || "No recommendation provided.",
                     triggers: Array.isArray(g.triggers) ? g.triggers : [],
                     enforcement: g.enforcement || "Review", 
                     location: g.location || "" 
@@ -255,16 +285,18 @@
             }
             
             analysisResults = parsed;
-            updateProgress(100, 'Done!');
+            updateProgress(100, 'Report Ready!');
             
             setTimeout(() => { 
                 hideLoading(); 
-                displayResults(enableProfiling, enableGreenAI);
+                displayResults(enableProfiling, enableRagDeepScan, enableGreenAI);
                 scrollToSummary();
             }, 500);
     
         } catch (error) {
-            hideLoading(); showError(error.message);
+            console.error("Analysis failed:", error);
+            hideLoading();
+            showError(error.message || 'Connection to backend failed.');
         }
     }
 
@@ -274,7 +306,7 @@
     }
   
     // --- DISPLAY ENGINE ---
-    function displayResults(enableProfiling, enableGreenAI) {
+    function displayResults(enableProfiling, enableRagDeepScan, enableGreenAI) {
         if (!analysisResults) return;
 
         const container = document.getElementById('resultsSection');
@@ -284,18 +316,23 @@
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
 
-        // Determine Theme for Score Card based on score (Top Bar Only)
+        // Determine Theme for Score Card based on score (Only Top Bar)
         let topBarColor = "bg-red-500";
         let badgeColor = "bg-red-500";
-        if (gapData.score >= 80) { topBarColor = "bg-emerald-500"; badgeColor = "bg-emerald-500"; } 
-        else if (gapData.score >= 50) { topBarColor = "bg-amber-500"; badgeColor = "bg-amber-500"; }
+        if (gapData.score >= 80) {
+            topBarColor = "bg-emerald-500";
+            badgeColor = "bg-emerald-500";
+        } else if (gapData.score >= 50) {
+            topBarColor = "bg-amber-500";
+            badgeColor = "bg-amber-500";
+        }
 
-        // 2. Render Executive Summary (SQUARE Cards, Consistent Sizing)
-        // Note: Numbers are standardized to text-7xl for consistency
-        const summaryGridClass = enableGreenAI ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 md:grid-cols-3";
+        // 2. Render Executive Summary (SQUARE Cards, Consistent Numbers)
+        // DYNAMIC GRID: 4 columns if Green AI is ON, 3 columns if OFF
+        const summaryGridCols = enableGreenAI ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3';
 
         const summaryHTML = `
-        <div id="executive-summary" class="grid ${summaryGridClass} gap-6 mb-10 fade-in">
+        <div id="executive-summary" class="grid ${summaryGridCols} gap-6 mb-10 fade-in">
             
             <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
                 <div class="absolute top-0 left-0 w-full h-1 ${topBarColor}"></div>
@@ -344,7 +381,7 @@
             </div>`;
         }
 
-        // 4. Filter Bar
+        // 4. Category Filter Bar
         const filterHTML = `
             <div class="sticky top-0 z-40 bg-slate-50/90 dark:bg-[#0f111a]/90 backdrop-blur-md py-4 mb-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4 overflow-x-auto custom-scroll px-2" id="categoryFilters">
             </div>`;
@@ -352,7 +389,7 @@
         // 5. Build Final Layout
         container.innerHTML = summaryHTML + performanceRowHTML + filterHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>';
 
-        // 6. Initialize Modules
+        // 6. Initialize Modules into specific slots
         if (enableGreenAI && window.greenAIMonitor) {
             window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'slot-green-ai');
         }
@@ -404,7 +441,8 @@
                 </div>
 
                 <div class="p-6 flex-1 flex flex-col items-center justify-center text-center relative z-10">
-                    <div class="w-16 h-16 p-3 mb-4 ${theme.text} transition-transform duration-500 group-hover:scale-110 opacity-90">
+                    
+                    <div class="w-16 h-16 p-2 mb-4 ${theme.text} transition-transform duration-500 group-hover:scale-110 opacity-90">
                         ${theme.icon}
                     </div>
 
@@ -423,7 +461,9 @@
 
                 <div class="absolute inset-x-0 bottom-0 z-30 transform translate-y-[105%] transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) group-hover:translate-y-0 h-2/3">
                     <div class="bg-white/95 dark:bg-[#151925]/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-700 p-5 shadow-2xl h-full flex flex-col rounded-none">
+                        
                         <div class="w-10 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-3 shrink-0"></div>
+
                         <div class="overflow-y-auto custom-scroll pr-1 space-y-3 text-left">
                             <div>
                                 <h4 class="text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-1">Mechanism</h4>
@@ -431,22 +471,24 @@
                                     ${escapeHtml(g.mechanism)}
                                 </div>
                             </div>
+
                             <div>
                                 <h4 class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Context</h4>
                                 ${!isMissing ? 
                                     `<div class="bg-slate-100 dark:bg-slate-800 rounded-none p-2 font-mono text-[10px] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 leading-relaxed break-words">"${escapeHtml(g.location)}"</div>` 
-                                    : `<div class="text-[10px] italic text-slate-400">Not detected in prompt</div>`}
+                                    : 
+                                    `<div class="text-[10px] italic text-slate-400">Not detected in prompt</div>`
+                                }
                             </div>
                         </div>
                     </div>
                 </div>
+
             </div>`;
         }).join('');
     }
 
-    // ... (Keep existing Filter, Utils, Export, and Init functions same as before) ...
-    // Note: Use the previously provided utility functions for filter, export, etc.
-    
+    // --- FILTERS & UI ---
     function filterByStatus(status) { currentStatusFilter = status; applyFilters(); }
     function filterByCategory(category) { currentCategoryFilter = category; applyFilters(); }
     
@@ -470,26 +512,65 @@
             container.innerHTML = allCats.map(cat => {
                 const count = cat === 'all' ? analysisResults.guardrails.length : counts[cat];
                 const isSelected = currentCategoryFilter === cat;
+                
                 const activeClass = "bg-indigo-600 text-white shadow-lg border-transparent";
                 const inactiveClass = "bg-white dark:bg-[#151925] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700";
-                return `<button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" class="shrink-0 px-4 py-2 rounded-none text-xs font-bold transition-all duration-300 border flex items-center gap-2 ${isSelected ? activeClass : inactiveClass}"><span>${escapeHtml(cat === 'all' ? 'All Categories' : cat)}</span><span class="px-1.5 py-0.5 rounded-none text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">${count}</span></button>`;
+                
+                return `
+                <button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" 
+                    class="shrink-0 px-4 py-2 rounded-none text-xs font-bold transition-all duration-300 border flex items-center gap-2 ${isSelected ? activeClass : inactiveClass}">
+                    <span>${escapeHtml(cat === 'all' ? 'All Categories' : cat)}</span>
+                    <span class="px-1.5 py-0.5 rounded-none text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">
+                        ${count}
+                    </span>
+                </button>`;
             }).join('');
         }
     }
 
+    // --- ROBUST PDF EXPORT ---
     function exportPdf() {
         const element = document.getElementById('resultsSection');
-        if (!element || element.classList.contains('hidden')) { showError("No analysis results to export."); return; }
+        if (!element || element.classList.contains('hidden')) { 
+            showError("No analysis results to export."); 
+            return; 
+        }
+
         const btn = document.getElementById('exportPdfBtn');
         const originalText = btn.innerHTML;
-        btn.innerHTML = `Generating...`;
+        
+        btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...`;
         btn.disabled = true;
-        const opt = { margin: [0.3, 0.3, 0.3, 0.3], filename: `Guardrail_Audit.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0, windowWidth: 1400 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } };
-        setTimeout(() => { window.html2pdf().set(opt).from(element).save().then(() => { btn.innerHTML = originalText; btn.disabled = false; }).catch(err => { console.error("PDF Export failed:", err); btn.innerHTML = originalText; btn.disabled = false; showError("PDF Export failed."); }); }, 500);
+
+        const opt = {
+            margin:       [0.3, 0.3, 0.3, 0.3],
+            filename:     `Guardrail_Audit_${new Date().toISOString().slice(0,10)}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2, 
+                useCORS: true, 
+                letterRendering: true,
+                scrollY: 0,
+                windowWidth: 1400 
+            },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+        };
+
+        setTimeout(() => {
+            window.html2pdf().set(opt).from(element).save().then(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(err => {
+                console.error("PDF Export failed:", err);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showError("PDF Export failed. Check console for details.");
+            });
+        }, 500);
     }
-    
+
     function exportJson() { if(analysisResults) saveAsJson(analysisResults); }
-    function exportCsv() { /* ... CSV Logic ... */ } // (Use previous CSV logic)
+    function exportCsv() { /* ... CSV Logic ... */ } 
 
     function showLoading() { loadingState.classList.remove('hidden'); analyzeBtn.disabled = true; }
     function hideLoading() { loadingState.classList.add('hidden'); analyzeBtn.disabled = false; progressBar.style.width = '0%'; }
@@ -500,5 +581,9 @@
 
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 
-    window.guardrailAnalyzer = { filterByCategory, filterByStatus };
+    window.guardrailAnalyzer = { 
+        filterByCategory: filterByCategory, 
+        filterByStatus: filterByStatus,
+        version: '4.4.0-final-ui' 
+    };
 })();
