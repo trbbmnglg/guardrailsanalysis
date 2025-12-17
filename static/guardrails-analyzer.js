@@ -549,9 +549,10 @@
         const fullBreakdownHTML = `<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mt-8 fade-in" id="recommendations">${checklistHTML + recsHTML}</div>`;
 
         // Latency, Green AI & Export
-        const latencyHTML = `<div id="latencyReportSection" class="hidden fade-in mb-8"></div>`;
+        let latencyHTML = ``;
         let greenAIHTML  = ``;
       
+        if(enableProfiling){ latencyHTML = `<div id="latencyReportSection" class="hidden fade-in mb-8"></div>`; }
         if(enableGreenAI){ greenAIHTML = `<div id="greenAISection" class="hidden fade-in mb-8"></div>`; }
       
         const exportHTML = `
