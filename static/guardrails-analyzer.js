@@ -1,4 +1,4 @@
-// AI Agent Guardrails Analysis
+// AI Agent Guardrail Analyzer - Enterprise Agentic Edition
 // Author: Robert Bumanglag
 // Backend: Python CrewAI (FastAPI)
 
@@ -16,46 +16,78 @@
     let loadingState, errorState, resultsSection;
     let progressBar, progressText;
 
-    // --- CONFIG: Flat UI Colors & Icons ---
+    // --- CONFIG: Flat UI Colors & Icons (Updated for Dark Mode) ---
     const categoryStyles = {
         "responsible ai": { 
-            border: "border-purple-200", bg: "bg-purple-50", text: "text-purple-700", 
-            accent: "bg-purple-600", iconBg: "bg-purple-100", iconColor: "text-purple-600",
+            border: "border-purple-200 dark:border-purple-800/50", 
+            bg: "bg-purple-50 dark:bg-purple-900/10", 
+            text: "text-purple-700 dark:text-purple-300", 
+            accent: "bg-purple-600", 
+            iconBg: "bg-purple-100 dark:bg-purple-900/30", 
+            iconColor: "text-purple-600 dark:text-purple-300",
             icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>` 
         },
         "scope control": { 
-            border: "border-blue-200", bg: "bg-blue-50", text: "text-blue-700", 
-            accent: "bg-blue-600", iconBg: "bg-blue-100", iconColor: "text-blue-600",
+            border: "border-blue-200 dark:border-blue-800/50", 
+            bg: "bg-blue-50 dark:bg-blue-900/10", 
+            text: "text-blue-700 dark:text-blue-300", 
+            accent: "bg-blue-600", 
+            iconBg: "bg-blue-100 dark:bg-blue-900/30", 
+            iconColor: "text-blue-600 dark:text-blue-300",
             icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>`
         },
         "security": { 
-            border: "border-red-200", bg: "bg-red-50", text: "text-red-700", 
-            accent: "bg-red-600", iconBg: "bg-red-100", iconColor: "text-red-600",
+            border: "border-red-200 dark:border-red-800/50", 
+            bg: "bg-red-50 dark:bg-red-900/10", 
+            text: "text-red-700 dark:text-red-300", 
+            accent: "bg-red-600", 
+            iconBg: "bg-red-100 dark:bg-red-900/30", 
+            iconColor: "text-red-600 dark:text-red-300",
             icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`
         },
         "privacy": { 
-            border: "border-emerald-200", bg: "bg-emerald-50", text: "text-emerald-700", 
-            accent: "bg-emerald-600", iconBg: "bg-emerald-100", iconColor: "text-emerald-600",
+            border: "border-emerald-200 dark:border-emerald-800/50", 
+            bg: "bg-emerald-50 dark:bg-emerald-900/10", 
+            text: "text-emerald-700 dark:text-emerald-300", 
+            accent: "bg-emerald-600", 
+            iconBg: "bg-emerald-100 dark:bg-emerald-900/30", 
+            iconColor: "text-emerald-600 dark:text-emerald-300",
             icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>`
         },
         "input validation": { 
-            border: "border-cyan-200", bg: "bg-cyan-50", text: "text-cyan-700", 
-            accent: "bg-cyan-600", iconBg: "bg-cyan-100", iconColor: "text-cyan-600",
+            border: "border-cyan-200 dark:border-cyan-800/50", 
+            bg: "bg-cyan-50 dark:bg-cyan-900/10", 
+            text: "text-cyan-700 dark:text-cyan-300", 
+            accent: "bg-cyan-600", 
+            iconBg: "bg-cyan-100 dark:bg-cyan-900/30", 
+            iconColor: "text-cyan-600 dark:text-cyan-300",
             icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>`
         },
         "output control": { 
-            border: "border-pink-200", bg: "bg-pink-50", text: "text-pink-700", 
-            accent: "bg-pink-600", iconBg: "bg-pink-100", iconColor: "text-pink-600",
+            border: "border-pink-200 dark:border-pink-800/50", 
+            bg: "bg-pink-50 dark:bg-pink-900/10", 
+            text: "text-pink-700 dark:text-pink-300", 
+            accent: "bg-pink-600", 
+            iconBg: "bg-pink-100 dark:bg-pink-900/30", 
+            iconColor: "text-pink-600 dark:text-pink-300",
             icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>`
         },
         "qa": { 
-            border: "border-blue-200", bg: "bg-blue-50", text: "text-blue-700", 
-            accent: "bg-blue-600", iconBg: "bg-blue-100", iconColor: "text-blue-600",
+            border: "border-blue-200 dark:border-blue-800/50", 
+            bg: "bg-blue-50 dark:bg-blue-900/10", 
+            text: "text-blue-700 dark:text-blue-300", 
+            accent: "bg-blue-600", 
+            iconBg: "bg-blue-100 dark:bg-blue-900/30", 
+            iconColor: "text-blue-600 dark:text-blue-300",
             icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
         },
         "default": { 
-            border: "border-slate-200", bg: "bg-slate-50", text: "text-slate-600", 
-            accent: "bg-slate-500", iconBg: "bg-slate-100", iconColor: "text-slate-500",
+            border: "border-slate-200 dark:border-slate-700", 
+            bg: "bg-slate-50 dark:bg-slate-800/50", 
+            text: "text-slate-600 dark:text-slate-400", 
+            accent: "bg-slate-500", 
+            iconBg: "bg-slate-100 dark:bg-slate-700", 
+            iconColor: "text-slate-500 dark:text-slate-400",
             icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
         }
     };
@@ -70,16 +102,15 @@
     function init() {
         // --- UI TRANSFORMATION: Convert "Save API Key" checkbox to Modern Toggle ---
         const saveKeyCheckbox = document.getElementById('saveApiKey');
-        // SAFETY CHECK: Only apply transformation if not already styled (via sr-only class in new HTML)
         if (saveKeyCheckbox && saveKeyCheckbox.parentElement && saveKeyCheckbox.type === 'checkbox' && !saveKeyCheckbox.classList.contains('sr-only')) {
              const parent = saveKeyCheckbox.parentElement;
              const toggleHTML = `
                 <label class="flex items-center gap-3 cursor-pointer group select-none">
                     <div class="relative inline-flex items-center">
                         <input type="checkbox" id="saveApiKey" class="sr-only peer">
-                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600 transition-colors"></div>
+                        <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600 transition-colors"></div>
                     </div>
-                    <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors font-medium">Remember API key for this session</span>
+                    <span class="text-sm text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors font-medium">Remember API key for this session</span>
                 </label>
              `;
              const tempDiv = document.createElement('div');
@@ -99,6 +130,13 @@
         resultsSection = document.getElementById('resultsSection');
         progressBar = document.getElementById('progressBar');
         progressText = document.getElementById('progressText');
+
+        if (analyzeBtn) {
+            const btnContainer = analyzeBtn.parentElement; 
+            if (btnContainer && btnContainer.parentElement && !document.getElementById('analysisControlsContainer')) {
+                // Controls logic handled in index.html now
+            }
+        }
 
         setupEventListeners();
         loadCachedApiKey();
@@ -253,16 +291,29 @@
     }
 
     function renderScoreChart(score, confidence) {
-      let color = '#dc2626'; let textColor = 'text-red-700'; let trustTextColor = 'text-red-600'; let trustLevelText = 'High Risk';
-      if (score >= 80) { trustTextColor = 'text-green-600'; trustLevelText = 'Low Risk'; color = '#16a34a'; textColor = 'text-green-700'; } 
-      else if (score >= 50) { trustTextColor = 'text-yellow-600'; trustLevelText = 'Moderate Risk'; color = '#ea580c'; textColor = 'text-orange-700'; }
+      let color = '#dc2626'; 
+      let textColor = 'text-red-700 dark:text-red-400'; 
+      let trustTextColor = 'text-red-600 dark:text-red-400'; 
+      let trustLevelText = 'High Risk';
+      
+      if (score >= 80) { 
+          trustTextColor = 'text-green-600 dark:text-green-400'; 
+          trustLevelText = 'Low Risk'; 
+          color = '#16a34a'; 
+          textColor = 'text-green-700 dark:text-green-400'; 
+      } else if (score >= 50) { 
+          trustTextColor = 'text-yellow-600 dark:text-yellow-400'; 
+          trustLevelText = 'Moderate Risk'; 
+          color = '#ea580c'; 
+          textColor = 'text-orange-700 dark:text-orange-400'; 
+      }
         
         const radius = 45; const circumference = 2 * Math.PI * radius; const offset = circumference - (score / 100) * circumference;
         return `
             <div class="relative flex flex-col items-center justify-center">
                 <div class="relative w-28 h-28">
                     <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                        <circle cx="60" cy="60" r="${radius}" fill="none" stroke="#e5e7eb" stroke-width="10"></circle>
+                        <circle cx="60" cy="60" r="${radius}" fill="none" class="stroke-gray-200 dark:stroke-slate-700" stroke-width="10"></circle>
                         <circle cx="60" cy="60" r="${radius}" fill="none" stroke="${color}" stroke-width="10" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease-in-out;"></circle>
                     </svg>
                     <div class="absolute inset-0 flex flex-col items-center justify-center">
@@ -270,7 +321,7 @@
                         ${confidence ? `<span class="text-[10px] font-medium ${trustTextColor}">${trustLevelText}</span>` : ''}
                     </div>
                 </div>
-                <div class="mt-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">Safety Score</div>
+                <div class="mt-2 text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Safety Score</div>
             </div>`;
     }
 
@@ -279,12 +330,12 @@
         hideError();
         hideResults();
         showLoading();
-
-        const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
-        const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
-        const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
     
         try {
+            // Updated IDs based on new sidebar implementation
+            const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
+            const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
+            const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
           
             updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
     
@@ -295,8 +346,7 @@
                     instruction: instruction, 
                     api_key: apiKey,
                     enable_profiling: enableProfiling, 
-                    enable_rag_deep_scan: enableRagDeepScan,
-                    enable_greenai_analysis: enableGreenAI
+                    enable_rag_deep_scan: enableRagDeepScan
                 })
             });
     
@@ -357,7 +407,7 @@
   
     function displayResults(enableProfiling, enableRagDeepScan, enableGreenAI) {
         if (!analysisResults) return;
-  
+
         // 1. Calculate Stats
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
@@ -370,21 +420,21 @@
 
         // --- DYNAMIC HTML CONSTRUCTION (Bento Grid) ---
         const summaryHTML = `
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 fade-in">
+            <div class="bg-white dark:bg-[#1e2130] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-8 fade-in">
                 <div class="flex items-center justify-between mb-6">
                     <div>
-                        <h2 class="text-xl font-bold text-slate-900">Executive Summary</h2>
-                        <p class="text-sm text-slate-500">Real-time analysis of guardrail coverage and risk exposure.</p>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Executive Summary</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Real-time analysis of guardrail coverage and risk exposure.</p>
                     </div>
                     ${gapAnalysis.confidence ? `
-                    <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full border border-slate-200" title="AI Confidence Level">
+                    <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700" title="AI Confidence Level">
                         <div class="w-2 h-2 rounded-full ${gapAnalysis.confidence.level === 'High' ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
-                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Confidence: ${gapAnalysis.confidence.level}</span>
+                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">Confidence: ${gapAnalysis.confidence.level}</span>
                     </div>` : ''}
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                    <div class="lg:col-span-1 bg-white rounded-xl border border-slate-200 p-4 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
+                    <div class="lg:col-span-1 bg-white dark:bg-[#151925] rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
                         <div id="coverageScore" class="transform scale-90 w-full h-full flex items-center justify-center">
                             ${renderScoreChart(gapAnalysis.score, gapAnalysis.confidence)}
@@ -392,45 +442,45 @@
                     </div>
 
                     <div onclick="window.guardrailAnalyzer.filterBySummaryCard('active')" 
-                         class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                         class="cursor-pointer group bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-[#151925] rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Coverage</p>
-                                <div class="text-3xl font-black text-slate-800 group-hover:text-blue-600 transition-colors" id="activeCount">${presentGuardrails.length}</div>
-                                <p class="text-xs text-slate-500 mt-1">Active Guardrails</p>
+                                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Coverage</p>
+                                <div class="text-3xl font-black text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" id="activeCount">${presentGuardrails.length}</div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Active Guardrails</p>
                             </div>
-                            <div class="p-2 bg-white rounded-lg border border-slate-100 text-blue-500 group-hover:scale-110 transition-transform shadow-sm">
+                            <div class="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 text-blue-500 group-hover:scale-110 transition-transform shadow-sm">
                                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             </div>
                         </div>
                     </div>
 
                     <div onclick="window.guardrailAnalyzer.filterBySummaryCard('critical')" 
-                         class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                         class="cursor-pointer group bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-[#151925] rounded-xl border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-700 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Risk Exposure</p>
-                                <div class="text-3xl font-black text-slate-800 group-hover:text-red-600 transition-colors" id="missingCriticalCount">${missingCritical}</div>
-                                <p class="text-xs text-slate-500 mt-1">Critical Gaps</p>
+                                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Risk Exposure</p>
+                                <div class="text-3xl font-black text-slate-800 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors" id="missingCriticalCount">${missingCritical}</div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Critical Gaps</p>
                             </div>
-                            <div class="p-2 bg-white rounded-lg border border-slate-100 text-red-500 group-hover:scale-110 transition-transform shadow-sm">
+                            <div class="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 text-red-500 group-hover:scale-110 transition-transform shadow-sm">
                                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                             </div>
                         </div>
                     </div>
 
                     <div onclick="window.guardrailAnalyzer.filterBySummaryCard('high')" 
-                         class="cursor-pointer group bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-orange-300 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
+                         class="cursor-pointer group bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-[#151925] rounded-xl border border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md transition-all duration-200 p-5 relative overflow-hidden">
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Improvements</p>
-                                <div class="text-3xl font-black text-slate-800 group-hover:text-orange-600 transition-colors" id="missingHighCount">${missingHigh}</div>
-                                <p class="text-xs text-slate-500 mt-1">High Priority</p>
+                                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Improvements</p>
+                                <div class="text-3xl font-black text-slate-800 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors" id="missingHighCount">${missingHigh}</div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">High Priority</p>
                             </div>
-                            <div class="p-2 bg-white rounded-lg border border-slate-100 text-orange-500 group-hover:scale-110 transition-transform shadow-sm">
+                            <div class="p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 text-orange-500 group-hover:scale-110 transition-transform shadow-sm">
                                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                             </div>
                         </div>
@@ -440,22 +490,22 @@
 
         // Filter Controls
         const filterHTML = `
-            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="bg-white dark:bg-[#1e2130] rounded-xl shadow-lg p-6 mb-8">
                 <div class="flex flex-col gap-4">
-                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">View:</span>
-                        <div class="flex bg-gray-100 rounded-lg p-1 gap-1">
-                            <button onclick="window.guardrailAnalyzer.filterByStatus('active')" id="btn-status-active" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm bg-white text-blue-700">Active Only</button>
-                            <button onclick="window.guardrailAnalyzer.filterByStatus('missing')" id="btn-status-missing" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900">Missing Only</button>
-                            <button onclick="window.guardrailAnalyzer.filterByStatus('all')" id="btn-status-all" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900">Show All</button>
+                    <div class="flex items-center gap-3 border-b border-gray-100 dark:border-slate-700 pb-4">
+                        <span class="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mr-2">View:</span>
+                        <div class="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1 gap-1">
+                            <button onclick="window.guardrailAnalyzer.filterByStatus('active')" id="btn-status-active" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all shadow-sm bg-white dark:bg-[#151925] text-blue-700 dark:text-blue-300">Active Only</button>
+                            <button onclick="window.guardrailAnalyzer.filterByStatus('missing')" id="btn-status-missing" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white">Missing Only</button>
+                            <button onclick="window.guardrailAnalyzer.filterByStatus('all')" id="btn-status-all" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white">Show All</button>
                         </div>
-                        <div id="activeFilterBadge" class="hidden ml-auto px-3 py-1 rounded-full text-xs font-bold bg-gray-800 text-white flex items-center gap-2">
+                        <div id="activeFilterBadge" class="hidden ml-auto px-3 py-1 rounded-full text-xs font-bold bg-gray-800 dark:bg-slate-700 text-white flex items-center gap-2">
                             <span id="activeFilterText">Filtered</span>
                             <button onclick="window.guardrailAnalyzer.resetFilters()" class="hover:text-gray-300">✕</button>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">Category:</span>
+                        <span class="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mr-2">Category:</span>
                         <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
                     </div>
                 </div>
@@ -463,68 +513,68 @@
             <div id="guardrailsDisplay" class="space-y-6"></div>`;
 
         // Recommendations & Breakdown
-        const breakdownContainer = document.getElementById('recommendations'); // Original ID reuse might be risky if we wipe parent, but we will reconstruct below
+        const breakdownContainer = document.getElementById('recommendations');
         
         const checklistHTML = `
             <div class="mb-8">
                 <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                     <div>
-                        <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                             <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-200 ring-1 ring-indigo-100"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                             <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-none ring-1 ring-indigo-100 dark:ring-indigo-900"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
                             Governance Insights
                         </h2>
-                        <p class="text-slate-500 mt-1 ml-14">AI-verified compliance gaps and remediation steps</p>
+                        <p class="text-slate-500 dark:text-slate-400 mt-1 ml-14">AI-verified compliance gaps and remediation steps</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     ${gapAnalysis.breakdown.map((item, i) => {
                         const isPass = item.status === 'pass';
                         const isNeutral = item.status === 'neutral';
-                        let containerClass = isPass ? "bg-emerald-50/50 border-emerald-100" : isNeutral ? "bg-slate-50 border-slate-100" : "bg-red-50/50 border-red-100";
-                        let iconClass = isPass ? "bg-emerald-100 text-emerald-600" : isNeutral ? "bg-slate-200 text-slate-400" : "bg-red-100 text-red-600";
+                        let containerClass = isPass ? "bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/50" : isNeutral ? "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700" : "bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-800/50";
+                        let iconClass = isPass ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300" : isNeutral ? "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-400" : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300";
                         let icon = isPass ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>` : isNeutral ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>` : `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
-                        return `<div class="flex items-center gap-4 p-4 rounded-xl border ${containerClass} fade-in" style="animation-delay: ${i * 0.05}s"><div class="h-12 w-12 rounded-lg ${iconClass} flex items-center justify-center flex-shrink-0">${icon}</div><div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1"><span class="font-bold text-slate-800 text-sm truncate pr-2">${escapeHtml(item.label)}</span><span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${isPass ? 'bg-emerald-100 text-emerald-700' : isNeutral ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-700'}">${isPass ? '+' + item.weight + ' PTS' : 'MISSING'}</span></div><div class="text-xs text-slate-500 truncate">${item.count > 0 ? `<span class="font-semibold text-slate-700">${item.count}</span> controls verified` : 'No controls detected'}</div></div></div>`;
+                        return `<div class="flex items-center gap-4 p-4 rounded-xl border ${containerClass} fade-in" style="animation-delay: ${i * 0.05}s"><div class="h-12 w-12 rounded-lg ${iconClass} flex items-center justify-center flex-shrink-0">${icon}</div><div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1"><span class="font-bold text-slate-800 dark:text-slate-200 text-sm truncate pr-2">${escapeHtml(item.label)}</span><span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${isPass ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : isNeutral ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}">${isPass ? '+' + item.weight + ' PTS' : 'MISSING'}</span></div><div class="text-xs text-slate-500 dark:text-slate-400 truncate">${item.count > 0 ? `<span class="font-semibold text-slate-700 dark:text-slate-300">${item.count}</span> controls verified` : 'No controls detected'}</div></div></div>`;
                     }).join('')}
                 </div>
             </div>`;
         
         const recsHTML = `
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mt-8 fade-in">
-                 <h2 class="text-xl font-bold text-slate-900 flex items-center gap-3 mb-6">
-                    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg></span>
+            <div class="bg-white dark:bg-[#1e2130] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 mt-8 fade-in">
+                 <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-3 mb-6">
+                    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg></span>
                     Strategic Recommendations
-                    <span class="ml-2 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold border border-indigo-100 shadow-sm">${analysisResults.recommendations.length}</span>
+                    <span class="ml-2 px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 text-xs font-bold border border-indigo-100 dark:border-indigo-800 shadow-sm">${analysisResults.recommendations.length}</span>
                 </h2>
                 <div class="space-y-3">
                     ${analysisResults.recommendations.map((rec, i) => `
-                        <div class="flex items-start gap-4 p-5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-indigo-200 transition-all duration-200"><div class="flex-shrink-0 mt-0.5"><div class="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center shadow-sm text-xs font-bold text-slate-400">${i + 1}</div></div><div class="flex-1"><p class="text-slate-700 text-sm font-medium leading-relaxed">${escapeHtml(rec)}</p></div></div>
+                        <div class="flex items-start gap-4 p-5 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-white dark:hover:bg-[#151925] hover:border-indigo-200 dark:hover:border-indigo-800 transition-all duration-200"><div class="flex-shrink-0 mt-0.5"><div class="w-7 h-7 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 flex items-center justify-center shadow-sm text-xs font-bold text-slate-400 dark:text-slate-300">${i + 1}</div></div><div class="flex-1"><p class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-relaxed">${escapeHtml(rec)}</p></div></div>
                     `).join('')}
                 </div>
             </div>`;
         
-        const fullBreakdownHTML = `<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mt-8 fade-in" id="recommendations">${checklistHTML + recsHTML}</div>`;
+        const fullBreakdownHTML = `<div class="bg-white dark:bg-[#1e2130] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 mt-8 fade-in" id="recommendations">${checklistHTML + recsHTML}</div>`;
 
         // Latency, Green AI & Export
         let latencyHTML = ``;
-        let greenAIHTML  = ``;
-      
+        let greenAIHTML = ``;
+        
         if(enableProfiling){ latencyHTML = `<div id="latencyReportSection" class="hidden fade-in mb-8"></div>`; }
         if(enableGreenAI){ greenAIHTML = `<div id="greenAISection" class="hidden fade-in mb-8"></div>`; }
-      
+        
         const exportHTML = `
-            <div class="bg-white rounded-xl shadow-lg p-6 mt-8 flex items-center justify-between">
+            <div class="bg-white dark:bg-[#1e2130] rounded-xl shadow-lg p-6 mt-8 flex items-center justify-between">
                 <div>
-                    <h3 class="font-semibold text-gray-900">Export Analysis Results</h3>
-                    <p class="text-sm text-gray-600 mt-1">Download your guardrail analysis in various formats</p>
+                    <h3 class="font-semibold text-gray-900 dark:text-white">Export Analysis Results</h3>
+                    <p class="text-sm text-gray-600 dark:text-slate-400 mt-1">Download your guardrail analysis in various formats</p>
                 </div>
                 <div class="flex gap-3">
-                    <button id="exportJson" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">Export JSON</button>
+                    <button id="exportJson" class="bg-gray-600 dark:bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-gray-700 dark:hover:bg-slate-600 transition-colors">Export JSON</button>
                     <button id="exportCsv" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Export CSV</button>
                     <button id="exportPdfBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"><span>📄</span> Export PDF</button>
                 </div>
             </div>`;
 
-        // INJECT FULL HTML to prevent null ID references
+        // INJECT FULL HTML
         resultsSection.innerHTML = summaryHTML + filterHTML + '<div id="guardrailsDisplay" class="space-y-6"></div>' + fullBreakdownHTML + latencyHTML + greenAIHTML + exportHTML;
         
         // Re-attach Export Listeners
@@ -532,24 +582,18 @@
         document.getElementById('exportJson').addEventListener('click', exportJson);
         document.getElementById('exportCsv').addEventListener('click', exportCsv);
 
+        // --- RENDER GREEN AI MONITOR ---
         if (analysisResults.green_ai_analysis && window.greenAIMonitor) {
             window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'greenAISection');
         }
 
         // --- RENDER LATENCY PROFILER (HYBRID MODE) ---
         const latencyContainer = document.getElementById('latencyReportSection');
-        if (window.latencyProfiler) {
+        if (window.latencyProfiler && enableProfiling) {
             console.log('📊 Rendering Latency Profiler...');
             const backendStrategy = analysisResults.tiering_strategy || null;
-            if (backendStrategy) {
-                console.log('⚡ Hybrid Mode: Using Backend Cost Strategy', backendStrategy);
-            } else {
-                console.log('⚡ Client Mode: Calculating Latency locally');
-            }
             window.latencyProfiler.analyze(analysisResults.guardrails, backendStrategy);
             latencyContainer.classList.remove('hidden');
-        } else {
-            console.error('❌ Latency profiler script not loaded!');
         }
 
         resultsSection.classList.remove('hidden');
@@ -559,7 +603,7 @@
     function renderGuardrails(guardrails) { 
         const container = document.getElementById('guardrailsDisplay');
         if (guardrails.length === 0) { 
-            container.innerHTML = `<div class="p-8 text-center text-gray-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">No results found for this filter.</div>`; 
+            container.innerHTML = `<div class="p-8 text-center text-gray-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">No results found for this filter.</div>`; 
             return; 
         }
         
@@ -574,17 +618,17 @@
              }
 
              const cardOpacity = isMissing ? "border-dashed opacity-90" : "";
-             const cardBg = isMissing ? "bg-slate-50" : "bg-white";
-             const borderColor = isMissing ? "border-red-200" : theme.border;
+             const cardBg = isMissing ? "bg-slate-50 dark:bg-[#151925]/80" : "bg-white dark:bg-[#1e2130]";
+             const borderColor = isMissing ? "border-red-200 dark:border-red-900/50" : theme.border;
              const accentColor = isMissing ? "bg-red-400" : theme.accent;
-             const nameColor = isMissing ? "text-red-700" : "text-slate-900";
+             const nameColor = isMissing ? "text-red-700 dark:text-red-400" : "text-slate-900 dark:text-white";
 
-             let sevBadgeClass = "bg-slate-100 text-slate-600";
+             let sevBadgeClass = "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300";
              const sevLower = (g.severity || 'low').toLowerCase();
-             if (sevLower === 'critical') sevBadgeClass = "bg-red-100 text-red-700 border-red-200";
-             else if (sevLower === 'high') sevBadgeClass = "bg-orange-100 text-orange-700 border-orange-200";
-             else if (sevLower === 'medium') sevBadgeClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
-             else sevBadgeClass = "bg-green-100 text-green-700 border-green-200";
+             if (sevLower === 'critical') sevBadgeClass = "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800";
+             else if (sevLower === 'high') sevBadgeClass = "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800";
+             else if (sevLower === 'medium') sevBadgeClass = "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800";
+             else sevBadgeClass = "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800";
 
              return `
             <div class="relative group rounded-xl border ${borderColor} ${cardBg} ${cardOpacity} shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden fade-in" style="animation-delay: ${idx * 0.05}s">
@@ -593,48 +637,48 @@
                     <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">
                         <div class="flex-1">
                             <div class="flex items-center gap-3 mb-2">
-                                <div class="w-8 h-8 rounded-lg ${isMissing ? 'bg-red-100 text-red-600' : theme.iconBg + ' ' + theme.iconColor} flex items-center justify-center shrink-0">
+                                <div class="w-8 h-8 rounded-lg ${isMissing ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : theme.iconBg + ' ' + theme.iconColor} flex items-center justify-center shrink-0">
                                     ${isMissing ? `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>` : theme.icon}
                                 </div>
                                 <h3 class="text-lg font-bold ${nameColor} leading-tight">
                                     ${escapeHtml(g.name.replace(/^MISSING:\s*/i, ''))}
                                 </h3>
-                                ${isMissing ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-100 text-red-600 border border-red-200">Missing</span>` : ''}
+                                ${isMissing ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 border border-red-200 dark:border-red-800">Missing</span>` : ''}
                             </div>
-                            <p class="text-sm text-slate-500 leading-relaxed max-w-3xl ml-11">${escapeHtml(g.description)}</p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl ml-11">${escapeHtml(g.description)}</p>
                         </div>
                         <div class="flex items-center gap-2 flex-shrink-0 self-start mt-1">
                             <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${sevBadgeClass}">${escapeHtml(g.severity)}</span>
-                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 bg-white text-slate-500 shadow-sm">${escapeHtml(g.category)}</span>
+                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-sm">${escapeHtml(g.category)}</span>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-5 border-t border-slate-100/80 border-dashed">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-5 border-t border-slate-100/80 dark:border-slate-700/50 border-dashed">
                         <div class="lg:col-span-5 space-y-5">
                             <div class="flex flex-col gap-1">
-                                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Action & Mechanism</h4>
+                                <h4 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Action & Mechanism</h4>
                                 <div class="flex items-start gap-3">
-                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                        <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                         ${escapeHtml(g.enforcement || "Review")}
                                     </span>
-                                    <div class="text-sm text-slate-600 leading-snug pt-0.5 border-l-2 border-slate-200 pl-3">${escapeHtml(g.mechanism)}</div>
+                                    <div class="text-sm text-slate-600 dark:text-slate-400 leading-snug pt-0.5 border-l-2 border-slate-200 dark:border-slate-700 pl-3">${escapeHtml(g.mechanism)}</div>
                                 </div>
                             </div>
                             <div>
-                                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Trigger Conditions</h4>
+                                <h4 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Trigger Conditions</h4>
                                 <div class="flex flex-wrap gap-2">
-                                    ${g.triggers.map(t => `<span class="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-500 text-xs hover:border-slate-300 hover:text-slate-700 transition-colors cursor-default shadow-sm">${escapeHtml(t)}</span>`).join('')}
+                                    ${g.triggers.map(t => `<span class="px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-xs hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-default shadow-sm">${escapeHtml(t)}</span>`).join('')}
                                 </div>
                             </div>
                         </div>
                         <div class="lg:col-span-7 flex flex-col h-full">
                              <div class="flex items-center justify-between mb-2">
-                                 <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Detected Context</h4>
-                                 ${!isMissing ? '<span class="text-emerald-600 text-[10px] font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Verified in prompt</span>' : ''}
+                                 <h4 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Detected Context</h4>
+                                 ${!isMissing ? '<span class="text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-800"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Verified in prompt</span>' : ''}
                              </div>
-                             <div class="relative bg-slate-50/80 rounded-lg border border-slate-200 p-4 flex-grow group-hover:border-slate-300 transition-colors min-h-[100px]">
-                                ${!isMissing ? `<div class="font-mono text-xs text-slate-600 leading-relaxed whitespace-pre-wrap mt-2 select-all">"${escapeHtml(g.location)}"</div>` 
-                                : `<div class="flex flex-col items-center justify-center h-full text-slate-400 gap-2 py-4"><svg class="w-8 h-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span class="text-xs italic opacity-60">Not detected in current instruction set</span></div>`}
+                             <div class="relative bg-slate-50/80 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 p-4 flex-grow group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors min-h-[100px]">
+                                ${!isMissing ? `<div class="font-mono text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap mt-2 select-all">"${escapeHtml(g.location)}"</div>` 
+                                : `<div class="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500 gap-2 py-4"><svg class="w-8 h-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span class="text-xs italic opacity-60">Not detected in current instruction set</span></div>`}
                              </div>
                         </div>
                     </div>
@@ -676,7 +720,7 @@
             const btn = document.getElementById(`btn-status-${s}`);
             if (btn) {
                 const isActive = currentStatusFilter === s;
-                btn.className = isActive ? "px-4 py-1.5 rounded-md text-sm font-bold transition-all shadow-sm bg-white text-blue-700 ring-1 ring-black/5" : "px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-900 hover:bg-gray-200/50";
+                btn.className = isActive ? "px-4 py-1.5 rounded-md text-sm font-bold transition-all shadow-sm bg-white dark:bg-[#151925] text-blue-700 dark:text-blue-300 ring-1 ring-black/5 dark:ring-white/10" : "px-4 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-slate-700";
             }
         });
         const badge = document.getElementById('activeFilterBadge');
@@ -685,7 +729,7 @@
             if (currentSeverityFilter !== 'all') {
                 badge.classList.remove('hidden');
                 badgeText.textContent = `Filtered by: ${currentSeverityFilter.charAt(0).toUpperCase() + currentSeverityFilter.slice(1)}`;
-                badge.className = currentSeverityFilter === 'critical' ? 'ml-auto px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 flex items-center gap-2' : 'ml-auto px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800 flex items-center gap-2';
+                badge.className = currentSeverityFilter === 'critical' ? 'ml-auto px-3 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 flex items-center gap-2' : 'ml-auto px-3 py-1 rounded-full text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 flex items-center gap-2';
             } else {
                 badge.classList.add('hidden');
             }
@@ -706,10 +750,10 @@
                 
                 // Styles for badge-based design
                 const baseClasses = "px-3 py-1.5 rounded-lg font-medium transition-all text-xs border flex items-center gap-2";
-                const activeClasses = "bg-blue-600 text-white shadow-md border-blue-600";
-                const inactiveClasses = "bg-white text-gray-600 hover:bg-gray-50 border-gray-200 shadow-sm";
+                const activeClasses = "bg-blue-600 dark:bg-blue-600 text-white shadow-md border-blue-600 dark:border-blue-500";
+                const inactiveClasses = "bg-white dark:bg-[#151925] text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 border-gray-200 dark:border-slate-700 shadow-sm";
                 const badgeActive = "bg-white/20 text-white";
-                const badgeInactive = "bg-slate-100 text-slate-500 group-hover:bg-slate-200";
+                const badgeInactive = "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 group-hover:bg-slate-200 dark:group-hover:bg-slate-600";
 
                 return `<button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" class="${baseClasses} ${isSelected ? activeClasses : inactiveClasses} group">
                     <span>${escapeHtml(cat === 'all' ? 'All' : cat)}</span>
