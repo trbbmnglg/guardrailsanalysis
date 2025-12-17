@@ -30,23 +30,38 @@
         </svg>`
     };
 
-    function render(data, containerId) {
+function render(data, containerId) {
         const container = document.getElementById(containerId);
         if (!container || !data || !data.status) return;
 
         const statusLower = String(data.status).toLowerCase();
         
+        // Configuration with specific hover tint classes
         const config = {
-            green: { svg: PLANT_SVGS.green, color: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
-            amber: { svg: PLANT_SVGS.amber, color: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
-            red: { svg: PLANT_SVGS.red, color: "bg-red-500", text: "text-red-500 dark:text-red-400" }
+            green: { 
+                svg: PLANT_SVGS.green, 
+                color: "bg-emerald-500", 
+                text: "text-emerald-600 dark:text-emerald-400",
+                hover: "hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10" 
+            },
+            amber: { 
+                svg: PLANT_SVGS.amber, 
+                color: "bg-amber-500", 
+                text: "text-amber-600 dark:text-amber-400",
+                hover: "hover:bg-amber-50/50 dark:hover:bg-amber-900/10" 
+            },
+            red: { 
+                svg: PLANT_SVGS.red, 
+                color: "bg-red-500", 
+                text: "text-red-500 dark:text-red-400",
+                hover: "hover:bg-red-50/50 dark:hover:bg-red-900/10" 
+            }
         };
 
         const theme = config[statusLower] || config.green;
 
-        // UPDATED: No Top Tags, text-8xl score, Carbon Impact Badge
         const html = `
-            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center h-full">
+            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md ${theme.hover} aspect-square flex flex-col justify-center items-center h-full">
                 
                 <div class="absolute top-0 left-0 w-full h-1 ${theme.color}"></div>
                 
@@ -55,7 +70,7 @@
                 </div>
 
                 <div class="text-center">
-                    <div class="text-8xl font-black ${theme.text} tracking-tighter drop-shadow-sm mb-1">
+                    <div class="text-7xl lg:text-8xl font-black ${theme.text} tracking-tighter drop-shadow-sm mb-1">
                         ${data.energy_score}
                     </div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">
