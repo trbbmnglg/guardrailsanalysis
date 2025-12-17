@@ -100,7 +100,6 @@
     }
 
     function init() {
-        // UI Transformation for API Key Toggle
         const saveKeyCheckbox = document.getElementById('saveApiKey');
         if (saveKeyCheckbox && saveKeyCheckbox.parentElement && saveKeyCheckbox.type === 'checkbox' && !saveKeyCheckbox.classList.contains('sr-only')) {
              const parent = saveKeyCheckbox.parentElement;
@@ -345,8 +344,11 @@
         }
 
         // 2. Render Executive Summary (SQUARE Cards, Flat Design)
+        // DYNAMIC GRID: 4 columns if Green AI is ON, 3 columns if OFF
+        const summaryGridCols = enableGreenAI ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3';
+
         const summaryHTML = `
-        <div id="executive-summary" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 fade-in">
+        <div id="executive-summary" class="grid ${summaryGridCols} gap-6 mb-10 fade-in">
             
             <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
                 <div class="absolute top-0 left-0 w-full h-1 ${topBarColor}"></div>
@@ -380,21 +382,19 @@
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Missing Guards</p>
                 </div>
             </div>
+
+            ${enableGreenAI ? `<div id="slot-green-ai" class="h-full"></div>` : ''}
         </div>`;
 
-        // 3. UNIFIED PERFORMANCE DASHBOARD ROW
+        // 3. UNIFIED PERFORMANCE DASHBOARD ROW (Latency Only)
         let performanceRowHTML = '';
         if (enableProfiling) {
             performanceRowHTML = `
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12 fade-in">
-                <div id="slot-latency-engine" class="${enableGreenAI ? 'lg:col-span-4 xl:col-span-3' : 'lg:col-span-4'} h-full"></div>
+                <div id="slot-latency-engine" class="lg:col-span-4 h-full"></div>
 
-                ${enableGreenAI ? `<div id="slot-green-ai" class="lg:col-span-4 xl:col-span-3 h-full"></div>` : ''}
-
-                <div id="slot-latency-waterfall" class="${enableGreenAI ? 'lg:col-span-4 xl:col-span-6' : 'lg:col-span-8'} h-full"></div>
+                <div id="slot-latency-waterfall" class="lg:col-span-8 h-full"></div>
             </div>`;
-        } else if (enableGreenAI) {
-            performanceRowHTML = `<div id="slot-green-ai" class="max-w-md mx-auto mb-12 fade-in h-96"></div>`;
         }
 
         // 4. Category Filter Bar
@@ -406,10 +406,12 @@
         container.innerHTML = summaryHTML + performanceRowHTML + filterHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>';
 
         // 6. Initialize Modules into specific slots
+        // Green AI is now in the TOP Summary row
         if (enableGreenAI && window.greenAIMonitor) {
             window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'slot-green-ai');
         }
         
+        // Latency is now in the 2nd row (split between Engine and Waterfall)
         if (enableProfiling && window.latencyProfiler) {
             window.latencyProfiler.analyze(
                 analysisResults.guardrails, 
@@ -443,7 +445,6 @@
              const badgeClass = isMissing ? "bg-red-500 shadow-none" : "bg-emerald-500 shadow-none";
              const statusText = isMissing ? "MISSING" : "ACTIVE";
              
-             // Note: rounded-none, border-slate-200 (fixed)
              return `
             <div class="relative group bg-white dark:bg-[#1e2130] rounded-none shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-all duration-500 hover:shadow-md hover:-translate-y-1 fade-in aspect-square flex flex-col" style="animation-delay: ${idx * 0.05}s">
                 
@@ -545,7 +546,7 @@
         }
     }
 
-    // --- UTILS & EXPORT ---
+    // --- ROBUST PDF EXPORT ---
     function exportPdf() {
         const element = document.getElementById('resultsSection');
         if (!element || element.classList.contains('hidden')) { 
@@ -586,19 +587,6 @@
         }, 500);
     }
 
-    function exportJson() {
-        if (!analysisResults) return;
-        const blob = new Blob([JSON.stringify(analysisResults, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'guardrail-analysis.json'; a.click();
-    }
-    
-    function exportCsv() {
-        if (!analysisResults) return;
-        const rows = [["Name","Category","Severity","Enforcement","Mechanism","Location"], ...analysisResults.guardrails.map(g => [g.name, g.category, g.severity, g.enforcement, g.mechanism, g.location])];
-        const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
-        const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "guardrail_analysis.csv"); document.body.appendChild(link); link.click();
-    }
-
     function showLoading() { loadingState.classList.remove('hidden'); analyzeBtn.disabled = true; }
     function hideLoading() { loadingState.classList.add('hidden'); analyzeBtn.disabled = false; progressBar.style.width = '0%'; }
     function updateProgress(percent, text) { progressBar.style.width = percent + '%'; progressText.textContent = text; }
@@ -611,6 +599,6 @@
     window.guardrailAnalyzer = { 
         filterByCategory: filterByCategory, 
         filterByStatus: filterByStatus,
-        version: '4.2.0-flat-ui' 
+        version: '4.3.0-summary-integration' 
     };
 })();
