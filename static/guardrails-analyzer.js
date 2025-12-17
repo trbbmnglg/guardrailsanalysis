@@ -346,7 +346,8 @@
                     instruction: instruction, 
                     api_key: apiKey,
                     enable_profiling: enableProfiling, 
-                    enable_rag_deep_scan: enableRagDeepScan
+                    enable_rag_deep_scan: enableRagDeepScan,
+                    enable_greenai_analysis: enableGreenAI
                 })
             });
     
