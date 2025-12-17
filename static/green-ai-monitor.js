@@ -7,7 +7,7 @@
     const PLANT_SVGS = {
         // 🌿 GREEN: Healthy, Upright Plant
         green: `
-        <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-md">
+        <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-xl filter">
             <path d="M35 65 L40 90 L60 90 L65 65 Z" fill="#E6D5C3" stroke="#D4B59E" stroke-width="2" stroke-linejoin="round"/>
             <path d="M32 65 L68 65" stroke="#D4B59E" stroke-width="2" stroke-linecap="round"/>
             
@@ -27,7 +27,7 @@
 
         // 🍂 AMBER: Wilting, Drooping Plant
         amber: `
-        <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-sm">
+        <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-md filter grayscale-[0.2]">
             <path d="M35 65 L40 90 L60 90 L65 65 Z" fill="#E6D5C3" stroke="#D4B59E" stroke-width="2" stroke-linejoin="round"/>
             <path d="M32 65 L68 65" stroke="#D4B59E" stroke-width="2" stroke-linecap="round"/>
             
@@ -43,7 +43,7 @@
 
         // 🥀 RED: Dead, Withered Brown Plant
         red: `
-        <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-sm opacity-90">
+        <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-sm opacity-90 filter sepia contrast-125">
             <path d="M35 65 L40 90 L60 90 L65 65 Z" fill="#E6D5C3" stroke="#D4B59E" stroke-width="2" stroke-linejoin="round"/>
             <path d="M32 65 L68 65" stroke="#D4B59E" stroke-width="2" stroke-linecap="round"/>
             
@@ -68,79 +68,70 @@
         const config = {
             green: {
                 svg: PLANT_SVGS.green,
-                text: "text-emerald-900 dark:text-emerald-300",
+                text: "text-emerald-600 dark:text-emerald-400",
                 badge: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800",
-                bar: "bg-emerald-500"
+                shadow: "shadow-emerald-100 dark:shadow-none"
             },
             amber: {
                 svg: PLANT_SVGS.amber,
-                text: "text-amber-900 dark:text-amber-300",
+                text: "text-amber-600 dark:text-amber-400",
                 badge: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-800",
-                bar: "bg-amber-500"
+                shadow: "shadow-amber-100 dark:shadow-none"
             },
             red: {
                 svg: PLANT_SVGS.red,
-                text: "text-stone-800 dark:text-stone-300",
+                text: "text-stone-600 dark:text-stone-400",
                 badge: "bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700",
-                bar: "bg-stone-500"
+                shadow: "shadow-stone-200 dark:shadow-none"
             }
         };
 
         const theme = config[statusLower] || config.green;
 
         const html = `
-            <div class="bg-white dark:bg-[#1e2130] rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden fade-in">
-                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                    <div class="flex items-center gap-2">
-                        <span class="text-emerald-600 dark:text-emerald-400">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </span>
-                        <h3 class="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-wide">Environmental Impact</h3>
+            <div class="relative group bg-white dark:bg-[#1e2130] rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-visible fade-in p-10 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600">
+                
+                <div class="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto">
+                    <div class="w-64 bg-slate-900/95 backdrop-blur text-white text-xs rounded-xl p-4 shadow-2xl border border-slate-700 text-left relative">
+                        <div class="absolute -top-1 -right-1 w-3 h-3 bg-indigo-500 rounded-full animate-ping"></div>
+                        <h4 class="font-bold text-indigo-300 mb-2 uppercase tracking-wide text-[10px]">AI Analysis</h4>
+                        <p class="mb-3 text-slate-300 leading-relaxed">${data.reasoning}</p>
+                        <div class="pt-3 border-t border-slate-700">
+                            <span class="font-bold text-emerald-400 mb-1 block uppercase tracking-wide text-[10px]">Optimization Tip</span>
+                            <p class="italic text-slate-400">"${data.optimization_tip}"</p>
+                        </div>
                     </div>
-                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${theme.badge} border-opacity-20">
+                </div>
+
+                <div class="absolute top-6 left-6">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${theme.badge}">
                         ${data.status} AI
                     </span>
                 </div>
 
-                <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                    
-                    <div class="md:col-span-2 flex flex-col items-center justify-center text-center">
-                        <div class="w-24 h-24 mb-2 transition-transform duration-700 hover:scale-105">
-                            ${theme.svg}
-                        </div>
-                        <span class="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase">Est. Footprint</span>
-                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">${data.estimated_kwh_per_1k_req || '0'} kWh / 1k</span>
-                    </div>
-
-                    <div class="md:col-span-6 border-l border-r border-slate-100 dark:border-slate-700 px-6 border-dashed">
-                        <div class="mb-4">
-                            <div class="flex justify-between items-end mb-1">
-                                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">Efficiency Score</h4>
-                                <span class="text-sm font-mono font-bold ${theme.text}">${data.energy_score}/100</span>
-                            </div>
-                            <div class="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                                <div class="h-full ${theme.bar} transition-all duration-1000" style="width: ${data.energy_score}%"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="relative">
-                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3" title="${data.reasoning}">
-                                ${data.reasoning}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="md:col-span-4 bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-100 dark:border-slate-700 h-full flex flex-col justify-center">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="text-green-600 dark:text-green-400">🌱</span>
-                            <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Quick Tip</span>
-                        </div>
-                        <p class="text-xs text-slate-600 dark:text-slate-300 font-medium italic leading-relaxed">
-                            "${data.optimization_tip}"
-                        </p>
-                    </div>
-
+                <div class="absolute top-6 right-6 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>
+
+                <div class="w-56 h-56 mb-4 transition-transform duration-700 group-hover:scale-110 drop-shadow-2xl">
+                    ${theme.svg}
+                </div>
+
+                <div class="relative z-10">
+                    <div class="flex items-baseline justify-center gap-1">
+                        <span class="text-6xl font-black ${theme.text} tracking-tighter">${data.energy_score}</span>
+                        <span class="text-xl font-bold text-slate-300 dark:text-slate-600">/100</span>
+                    </div>
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1 mb-4">Green Efficiency Score</p>
+                </div>
+
+                <div class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-5 py-2.5 rounded-full border border-slate-200 dark:border-slate-700 group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    <span class="text-sm font-mono font-bold text-slate-600 dark:text-slate-300">
+                        ~${data.estimated_kwh_per_1k_req || '0'} kWh <span class="text-slate-400 font-normal">/ 1k reqs</span>
+                    </span>
+                </div>
+
             </div>
         `;
         
