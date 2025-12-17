@@ -1,6 +1,5 @@
 (function() {
     'use strict';
-
     // --- CUSTOM "BIG LEAF" ILLUSTRATIONS (SVG) ---
     // A single, large leaf that changes health state.
     
