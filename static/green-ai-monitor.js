@@ -64,27 +64,24 @@
 
         const statusLower = String(data.status).toLowerCase();
         
-        // Configuration per status
+        // Configuration per status (Updated for Dark Mode)
         const config = {
             green: {
                 svg: PLANT_SVGS.green,
-                bg: "bg-emerald-50",
-                text: "text-emerald-900",
-                badge: "bg-emerald-100 text-emerald-700",
+                text: "text-emerald-900 dark:text-emerald-300",
+                badge: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800",
                 bar: "bg-emerald-500"
             },
             amber: {
                 svg: PLANT_SVGS.amber,
-                bg: "bg-amber-50",
-                text: "text-amber-900",
-                badge: "bg-amber-100 text-amber-700",
+                text: "text-amber-900 dark:text-amber-300",
+                badge: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-800",
                 bar: "bg-amber-500"
             },
             red: {
                 svg: PLANT_SVGS.red,
-                bg: "bg-stone-50", // Withered/Dead look
-                text: "text-stone-800",
-                badge: "bg-stone-200 text-stone-700",
+                text: "text-stone-800 dark:text-stone-300",
+                badge: "bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700",
                 bar: "bg-stone-500"
             }
         };
@@ -92,13 +89,13 @@
         const theme = config[statusLower] || config.green;
 
         const html = `
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in">
-                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div class="bg-white dark:bg-[#1e2130] rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden fade-in">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
                     <div class="flex items-center gap-2">
-                        <span class="text-emerald-600">
+                        <span class="text-emerald-600 dark:text-emerald-400">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </span>
-                        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wide">Environmental Impact</h3>
+                        <h3 class="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-wide">Environmental Impact</h3>
                     </div>
                     <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${theme.badge} border-opacity-20">
                         ${data.status} AI
@@ -111,34 +108,34 @@
                         <div class="w-24 h-24 mb-2 transition-transform duration-700 hover:scale-105">
                             ${theme.svg}
                         </div>
-                        <span class="text-[10px] font-mono text-slate-400 uppercase">Est. Footprint</span>
-                        <span class="text-xs font-bold text-slate-600">${data.estimated_kwh_per_1k_req || '0'} kWh / 1k</span>
+                        <span class="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase">Est. Footprint</span>
+                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300">${data.estimated_kwh_per_1k_req || '0'} kWh / 1k</span>
                     </div>
 
-                    <div class="md:col-span-6 border-l border-r border-slate-100 px-6 border-dashed">
+                    <div class="md:col-span-6 border-l border-r border-slate-100 dark:border-slate-700 px-6 border-dashed">
                         <div class="mb-4">
                             <div class="flex justify-between items-end mb-1">
-                                <h4 class="text-sm font-bold text-slate-700">Efficiency Score</h4>
+                                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">Efficiency Score</h4>
                                 <span class="text-sm font-mono font-bold ${theme.text}">${data.energy_score}/100</span>
                             </div>
-                            <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                                 <div class="h-full ${theme.bar} transition-all duration-1000" style="width: ${data.energy_score}%"></div>
                             </div>
                         </div>
                         
                         <div class="relative">
-                            <p class="text-sm text-slate-600 leading-relaxed line-clamp-3" title="${data.reasoning}">
+                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3" title="${data.reasoning}">
                                 ${data.reasoning}
                             </p>
                         </div>
                     </div>
 
-                    <div class="md:col-span-4 bg-slate-50 rounded-lg p-4 border border-slate-100 h-full flex flex-col justify-center">
+                    <div class="md:col-span-4 bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-100 dark:border-slate-700 h-full flex flex-col justify-center">
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="text-green-600">🌱</span>
-                            <span class="text-xs font-bold text-slate-500 uppercase">Quick Tip</span>
+                            <span class="text-green-600 dark:text-green-400">🌱</span>
+                            <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Quick Tip</span>
                         </div>
-                        <p class="text-xs text-slate-600 font-medium italic leading-relaxed">
+                        <p class="text-xs text-slate-600 dark:text-slate-300 font-medium italic leading-relaxed">
                             "${data.optimization_tip}"
                         </p>
                     </div>
