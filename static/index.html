@@ -23,7 +23,7 @@
                 mono: ['"JetBrains Mono"', 'monospace'],
               },
               boxShadow: {
-                'sidebar': '4px 0 15px rgba(0, 0, 0, 0.05)',
+                'sidebar': '4px 0 15px rgba(0, 0, 0, 0.1)',
               }
             }
           }
@@ -39,10 +39,6 @@
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
 
-        /* Navigation Active State */
-        .nav-btn.active { background-color: #f1f5f9; color: #4f46e5; }
-        .nav-btn.active svg { color: #4f46e5; }
-        
         /* Loading Shimmer */
         .loading-shimmer {
             background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
@@ -64,37 +60,37 @@
 
 <body class="bg-slate-50 text-slate-900 flex h-screen w-full">
 
-    <aside class="w-20 h-full bg-white border-r border-slate-200 flex flex-col items-center py-6 z-50 shadow-sidebar shrink-0 relative">
+    <aside class="w-20 h-full bg-[#0f172a] border-r border-slate-800 flex flex-col items-center py-6 z-50 shadow-sidebar shrink-0 relative">
         
         <div class="mb-8">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-200 text-white">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-900/50 text-white">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
             </div>
         </div>
 
-        <div class="flex flex-col gap-4 w-full px-2">
+        <div class="flex flex-col gap-4 w-full">
             
-            <button onclick="handleNavClick('instruction')" id="btn-instruction" class="nav-btn w-full p-3 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-indigo-600 transition-all flex justify-center group relative">
+            <button onclick="handleNavClick('instruction')" id="btn-instruction" class="nav-btn w-full p-3 text-slate-400 hover:text-white hover:bg-white/10 transition-all flex justify-center group relative border-l-4 border-transparent">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                <span class="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">Instructions</span>
+                <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-md">Instructions</span>
             </button>
 
-            <button onclick="handleNavClick('auth')" id="btn-auth" class="nav-btn w-full p-3 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-amber-600 transition-all flex justify-center group relative">
+            <button onclick="handleNavClick('auth')" id="btn-auth" class="nav-btn w-full p-3 text-slate-400 hover:text-white hover:bg-white/10 transition-all flex justify-center group relative border-l-4 border-transparent">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
-                <span class="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">Authentication</span>
+                <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-md">Authentication</span>
             </button>
 
-            <button onclick="handleNavClick('config')" id="btn-config" class="nav-btn w-full p-3 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-blue-600 transition-all flex justify-center group relative">
+            <button onclick="handleNavClick('config')" id="btn-config" class="nav-btn w-full p-3 text-slate-400 hover:text-white hover:bg-white/10 transition-all flex justify-center group relative border-l-4 border-transparent">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                <span class="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">Configuration</span>
+                <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-md">Configuration</span>
             </button>
 
         </div>
 
-        <div class="mt-auto mb-4">
-            <button onclick="triggerRun()" class="p-3 rounded-full bg-slate-900 text-white hover:bg-indigo-600 hover:shadow-lg hover:scale-110 transition-all duration-300 group relative">
+        <div class="mt-auto mb-6">
+            <button onclick="triggerRun()" class="p-3 rounded-full bg-purple-600 text-white hover:bg-purple-500 hover:shadow-lg hover:shadow-purple-500/30 hover:scale-110 transition-all duration-300 group relative">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /></svg>
-                <span class="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">Run Audit</span>
+                <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-md">Run Audit</span>
             </button>
         </div>
     </aside>
@@ -103,7 +99,7 @@
         
         <div class="h-16 border-b border-slate-100 px-6 flex items-center justify-between shrink-0">
             <h2 class="font-heading font-bold text-slate-800 text-lg" id="drawerTitle">Control Center</h2>
-            <button onclick="closeDrawer()" class="text-slate-400 hover:text-slate-600">
+            <button onclick="closeDrawer()" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -112,14 +108,14 @@
             
             <div id="content-instruction" class="drawer-section hidden h-full flex flex-col">
                 <p class="text-sm text-slate-500 mb-4">Define your AI agent's role, goals, and constraints below.</p>
-                <div class="relative flex-1">
+                <div class="relative flex-1 flex flex-col">
                     <textarea id="instructionInput" 
                         class="w-full h-full min-h-[400px] p-4 rounded-xl border border-slate-200 text-sm font-mono leading-relaxed text-slate-600 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all resize-none outline-none"
                         placeholder="Example:
 Role: Financial Advisor Agent
 Goal: Provide investment advice based on user risk profile.
 Constraint: Never provide tax advice."></textarea>
-                    <div class="absolute bottom-4 right-4 text-xs text-slate-400 font-mono bg-white/80 px-2 rounded">
+                    <div class="text-right mt-2 text-xs text-slate-400 font-mono">
                         <span id="charCount">0</span> chars
                     </div>
                 </div>
@@ -209,12 +205,11 @@ Constraint: Never provide tax advice."></textarea>
         </div>
     </div>
 
-    <main class="flex-1 h-full overflow-y-auto custom-scroll relative">
+    <main class="flex-1 h-full overflow-y-auto custom-scroll relative bg-slate-50">
         
         <header class="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
             <div>
-                <h1 class="font-heading font-bold text-slate-800 text-lg leading-none">Prompts Analysis</h1>
-                <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">v3.0 Itadori</span>
+                <h1 class="font-heading font-bold text-slate-800 text-lg leading-none">Dashboard</h1>
             </div>
             
             <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
@@ -229,12 +224,12 @@ Constraint: Never provide tax advice."></textarea>
         <div class="p-8 pb-20 max-w-7xl mx-auto">
             
             <div id="emptyState" class="h-[60vh] flex flex-col items-center justify-center text-center opacity-60">
-                <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                <div class="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center mb-6">
                     <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
                 </div>
                 <h2 class="text-2xl font-bold text-slate-800 mb-2">No Analysis Yet</h2>
                 <p class="text-slate-500 max-w-md">Use the sidebar on the left to input your Agent Instruction, configure settings, and run the audit.</p>
-                <button onclick="handleNavClick('instruction')" class="mt-6 px-6 py-2 bg-indigo-50 text-indigo-700 font-medium rounded-lg hover:bg-indigo-100 transition-colors">
+                <button onclick="handleNavClick('instruction')" class="mt-6 px-6 py-2 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
                     Start New Analysis
                 </button>
             </div>
@@ -265,14 +260,19 @@ Constraint: Never provide tax advice."></textarea>
 
             <div class="space-y-8">
                 <div id="executive-summary"></div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div id="greenAISection" class="hidden h-full"></div>
+                    <div id="latencyReportSection" class="hidden h-full"></div>
+                </div>
+
                 <div id="resultsSection" class="hidden space-y-8"></div>
-                <div id="latencyReportSection" class="hidden h-full"></div>
             </div>
 
         </div>
     </main>
 
-<script>
+    <script>
         let isDrawerOpen = false;
         let currentSection = null;
 
@@ -295,15 +295,15 @@ Constraint: Never provide tax advice."></textarea>
             // 2. Open Logic
             // Reset all icons
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-indigo-50', 'text-indigo-600', 'border-r-4', 'border-indigo-600');
-                btn.classList.add('text-slate-400');
+                btn.classList.remove('text-white', 'bg-white/10', 'border-purple-500'); // Clean up active states
+                btn.classList.add('text-slate-400', 'border-transparent'); // Reset to default
             });
 
-            // Highlight Active Icon
+            // Highlight Active Icon (Dark Theme logic)
             const activeBtn = document.getElementById('btn-' + section);
             if(activeBtn) {
-                activeBtn.classList.remove('text-slate-400');
-                activeBtn.classList.add('bg-indigo-50', 'text-indigo-600', 'border-r-4', 'border-indigo-600');
+                activeBtn.classList.remove('text-slate-400', 'border-transparent');
+                activeBtn.classList.add('text-purple-400', 'bg-white/5', 'border-purple-500');
             }
 
             // Set Title
@@ -340,30 +340,27 @@ Constraint: Never provide tax advice."></textarea>
 
             // Remove active styling from icons
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-indigo-50', 'text-indigo-600', 'border-r-4', 'border-indigo-600');
-                btn.classList.add('text-slate-400');
+                btn.classList.remove('text-purple-400', 'bg-white/5', 'border-purple-500');
+                btn.classList.add('text-slate-400', 'border-transparent');
             });
         }
 
-        // --- UPDATED LOGIC: HIDE EMPTY STATE & CLOSE DRAWER ---
-        // Hook into the analyze button to update UI state immediately
+        // --- HIDE EMPTY STATE LOGIC ---
         document.getElementById('analyzeBtn').addEventListener('click', () => {
             const key = document.getElementById('apiKey').value;
             const inst = document.getElementById('instructionInput').value;
             
-            // Only proceed if input is potentially valid
             if (key && inst) {
                 document.getElementById('emptyState').classList.add('hidden');
                 document.getElementById('loadingState').classList.remove('hidden');
                 
-                // === NEW LINE: Minimize the sidebar immediately ===
-                closeDrawer(); 
+                // Optional: Auto close drawer on mobile or small screens
+                // closeDrawer();
             }
         });
 
         // Run Button Proxy
         function triggerRun() {
-            // Check if open, if not open Instruction first
             if (!isDrawerOpen) {
                 handleNavClick('instruction');
                 return;
