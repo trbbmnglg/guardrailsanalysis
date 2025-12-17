@@ -15,7 +15,7 @@
         chartDown: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>`,
         hourglass: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
         turtle: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-        tools: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`
+        tools: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`
     };
 
     const MODEL_TIERS = {
@@ -167,28 +167,24 @@
 
         if (breakdown.length === 0) highestTier = 1;
 
-        // --- HYBRID OVERRIDE START (FIXED) ---
+        // --- HYBRID OVERRIDE START ---
         let model;
         
         if (backendStrategy && backendStrategy.selected_tier) {
             console.log("⚡ Hybrid Mode: Applying AI Cost Architect Strategy...", backendStrategy.selected_tier);
             
-            // Extract number from "Tier 4" or "Tier 4 - High"
             const match = backendStrategy.selected_tier.match(/(\d)/);
             if (match) highestTier = parseInt(match[0]);
             
             const tierKey = `tier${highestTier}`; 
-            // SAFETY FIX: Use || operator to fallback to tier2 if key doesn't exist
             model = MODEL_TIERS[tierKey] || MODEL_TIERS['tier2']; 
 
             if (backendStrategy.justification && backendStrategy.justification.length > 20) {
-                // Ensure model exists before spreading
                 model = { ...model, description: backendStrategy.justification };
             }
         } else {
             console.log("⚡ Client Mode: Using local tier calculation.");
             const tierKey = `tier${highestTier}`; 
-            // SAFETY FIX: Fallback here too
             model = MODEL_TIERS[tierKey] || MODEL_TIERS['tier2'];
         }
         // --- HYBRID OVERRIDE END ---
@@ -220,67 +216,70 @@
         const container = document.getElementById('latencyReportSection');
         if (!container) return;
 
-        // PASS THE BACKEND STRATEGY TO THE ANALYSIS
         const data = analyzeProfile(guardrails, backendStrategy);
         const isTier4 = data.tierLevel === 4;
         const isTier3 = data.tierLevel === 3;
         
-        let cardBorder = "border-slate-200";
-        let headerBg = "bg-slate-50";
-        if (isTier4) { cardBorder = "border-purple-300"; headerBg = "bg-purple-50"; }
-        else if (isTier3) { cardBorder = "border-indigo-300"; headerBg = "bg-indigo-50"; }
+        // Dark Mode Adjustments: Borders and Backgrounds
+        let cardBorder = "border-slate-200 dark:border-slate-700";
+        let headerBg = "bg-slate-50 dark:bg-slate-800/50";
+        
+        if (isTier4) { 
+            cardBorder = "border-purple-300 dark:border-purple-800"; 
+            headerBg = "bg-purple-50 dark:bg-purple-900/10"; 
+        } else if (isTier3) { 
+            cardBorder = "border-indigo-300 dark:border-indigo-800"; 
+            headerBg = "bg-indigo-50 dark:bg-indigo-900/10"; 
+        }
 
-        // GENERATE SVG REPEAT STRINGS
-        // Cost Icon: Repeat Dollar Sign
         const costIconsHTML = Array(data.tierLevel).fill(ICONS.dollar).join('');
         
-        // Speed Icon: Tier 1/2 = Bolt, Tier 3/4 = Clock
         let speedIconHTML = '';
         let speedColorClass = '';
         
         if (data.tierLevel === 1) {
             speedIconHTML = ICONS.boltSmall + ICONS.boltSmall + ICONS.boltSmall;
-            speedColorClass = "text-amber-500";
+            speedColorClass = "text-amber-500 dark:text-amber-400";
         } else if (data.tierLevel === 2) {
             speedIconHTML = ICONS.boltSmall + ICONS.boltSmall;
-            speedColorClass = "text-blue-500";
+            speedColorClass = "text-blue-500 dark:text-blue-400";
         } else if (data.tierLevel === 3) {
             speedIconHTML = ICONS.clock;
-            speedColorClass = "text-indigo-500";
+            speedColorClass = "text-indigo-500 dark:text-indigo-400";
         } else {
             speedIconHTML = ICONS.clock + ICONS.clock;
-            speedColorClass = "text-purple-500";
+            speedColorClass = "text-purple-500 dark:text-purple-400";
         }
 
         function getLatencyColor(ms) {
-            if (ms < 100) return "text-emerald-600";
-            if (ms < 800) return "text-blue-600";
-            return "text-orange-600";
+            if (ms < 100) return "text-emerald-600 dark:text-emerald-400";
+            if (ms < 800) return "text-blue-600 dark:text-blue-400";
+            return "text-orange-600 dark:text-orange-400";
         }
         function getTierBadge(tier) {
-            if (tier === 1) return "bg-emerald-100 text-emerald-700";
-            if (tier === 2) return "bg-blue-100 text-blue-700";
-            if (tier === 3) return "bg-indigo-100 text-indigo-700";
-            return "bg-purple-100 text-purple-700"; 
+            if (tier === 1) return "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300";
+            if (tier === 2) return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300";
+            if (tier === 3) return "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300";
+            return "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"; 
         }
         function getBarColor(tier) {
-            if (tier === 1) return "bg-emerald-400";
-            if (tier === 2) return "bg-blue-500";
-            if (tier === 3) return "bg-indigo-500";
-            return "bg-purple-500"; 
+            if (tier === 1) return "bg-emerald-400 dark:bg-emerald-500";
+            if (tier === 2) return "bg-blue-500 dark:bg-blue-500";
+            if (tier === 3) return "bg-indigo-500 dark:bg-indigo-500";
+            return "bg-purple-500 dark:bg-purple-500"; 
         }
 
         const html = `
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 fade-in">
-            <div class="col-span-1 bg-white rounded-lg shadow-sm border ${cardBorder} flex flex-col overflow-hidden">
-                <div class="${headerBg} px-4 py-3 border-b border-opacity-50 flex justify-between items-center">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Infrastructure Profile</span>
+            <div class="col-span-1 bg-white dark:bg-[#1e2130] rounded-lg shadow-sm border ${cardBorder} flex flex-col overflow-hidden">
+                <div class="${headerBg} px-4 py-3 border-b border-opacity-50 dark:border-opacity-30 border-slate-200 dark:border-slate-600 flex justify-between items-center">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Infrastructure Profile</span>
                     
                     <div class="flex items-center gap-2" title="Cost vs Speed Rating">
-                         <div class="flex items-center gap-0.5 opacity-60 text-slate-600" title="Cost Rating">
+                         <div class="flex items-center gap-0.5 opacity-60 text-slate-600 dark:text-slate-400" title="Cost Rating">
                             ${costIconsHTML}
                          </div>
-                         <span class="text-slate-300 text-xs">|</span>
+                         <span class="text-slate-300 dark:text-slate-600 text-xs">|</span>
                          <div class="flex items-center gap-0.5 ${speedColorClass}" title="Latency Rating">
                             ${speedIconHTML}
                          </div>
@@ -291,23 +290,23 @@
                         <div class="w-8 h-8 ${data.model.iconColor}">
                             ${data.model.icon}
                         </div>
-                        <h3 class="font-bold text-slate-800 text-lg leading-tight">${data.model.name}</h3>
+                        <h3 class="font-bold text-slate-800 dark:text-white text-lg leading-tight">${data.model.name}</h3>
                     </div>
-                    <span class="inline-block bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium px-2 py-1 rounded w-fit mb-4">
+                    <span class="inline-block bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 text-xs font-medium px-2 py-1 rounded w-fit mb-4">
                         ${data.model.type}
                     </span>
-                    <p class="text-sm text-slate-600 mb-6 flex-1">${data.model.description}</p>
-                    <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 flex-1">${data.model.description}</p>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
                         <div class="flex justify-between items-end mb-2">
-                            <label class="text-xs font-bold text-slate-500 uppercase">Monthly Volume</label>
-                            <span id="volumeDisplay" class="text-sm font-bold text-blue-600">100,000 reqs</span>
+                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Monthly Volume</label>
+                            <span id="volumeDisplay" class="text-sm font-bold text-blue-600 dark:text-blue-400">100,000 reqs</span>
                         </div>
                         <input type="range" id="volumeSlider" min="1" max="100" value="10" step="1" 
-                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer mb-4 accent-blue-600">
-                        <div class="flex justify-between items-center border-t border-slate-200 pt-3">
-                            <span class="text-xs text-slate-500">Est. Monthly Bill</span>
+                               class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer mb-4 accent-blue-600">
+                        <div class="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3">
+                            <span class="text-xs text-slate-500 dark:text-slate-400">Est. Monthly Bill</span>
                             <div class="text-right">
-                                <div id="monthlyCostDisplay" class="text-lg font-black text-slate-800">$0.00</div>
+                                <div id="monthlyCostDisplay" class="text-lg font-black text-slate-800 dark:text-white">$0.00</div>
                                 <div class="text-[10px] text-slate-400">@ ~${formatCurrency(data.model.avgCostPer1M)} / 1M</div>
                             </div>
                         </div>
@@ -316,9 +315,9 @@
             </div>
 
             <div class="col-span-1 lg:col-span-2 flex flex-col gap-6">
-                <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                        <h3 class="font-bold text-slate-700 text-sm uppercase tracking-wide">Latency Waterfall</h3>
+                <div class="bg-white dark:bg-[#1e2130] rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                        <h3 class="font-bold text-slate-700 dark:text-slate-200 text-sm uppercase tracking-wide">Latency Waterfall</h3>
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-slate-400">Total Overhead:</span>
                             <span class="text-xl font-black ${getLatencyColor(data.totalLatency)}">${data.totalLatency}ms</span>
@@ -328,8 +327,8 @@
                         ${data.breakdown.slice(0, 5).map(item => `
                             <div class="flex items-center gap-3 text-sm group">
                                 <div class="w-8 h-8 rounded flex items-center justify-center text-xs font-bold ${getTierBadge(item.tier)}">T${item.tier}</div>
-                                <div class="w-1/3 truncate text-slate-700 font-medium" title="${item.name}">${item.name}</div>
-                                <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="w-1/3 truncate text-slate-700 dark:text-slate-300 font-medium" title="${item.name}">${item.name}</div>
+                                <div class="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                                     <div class="h-full rounded-full ${getBarColor(item.tier)}" style="width: ${Math.min(100, (item.baseCost / 1000) * 100)}%"></div>
                                 </div>
                                 <div class="w-20 text-right font-mono text-slate-400 text-xs">~${Math.round(item.baseCost * (item.tier > 1 ? data.model.latencyFactor : 1))}ms</div>
@@ -339,23 +338,23 @@
                 </div>
 
                 ${data.tips.length > 0 ? `
-                    <div class="bg-white rounded-lg shadow-sm border border-blue-100 overflow-hidden">
-                        <div class="px-5 py-3 border-b border-blue-100 bg-blue-50 flex items-center gap-2">
-                            <span class="text-blue-600">
+                    <div class="bg-white dark:bg-[#1e2130] rounded-lg shadow-sm border border-blue-100 dark:border-blue-900/30 overflow-hidden">
+                        <div class="px-5 py-3 border-b border-blue-100 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/10 flex items-center gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">
                                 ${ICONS.tools}
                             </span>
-                            <h3 class="font-bold text-blue-900 text-sm uppercase tracking-wide">Optimization Opportunities</h3>
+                            <h3 class="font-bold text-blue-900 dark:text-blue-200 text-sm uppercase tracking-wide">Optimization Opportunities</h3>
                         </div>
-                        <div class="divide-y divide-blue-50">
+                        <div class="divide-y divide-blue-50 dark:divide-blue-900/20">
                             ${data.tips.map(tip => `
-                                <div class="p-4 hover:bg-blue-50/50 transition-colors">
+                                <div class="p-4 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors">
                                     <div class="flex items-start gap-3">
-                                        <div class="mt-1 bg-white p-1.5 rounded border border-blue-100 text-blue-500 shadow-sm">
+                                        <div class="mt-1 bg-white dark:bg-slate-800 p-1.5 rounded border border-blue-100 dark:border-blue-800 text-blue-500 dark:text-blue-400 shadow-sm">
                                             ${tip.icon}
                                         </div>
                                         <div>
-                                            <h4 class="font-bold text-slate-800 text-sm mb-1">${tip.title}</h4>
-                                            <p class="text-sm text-slate-600 leading-relaxed">${tip.desc}</p>
+                                            <h4 class="font-bold text-slate-800 dark:text-white text-sm mb-1">${tip.title}</h4>
+                                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">${tip.desc}</p>
                                         </div>
                                     </div>
                                 </div>
