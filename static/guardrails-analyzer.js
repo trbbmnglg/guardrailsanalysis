@@ -408,6 +408,10 @@
     function displayResults(enableProfiling, enableRagDeepScan, enableGreenAI) {
         if (!analysisResults) return;
 
+        console.log("📊 Rendering Results..."); // Debug Log
+        console.log("🌱 Green AI Enabled:", enableGreenAI); // Debug Log
+        console.log("🌱 Green AI Data:", analysisResults.green_ai_analysis); //
+
         // 1. Calculate Stats
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
