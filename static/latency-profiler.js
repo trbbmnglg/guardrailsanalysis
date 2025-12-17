@@ -175,18 +175,19 @@
     const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
     const formatNum = (num) => new Intl.NumberFormat('en-US').format(num);
 
-    function renderReport(guardrails, backendStrategy = null) {
+    // --- RENDER ENGINE (Supports SPLIT and LEGACY) ---
+    function renderReport(guardrails, backendStrategy = null, targets = null) {
+        
         const container = document.getElementById('latencyReportSection');
-        if (!container) return;
+        // If legacy container missing AND targets missing, abort
+        if (!container && (!targets || (!targets.engine && !targets.waterfall))) return;
 
         const data = analyzeProfile(guardrails, backendStrategy);
         const isTier4 = data.tierLevel === 4;
         const isTier3 = data.tierLevel === 3;
         
         // --- STYLE UPDATES: FLAT NEUTRAL ---
-        // Force neutral border regardless of Tier
         let cardBorder = "border-slate-200 dark:border-slate-700";
-        // Header can still have slight tint for context, but card body is neutral
         let headerBg = "bg-slate-50 dark:bg-slate-800/50";
         if (isTier4) headerBg = "bg-purple-50 dark:bg-purple-900/10";
         else if (isTier3) headerBg = "bg-indigo-50 dark:bg-indigo-900/10";
@@ -218,107 +219,117 @@
             return "bg-purple-500 dark:bg-purple-500"; 
         }
 
-        const html = `
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 fade-in">
-            <div class="col-span-1 bg-white dark:bg-[#1e2130] rounded-none shadow-sm border ${cardBorder} flex flex-col overflow-hidden">
-                <div class="${headerBg} px-4 py-3 border-b border-opacity-50 dark:border-opacity-30 border-slate-200 dark:border-slate-600 flex justify-between items-center">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Infrastructure Profile</span>
-                    
-                    <div class="flex items-center gap-2" title="Cost vs Speed Rating">
-                         <div class="flex items-center gap-0.5 opacity-60 text-slate-600 dark:text-slate-400" title="Cost Rating">
-                            ${costIconsHTML}
-                         </div>
-                         <span class="text-slate-300 dark:text-slate-600 text-xs">|</span>
-                         <div class="flex items-center gap-0.5 ${speedColorClass}" title="Latency Rating">
-                            ${speedIconHTML}
-                         </div>
-                    </div>
+        // 1. ENGINE CARD HTML
+        const engineHTML = `
+        <div class="h-full bg-white dark:bg-[#1e2130] rounded-none shadow-sm border ${cardBorder} flex flex-col overflow-hidden">
+            <div class="${headerBg} px-4 py-3 border-b border-opacity-50 dark:border-opacity-30 border-slate-200 dark:border-slate-600 flex justify-between items-center">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Infrastructure Profile</span>
+                
+                <div class="flex items-center gap-2" title="Cost vs Speed Rating">
+                     <div class="flex items-center gap-0.5 opacity-60 text-slate-600 dark:text-slate-400" title="Cost Rating">
+                        ${costIconsHTML}
+                     </div>
+                     <span class="text-slate-300 dark:text-slate-600 text-xs">|</span>
+                     <div class="flex items-center gap-0.5 ${speedColorClass}" title="Latency Rating">
+                        ${speedIconHTML}
+                     </div>
                 </div>
-                <div class="p-5 flex-1 flex flex-col">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="w-8 h-8 ${data.model.iconColor}">
-                            ${data.model.icon}
-                        </div>
-                        <h3 class="font-bold text-slate-800 dark:text-white text-lg leading-tight">${data.model.name}</h3>
+            </div>
+            <div class="p-5 flex-1 flex flex-col">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 ${data.model.iconColor}">
+                        ${data.model.icon}
                     </div>
-                    <span class="inline-block bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 text-xs font-medium px-2 py-1 rounded-none w-fit mb-4">
-                        ${data.model.type}
-                    </span>
-                    <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 flex-1">${data.model.description}</p>
-                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-none p-4 border border-slate-200 dark:border-slate-700">
-                        <div class="flex justify-between items-end mb-2">
-                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Monthly Volume</label>
-                            <span id="volumeDisplay" class="text-sm font-bold text-blue-600 dark:text-blue-400">100,000 reqs</span>
-                        </div>
-                        <input type="range" id="volumeSlider" min="1" max="100" value="10" step="1" 
-                               class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-none appearance-none cursor-pointer mb-4 accent-blue-600">
-                        <div class="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3">
-                            <span class="text-xs text-slate-500 dark:text-slate-400">Est. Monthly Bill</span>
-                            <div class="text-right">
-                                <div id="monthlyCostDisplay" class="text-lg font-black text-slate-800 dark:text-white">$0.00</div>
-                                <div class="text-[10px] text-slate-400">@ ~${formatCurrency(data.model.avgCostPer1M)} / 1M</div>
-                            </div>
+                    <h3 class="font-bold text-slate-800 dark:text-white text-lg leading-tight">${data.model.name}</h3>
+                </div>
+                <span class="inline-block bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 text-xs font-medium px-2 py-1 rounded-none w-fit mb-4">
+                    ${data.model.type}
+                </span>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 flex-1">${data.model.description}</p>
+                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-none p-4 border border-slate-200 dark:border-slate-700">
+                    <div class="flex justify-between items-end mb-2">
+                        <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Monthly Volume</label>
+                        <span id="volumeDisplay" class="text-sm font-bold text-blue-600 dark:text-blue-400">100,000 reqs</span>
+                    </div>
+                    <input type="range" id="volumeSlider" min="1" max="100" value="10" step="1" 
+                           class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-none appearance-none cursor-pointer mb-4 accent-blue-600">
+                    <div class="flex justify-between items-center border-t border-slate-200 dark:border-slate-700 pt-3">
+                        <span class="text-xs text-slate-500 dark:text-slate-400">Est. Monthly Bill</span>
+                        <div class="text-right">
+                            <div id="monthlyCostDisplay" class="text-lg font-black text-slate-800 dark:text-white">$0.00</div>
+                            <div class="text-[10px] text-slate-400">@ ~${formatCurrency(data.model.avgCostPer1M)} / 1M</div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>`;
 
-            <div class="col-span-1 lg:col-span-2 flex flex-col gap-6">
-                <div class="bg-white dark:bg-[#1e2130] rounded-none shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-                        <h3 class="font-bold text-slate-700 dark:text-slate-200 text-sm uppercase tracking-wide">Latency Waterfall</h3>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-slate-400">Total Overhead:</span>
-                            <span class="text-xl font-black ${getLatencyColor(data.totalLatency)}">${data.totalLatency}ms</span>
-                        </div>
+        // 2. WATERFALL HTML
+        const waterfallHTML = `
+        <div class="flex flex-col gap-6 h-full">
+            <div class="bg-white dark:bg-[#1e2130] rounded-none shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                    <h3 class="font-bold text-slate-700 dark:text-slate-200 text-sm uppercase tracking-wide">Latency Waterfall</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">Total Overhead:</span>
+                        <span class="text-xl font-black ${getLatencyColor(data.totalLatency)}">${data.totalLatency}ms</span>
                     </div>
-                    <div class="p-5 space-y-3">
-                        ${data.breakdown.slice(0, 5).map(item => `
-                            <div class="flex items-center gap-3 text-sm group">
-                                <div class="w-8 h-8 rounded-none flex items-center justify-center text-xs font-bold ${getTierBadge(item.tier)}">T${item.tier}</div>
-                                <div class="w-1/3 truncate text-slate-700 dark:text-slate-300 font-medium" title="${item.name}">${item.name}</div>
-                                <div class="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-none overflow-hidden">
-                                    <div class="h-full rounded-none ${getBarColor(item.tier)}" style="width: ${Math.min(100, (item.baseCost / 1000) * 100)}%"></div>
+                </div>
+                <div class="p-5 space-y-3">
+                    ${data.breakdown.length === 0 ? '<p class="text-sm text-slate-400 italic">No measurable latency factors detected.</p>' :
+                      data.breakdown.slice(0, 5).map(item => `
+                        <div class="flex items-center gap-3 text-sm group">
+                            <div class="w-8 h-8 rounded-none flex items-center justify-center text-xs font-bold ${getTierBadge(item.tier)}">T${item.tier}</div>
+                            <div class="w-1/3 truncate text-slate-700 dark:text-slate-300 font-medium" title="${item.name}">${item.name}</div>
+                            <div class="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-none overflow-hidden">
+                                <div class="h-full rounded-none ${getBarColor(item.tier)}" style="width: ${Math.min(100, (item.baseCost / 1000) * 100)}%"></div>
+                            </div>
+                            <div class="w-20 text-right font-mono text-slate-400 text-xs">~${Math.round(item.baseCost * (item.tier > 1 ? data.model.latencyFactor : 1))}ms</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            ${data.tips.length > 0 ? `
+                <div class="bg-white dark:bg-[#1e2130] rounded-none shadow-sm border border-blue-100 dark:border-blue-900/30 overflow-hidden">
+                    <div class="px-5 py-3 border-b border-blue-100 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/10 flex items-center gap-2">
+                        <span class="text-blue-600 dark:text-blue-400">
+                            ${ICONS.tools}
+                        </span>
+                        <h3 class="font-bold text-blue-900 dark:text-blue-200 text-sm uppercase tracking-wide">Optimization Opportunities</h3>
+                    </div>
+                    <div class="divide-y divide-blue-50 dark:divide-blue-900/20">
+                        ${data.tips.map(tip => `
+                            <div class="p-4 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors">
+                                <div class="flex items-start gap-3">
+                                    <div class="mt-1 bg-white dark:bg-slate-800 p-1.5 rounded-none border border-blue-100 dark:border-blue-800 text-blue-500 dark:text-blue-400 shadow-sm">
+                                        ${tip.icon}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800 dark:text-white text-sm mb-1">${tip.title}</h4>
+                                        <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">${tip.desc}</p>
+                                    </div>
                                 </div>
-                                <div class="w-20 text-right font-mono text-slate-400 text-xs">~${Math.round(item.baseCost * (item.tier > 1 ? data.model.latencyFactor : 1))}ms</div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
+            ` : ''}
+        </div>`;
 
-                ${data.tips.length > 0 ? `
-                    <div class="bg-white dark:bg-[#1e2130] rounded-none shadow-sm border border-blue-100 dark:border-blue-900/30 overflow-hidden">
-                        <div class="px-5 py-3 border-b border-blue-100 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/10 flex items-center gap-2">
-                            <span class="text-blue-600 dark:text-blue-400">
-                                ${ICONS.tools}
-                            </span>
-                            <h3 class="font-bold text-blue-900 dark:text-blue-200 text-sm uppercase tracking-wide">Optimization Opportunities</h3>
-                        </div>
-                        <div class="divide-y divide-blue-50 dark:divide-blue-900/20">
-                            ${data.tips.map(tip => `
-                                <div class="p-4 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors">
-                                    <div class="flex items-start gap-3">
-                                        <div class="mt-1 bg-white dark:bg-slate-800 p-1.5 rounded-none border border-blue-100 dark:border-blue-800 text-blue-500 dark:text-blue-400 shadow-sm">
-                                            ${tip.icon}
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-slate-800 dark:text-white text-sm mb-1">${tip.title}</h4>
-                                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">${tip.desc}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-            </div>
-        </div>
-        `;
+        // 3. RENDER LOGIC (Restored Targets Logic)
+        if (targets && targets.engine && targets.waterfall) {
+            const engineEl = document.getElementById(targets.engine);
+            const waterfallEl = document.getElementById(targets.waterfall);
+            if (engineEl) { engineEl.innerHTML = engineHTML; engineEl.classList.remove('hidden'); }
+            if (waterfallEl) { waterfallEl.innerHTML = waterfallHTML; waterfallEl.classList.remove('hidden'); }
+        } else if (container) {
+            // Legacy Rendering (Fallback)
+            container.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 fade-in"><div class="lg:col-span-1">${engineHTML}</div><div class="lg:col-span-2">${waterfallHTML}</div></div>`;
+            container.classList.remove('hidden');
+        }
 
-        container.innerHTML = html;
-        container.classList.remove('hidden');
-
-        // Calculator Logic... (Kept same)
+        // Calculator Logic... (Same as before)
         const slider = document.getElementById('volumeSlider');
         const volDisplay = document.getElementById('volumeDisplay');
         const costDisplay = document.getElementById('monthlyCostDisplay');
