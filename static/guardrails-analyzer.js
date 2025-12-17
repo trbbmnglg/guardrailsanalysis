@@ -9,6 +9,7 @@
     let analysisResults = null;
     let currentCategoryFilter = 'all';
     let currentStatusFilter = 'active'; 
+    let currentSeverityFilter = 'all';
 
     // DOM elements
     let apiKeyInput, instructionInput, charCount, analyzeBtn;
@@ -16,32 +17,78 @@
     let progressBar, progressText;
 
     // --- CONFIG: Flat UI Colors & Icons ---
-    // Note: Removed 'rounded' classes and specific border colors for the container
-    const CATEGORY_THEMES = {
+    const categoryStyles = {
+        "responsible ai": { 
+            border: "border-purple-200 dark:border-purple-800/50", 
+            bg: "bg-purple-50 dark:bg-purple-900/10", 
+            text: "text-purple-700 dark:text-purple-300", 
+            accent: "bg-purple-600", 
+            iconBg: "bg-purple-100 dark:bg-purple-900/30", 
+            iconColor: "text-purple-600 dark:text-purple-300",
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>` 
+        },
+        "scope control": { 
+            border: "border-blue-200 dark:border-blue-800/50", 
+            bg: "bg-blue-50 dark:bg-blue-900/10", 
+            text: "text-blue-700 dark:text-blue-300", 
+            accent: "bg-blue-600", 
+            iconBg: "bg-blue-100 dark:bg-blue-900/30", 
+            iconColor: "text-blue-600 dark:text-blue-300",
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>`
+        },
         "security": { 
-            bg: "from-slate-50 to-white dark:from-slate-800/30 dark:to-[#1e2130]",
-            text: "text-red-600 dark:text-red-400",
-            icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>`
+            border: "border-red-200 dark:border-red-800/50", 
+            bg: "bg-red-50 dark:bg-red-900/10", 
+            text: "text-red-700 dark:text-red-300", 
+            accent: "bg-red-600", 
+            iconBg: "bg-red-100 dark:bg-red-900/30", 
+            iconColor: "text-red-600 dark:text-red-300",
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`
         },
         "privacy": { 
-            bg: "from-slate-50 to-white dark:from-slate-800/30 dark:to-[#1e2130]",
-            text: "text-emerald-600 dark:text-emerald-400",
-            icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`
+            border: "border-emerald-200 dark:border-emerald-800/50", 
+            bg: "bg-emerald-50 dark:bg-emerald-900/10", 
+            text: "text-emerald-700 dark:text-emerald-300", 
+            accent: "bg-emerald-600", 
+            iconBg: "bg-emerald-100 dark:bg-emerald-900/30", 
+            iconColor: "text-emerald-600 dark:text-emerald-300",
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>`
         },
-        "responsible ai": { 
-            bg: "from-slate-50 to-white dark:from-slate-800/30 dark:to-[#1e2130]",
-            text: "text-purple-600 dark:text-purple-400",
-            icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>`
+        "input validation": { 
+            border: "border-cyan-200 dark:border-cyan-800/50", 
+            bg: "bg-cyan-50 dark:bg-cyan-900/10", 
+            text: "text-cyan-700 dark:text-cyan-300", 
+            accent: "bg-cyan-600", 
+            iconBg: "bg-cyan-100 dark:bg-cyan-900/30", 
+            iconColor: "text-cyan-600 dark:text-cyan-300",
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>`
+        },
+        "output control": { 
+            border: "border-pink-200 dark:border-pink-800/50", 
+            bg: "bg-pink-50 dark:bg-pink-900/10", 
+            text: "text-pink-700 dark:text-pink-300", 
+            accent: "bg-pink-600", 
+            iconBg: "bg-pink-100 dark:bg-pink-900/30", 
+            iconColor: "text-pink-600 dark:text-pink-300",
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>`
         },
         "qa": { 
-            bg: "from-slate-50 to-white dark:from-slate-800/30 dark:to-[#1e2130]",
-            text: "text-blue-600 dark:text-blue-400",
-            icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>`
+            border: "border-blue-200 dark:border-blue-800/50", 
+            bg: "bg-blue-50 dark:bg-blue-900/10", 
+            text: "text-blue-700 dark:text-blue-300", 
+            accent: "bg-blue-600", 
+            iconBg: "bg-blue-100 dark:bg-blue-900/30", 
+            iconColor: "text-blue-600 dark:text-blue-300",
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
         },
         "default": { 
-            bg: "from-slate-50 to-white dark:from-slate-800/30 dark:to-[#1e2130]",
-            text: "text-slate-500 dark:text-slate-400",
-            icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>`
+            border: "border-slate-200 dark:border-slate-700", 
+            bg: "bg-slate-50 dark:bg-slate-800/50", 
+            text: "text-slate-600 dark:text-slate-400", 
+            accent: "bg-slate-500", 
+            iconBg: "bg-slate-100 dark:bg-slate-700", 
+            iconColor: "text-slate-500 dark:text-slate-400",
+            icon: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
         }
     };
 
@@ -53,6 +100,26 @@
     }
 
     function init() {
+        // UI Transformation for API Key Toggle
+        const saveKeyCheckbox = document.getElementById('saveApiKey');
+        if (saveKeyCheckbox && saveKeyCheckbox.parentElement && saveKeyCheckbox.type === 'checkbox' && !saveKeyCheckbox.classList.contains('sr-only')) {
+             const parent = saveKeyCheckbox.parentElement;
+             const toggleHTML = `
+                <label class="flex items-center gap-3 cursor-pointer group select-none">
+                    <div class="relative inline-flex items-center">
+                        <input type="checkbox" id="saveApiKey" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600 transition-colors"></div>
+                    </div>
+                    <span class="text-sm text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors font-medium">Remember API key for this session</span>
+                </label>
+             `;
+             const tempDiv = document.createElement('div');
+             tempDiv.innerHTML = toggleHTML;
+             if (tempDiv.firstElementChild) {
+                parent.parentNode.replaceChild(tempDiv.firstElementChild, parent);
+             }
+        }
+        
         apiKeyInput = document.getElementById('apiKey');
         instructionInput = document.getElementById('instructionInput');
         charCount = document.getElementById('charCount');
@@ -65,32 +132,55 @@
 
         setupEventListeners();
         loadCachedApiKey();
-        
-        const saveKeyCheckbox = document.getElementById('saveApiKey');
-        if (saveKeyCheckbox && saveKeyCheckbox.parentElement && saveKeyCheckbox.type === 'checkbox' && !saveKeyCheckbox.classList.contains('sr-only')) {
-             const parent = saveKeyCheckbox.parentElement;
-             const toggleHTML = `<label class="flex items-center gap-3 cursor-pointer group select-none"><div class="relative inline-flex items-center"><input type="checkbox" id="saveApiKey" class="sr-only peer"><div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div></div><span class="text-sm text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors font-medium">Remember API key</span></label>`;
-             const tempDiv = document.createElement('div'); tempDiv.innerHTML = toggleHTML;
-             if (tempDiv.firstElementChild) parent.parentNode.replaceChild(tempDiv.firstElementChild, parent);
-        }
     }
 
     function setupEventListeners() {
-        if (instructionInput) instructionInput.addEventListener('input', () => charCount.textContent = instructionInput.value.length);
-        if (analyzeBtn) analyzeBtn.addEventListener('click', async () => {
-            if (!apiKeyInput.value.trim()) { showError('Please enter your HuggingFace API key.'); return; }
-            if (!instructionInput.value.trim()) { showError('Please enter an instruction.'); return; }
-            await analyzeInstruction(apiKeyInput.value.trim(), instructionInput.value.trim());
-        });
+        let debounceTimer;
+        if (instructionInput) {
+            instructionInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    charCount.textContent = instructionInput.value.length;
+                }, 100);
+            });
+        }
+
+        if (analyzeBtn) {
+            analyzeBtn.addEventListener('click', async () => {
+                const apiKey = apiKeyInput.value.trim();
+                const instruction = instructionInput.value.trim();
+                if (!apiKey) { showError('Please enter your HuggingFace API key.'); return; }
+                if (!instruction) { showError('Please enter an agent instruction to analyze.'); return; }
+                await analyzeInstruction(apiKey, instruction);
+            });
+        }
+        
         document.getElementById('exportPdfBtn')?.addEventListener('click', exportPdf);
-        document.getElementById('exportJson')?.addEventListener('click', () => { if(analysisResults) saveAsJson(analysisResults); });
+        document.getElementById('exportJson')?.addEventListener('click', exportJson);
+        document.getElementById('exportCsv')?.addEventListener('click', exportCsv);
+        
+        const clearKeyBtn = document.getElementById('clearApiKey');
+        if (clearKeyBtn) {
+            clearKeyBtn.addEventListener('click', () => {
+                apiKeyInput.value = '';
+                sessionStorage.removeItem('hf_api_key');
+                showError('API key cleared from memory.');
+                setTimeout(hideError, 2000);
+            });
+        }
+
+        const saveKeyCheckbox = document.getElementById('saveApiKey');
+        if (saveKeyCheckbox) {
+            saveKeyCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked && apiKeyInput.value.trim()) {
+                    sessionStorage.setItem('hf_api_key', apiKeyInput.value.trim());
+                } else {
+                    sessionStorage.removeItem('hf_api_key');
+                }
+            });
+        }
     }
 
-    function saveAsJson(data) {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'guardrails.json'; a.click();
-    }
-    
     function loadCachedApiKey() {
         const cachedKey = sessionStorage.getItem('hf_api_key');
         if (cachedKey && apiKeyInput) apiKeyInput.value = cachedKey;
@@ -98,14 +188,14 @@
 
     function cleanAndParseJSON(rawText) {
         let clean = rawText.replace(/```json\s*|\s*```/g, '').trim();
+        clean = clean.replace(/```\s*|\s*```/g, '').trim();
         try { return JSON.parse(clean); } catch (e) {
             const match = rawText.match(/\{[\s\S]*\}/);
             if (match) { try { return JSON.parse(match[0]); } catch (e2) {} }
-            throw new Error("Could not extract valid JSON.");
+            throw new Error("Could not extract valid JSON from response.");
         }
     }
 
-    // --- GAP ANALYSIS ENGINE ---
     function performGapAnalysis(foundGuardrails) {
         const expectedDimensions = [
             { id: "security", weight: 2.0, categories: ["Security", "Compliance"] },
@@ -129,7 +219,7 @@
     }
 
     function renderScoreChart(score) {
-      // Logic for RAG colors in the circle chart
+      // Logic for RAG colors
       let color = '#ef4444'; // Red (Default)
       let textColor = 'text-red-600 dark:text-red-400'; 
       let label = 'High Risk';
@@ -156,7 +246,7 @@
                     <circle cx="60" cy="60" r="${radius}" fill="none" stroke="${color}" stroke-width="8" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round" class="transition-all duration-1000 ease-out"></circle>
                 </svg>
                 <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span class="text-4xl font-black ${textColor} tracking-tight">${score}</span>
+                    <span class="text-4xl font-black ${textColor} tracking-tight">${score}%</span>
                     <span class="text-[10px] font-bold uppercase tracking-wider ${textColor} mt-1">${label}</span>
                 </div>
             </div>
@@ -165,14 +255,16 @@
 
     // --- MAIN ANALYSIS ---
     async function analyzeInstruction(apiKey, instruction) {
-        hideError(); hideResults(); showLoading();
+        hideError();
+        hideResults();
+        showLoading();
     
         try {
             const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
             const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
             const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
           
-            updateProgress(10, 'Initializing Analysis Crew...');
+            updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
     
             const response = await fetch('/analyze', {
                 method: 'POST',
@@ -186,16 +278,23 @@
                 })
             });
     
-            if (!response.ok) throw new Error(`Backend Error: ${response.status}`);
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.detail || `Backend Error: ${response.status}`);
+            }
+    
+            updateProgress(75, 'Generating Report...');
             const data = await response.json();
-            if (!data.result) throw new Error("Empty result.");
+            
+            if (!data.result) throw new Error("Backend returned empty result.");
             
             let parsed = cleanAndParseJSON(data.result); 
+            
             if (parsed.guardrails) {
                 parsed.guardrails = parsed.guardrails.map(g => ({
                     ...g,
                     severity: g.risk_level || g.severity || "Medium", 
-                    mechanism: g.recommendation || g.mechanism || "Standard check",
+                    mechanism: g.recommendation || g.mechanism || "No recommendation provided.",
                     triggers: Array.isArray(g.triggers) ? g.triggers : [],
                     enforcement: g.enforcement || "Review", 
                     location: g.location || "" 
@@ -203,16 +302,18 @@
             }
             
             analysisResults = parsed;
-            updateProgress(100, 'Done!');
+            updateProgress(100, 'Report Ready!');
             
             setTimeout(() => { 
                 hideLoading(); 
-                displayResults(enableProfiling, enableGreenAI);
+                displayResults(enableProfiling, enableRagDeepScan, enableGreenAI);
                 scrollToSummary();
             }, 500);
     
         } catch (error) {
-            hideLoading(); showError(error.message);
+            console.error("Analysis failed:", error);
+            hideLoading();
+            showError(error.message || 'Connection to backend failed.');
         }
     }
 
@@ -222,7 +323,7 @@
     }
   
     // --- DISPLAY ENGINE ---
-    function displayResults(enableProfiling, enableGreenAI) {
+    function displayResults(enableProfiling, enableRagDeepScan, enableGreenAI) {
         if (!analysisResults) return;
 
         const container = document.getElementById('resultsSection');
@@ -232,22 +333,25 @@
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
 
-        // Determine Theme for Score Card based on score
-        let scoreTheme = { border: "border-red-500", bg: "bg-red-500", text: "text-red-500" };
+        // Determine Theme for Score Card based on score (Only Top Bar)
+        let topBarColor = "bg-red-500";
+        let badgeColor = "bg-red-500";
         if (gapData.score >= 80) {
-            scoreTheme = { border: "border-emerald-500", bg: "bg-emerald-500", text: "text-emerald-500" };
+            topBarColor = "bg-emerald-500";
+            badgeColor = "bg-emerald-500";
         } else if (gapData.score >= 50) {
-            scoreTheme = { border: "border-amber-500", bg: "bg-amber-500", text: "text-amber-500" };
+            topBarColor = "bg-amber-500";
+            badgeColor = "bg-amber-500";
         }
 
         // 2. Render Executive Summary (SQUARE Cards, Flat Design)
         const summaryHTML = `
         <div id="executive-summary" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 fade-in">
             
-            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border ${scoreTheme.border} shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
-                <div class="absolute top-0 left-0 w-full h-1 ${scoreTheme.bg}"></div>
+            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
+                <div class="absolute top-0 left-0 w-full h-1 ${topBarColor}"></div>
                 <div class="flex items-center gap-2 mb-2 absolute top-6 left-6">
-                    <span class="px-2 py-0.5 rounded-none text-[10px] font-black uppercase tracking-widest ${scoreTheme.bg} text-white">Score</span>
+                    <span class="px-2 py-0.5 rounded-none text-[10px] font-black uppercase tracking-widest ${badgeColor} text-white">Score</span>
                 </div>
                 <div class="mt-4">
                     ${renderScoreChart(gapData.score)}
@@ -331,8 +435,8 @@
              
              // Theme
              const catLower = (g.category || 'default').toLowerCase();
-             let theme = CATEGORY_THEMES['default']; 
-             for (const [key, style] of Object.entries(CATEGORY_THEMES)) {
+             let theme = categoryStyles['default']; 
+             for (const [key, style] of Object.entries(categoryStyles)) {
                  if (catLower.includes(key)) { theme = style; break; }
              }
 
@@ -441,7 +545,7 @@
         }
     }
 
-    // --- ROBUST PDF EXPORT ---
+    // --- UTILS & EXPORT ---
     function exportPdf() {
         const element = document.getElementById('resultsSection');
         if (!element || element.classList.contains('hidden')) { 
@@ -482,6 +586,19 @@
         }, 500);
     }
 
+    function exportJson() {
+        if (!analysisResults) return;
+        const blob = new Blob([JSON.stringify(analysisResults, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'guardrail-analysis.json'; a.click();
+    }
+    
+    function exportCsv() {
+        if (!analysisResults) return;
+        const rows = [["Name","Category","Severity","Enforcement","Mechanism","Location"], ...analysisResults.guardrails.map(g => [g.name, g.category, g.severity, g.enforcement, g.mechanism, g.location])];
+        const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+        const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "guardrail_analysis.csv"); document.body.appendChild(link); link.click();
+    }
+
     function showLoading() { loadingState.classList.remove('hidden'); analyzeBtn.disabled = true; }
     function hideLoading() { loadingState.classList.add('hidden'); analyzeBtn.disabled = false; progressBar.style.width = '0%'; }
     function updateProgress(percent, text) { progressBar.style.width = percent + '%'; progressText.textContent = text; }
@@ -491,5 +608,9 @@
 
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 
-    window.guardrailAnalyzer = { filterByCategory, filterByStatus };
+    window.guardrailAnalyzer = { 
+        filterByCategory: filterByCategory, 
+        filterByStatus: filterByStatus,
+        version: '4.2.0-flat-ui' 
+    };
 })();
