@@ -140,7 +140,7 @@
 
                     </div>
                 `;
-                btnContainer.parentElement.insertBefore(controlsContainer, btnContainer);
+                btnContainer.parentElement.insertBefore(btnContainer);
             }
         }
 
