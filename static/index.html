@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-
-<head>
+<html lang="en" class="light"> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guardrails Analysis v3.0</title>
@@ -15,8 +13,23 @@
     
     <script>
         tailwind.config = {
+          darkMode: 'class', // Enable class-based dark mode
           theme: {
             extend: {
+              colors: {
+                // Custom colors derived from your "GenWizard" reference
+                dark: {
+                    bg: '#0f111a',      // Main background (Deep Dark)
+                    panel: '#1e2130',   // Card/Sidebar background
+                    border: '#2d3246',  // Borders
+                    text: '#e2e8f0',    // Main text
+                    muted: '#94a3b8'    // Muted text
+                },
+                brand: {
+                    purple: '#8b5cf6',  // Primary accent
+                    glow: 'rgba(139, 92, 246, 0.5)'
+                }
+              },
               fontFamily: {
                 sans: ['"Inter"', 'sans-serif'],
                 heading: ['"Plus Jakarta Sans"', 'sans-serif'],
@@ -24,6 +37,7 @@
               },
               boxShadow: {
                 'sidebar': '4px 0 15px rgba(0, 0, 0, 0.1)',
+                'neon': '0 0 10px rgba(139, 92, 246, 0.3)',
               }
             }
           }
@@ -37,6 +51,7 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
+        .dark .custom-scroll::-webkit-scrollbar-thumb { background-color: #475569; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
 
         /* Loading Shimmer */
@@ -58,29 +73,29 @@
     <script src="/static/guardrails-analyzer.js" defer></script>
 </head>
 
-<body class="bg-slate-50 text-slate-900 flex h-screen w-full">
+<body class="bg-slate-50 dark:bg-dark-bg text-slate-900 dark:text-dark-text flex h-screen w-full transition-colors duration-300">
 
-    <aside class="w-20 h-full bg-[#0f172a] border-r border-slate-800 flex flex-col items-center py-6 z-50 shadow-sidebar shrink-0 relative">
+    <aside class="w-20 h-full bg-white dark:bg-dark-panel border-r border-slate-200 dark:border-dark-border flex flex-col items-center py-6 z-50 shadow-sidebar shrink-0 relative transition-colors duration-300">
         
         <div class="mb-8">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-900/50 text-white">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none text-white">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
             </div>
         </div>
 
-        <div class="flex flex-col gap-4 w-full">
+        <div class="flex flex-col gap-2 w-full">
             
-            <button onclick="handleNavClick('instruction')" id="btn-instruction" class="nav-btn w-full p-3 text-slate-400 hover:text-white hover:bg-white/10 transition-all flex justify-center group relative border-l-4 border-transparent">
+            <button onclick="handleNavClick('instruction')" id="btn-instruction" class="nav-btn w-full p-3 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-indigo-600 dark:hover:text-white transition-all flex justify-center group relative border-l-4 border-transparent">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-md">Instructions</span>
             </button>
 
-            <button onclick="handleNavClick('auth')" id="btn-auth" class="nav-btn w-full p-3 text-slate-400 hover:text-white hover:bg-white/10 transition-all flex justify-center group relative border-l-4 border-transparent">
+            <button onclick="handleNavClick('auth')" id="btn-auth" class="nav-btn w-full p-3 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-amber-600 dark:hover:text-white transition-all flex justify-center group relative border-l-4 border-transparent">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
                 <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-md">Authentication</span>
             </button>
 
-            <button onclick="handleNavClick('config')" id="btn-config" class="nav-btn w-full p-3 text-slate-400 hover:text-white hover:bg-white/10 transition-all flex justify-center group relative border-l-4 border-transparent">
+            <button onclick="handleNavClick('config')" id="btn-config" class="nav-btn w-full p-3 text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-blue-600 dark:hover:text-white transition-all flex justify-center group relative border-l-4 border-transparent">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                 <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-md">Configuration</span>
             </button>
@@ -88,18 +103,18 @@
         </div>
 
         <div class="mt-auto mb-6">
-            <button onclick="triggerRun()" class="p-3 rounded-full bg-purple-600 text-white hover:bg-purple-500 hover:shadow-lg hover:shadow-purple-500/30 hover:scale-110 transition-all duration-300 group relative">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /></svg>
+            <button onclick="triggerRun()" class="p-3 rounded-full bg-slate-900 dark:bg-brand-purple text-white hover:bg-indigo-600 dark:hover:bg-purple-500 hover:shadow-lg hover:scale-110 transition-all duration-300 group relative">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span class="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50 shadow-md">Run Audit</span>
             </button>
         </div>
     </aside>
 
-    <div id="controlDrawer" class="w-0 bg-white border-r border-slate-200 transition-all duration-300 ease-in-out overflow-hidden flex flex-col z-40 relative">
+    <div id="controlDrawer" class="w-0 bg-white dark:bg-dark-panel border-r border-slate-200 dark:border-dark-border transition-all duration-300 ease-in-out overflow-hidden flex flex-col z-40 relative">
         
-        <div class="h-16 border-b border-slate-100 px-6 flex items-center justify-between shrink-0">
-            <h2 class="font-heading font-bold text-slate-800 text-lg" id="drawerTitle">Control Center</h2>
-            <button onclick="closeDrawer()" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors">
+        <div class="h-16 border-b border-slate-100 dark:border-dark-border px-6 flex items-center justify-between shrink-0">
+            <h2 class="font-heading font-bold text-slate-800 dark:text-white text-lg" id="drawerTitle">Control Center</h2>
+            <button onclick="closeDrawer()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -107,95 +122,95 @@
         <div class="flex-1 overflow-y-auto custom-scroll p-6 min-w-[380px]">
             
             <div id="content-instruction" class="drawer-section hidden h-full flex flex-col">
-                <p class="text-sm text-slate-500 mb-4">Define your AI agent's role, goals, and constraints below.</p>
+                <p class="text-sm text-slate-500 dark:text-dark-muted mb-4">Define your AI agent's role, goals, and constraints below.</p>
                 <div class="relative flex-1 flex flex-col">
                     <textarea id="instructionInput" 
-                        class="w-full h-full min-h-[400px] p-4 rounded-xl border border-slate-200 text-sm font-mono leading-relaxed text-slate-600 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all resize-none outline-none"
+                        class="w-full h-full min-h-[400px] p-4 rounded-xl border border-slate-200 dark:border-dark-border text-sm font-mono leading-relaxed text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-[#151925] focus:bg-white dark:focus:bg-[#151925] focus:ring-2 focus:ring-indigo-100 dark:focus:ring-purple-900 focus:border-indigo-400 dark:focus:border-brand-purple transition-all resize-none outline-none"
                         placeholder="Example:
 Role: Financial Advisor Agent
 Goal: Provide investment advice based on user risk profile.
 Constraint: Never provide tax advice."></textarea>
-                    <div class="text-right mt-2 text-xs text-slate-400 font-mono">
+                    <div class="text-right mt-2 text-xs text-slate-400 dark:text-dark-muted font-mono">
                         <span id="charCount">0</span> chars
                     </div>
                 </div>
             </div>
 
             <div id="content-auth" class="drawer-section hidden">
-                <div class="bg-amber-50 border border-amber-100 rounded-xl p-5 mb-6">
-                    <h3 class="text-amber-900 font-bold text-sm mb-2 flex items-center gap-2">
+                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/50 rounded-xl p-5 mb-6">
+                    <h3 class="text-amber-900 dark:text-amber-400 font-bold text-sm mb-2 flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                         API Access Required
                     </h3>
-                    <p class="text-xs text-amber-800 leading-relaxed">
+                    <p class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
                         This tool uses HuggingFace Inference Endpoints (Llama-3). Your token is handled securely and never stored on our servers.
                     </p>
                 </div>
 
                 <div class="space-y-6">
                     <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">HuggingFace Token</label>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-2 uppercase tracking-wide">HuggingFace Token</label>
                         <div class="relative">
                             <input type="password" id="apiKey" 
-                                class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-amber-100 focus:border-amber-400 transition-all font-mono"
+                                class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-[#151925] text-sm dark:text-white focus:ring-2 focus:ring-amber-100 dark:focus:ring-amber-900 focus:border-amber-400 transition-all font-mono"
                                 placeholder="hf_...">
-                            <svg class="w-5 h-5 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                            <svg class="w-5 h-5 text-slate-300 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-dark-border">
                         <label class="flex items-center gap-3 cursor-pointer group select-none">
                             <div class="relative inline-flex items-center">
                                 <input type="checkbox" id="saveApiKey" class="sr-only peer">
-                                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500 transition-colors"></div>
+                                <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500 transition-colors"></div>
                             </div>
-                            <span class="text-sm text-slate-600 font-medium">Remember for session</span>
+                            <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Remember</span>
                         </label>
-                        <button id="clearApiKey" class="text-xs font-bold text-slate-400 hover:text-red-500 uppercase tracking-wide transition-colors">Clear Key</button>
+                        <button id="clearApiKey" class="text-xs font-bold text-slate-400 hover:text-red-500 dark:hover:text-red-400 uppercase tracking-wide transition-colors">Clear Key</button>
                     </div>
                 </div>
             </div>
 
             <div id="content-config" class="drawer-section hidden">
-                <p class="text-sm text-slate-500 mb-6">Customize the depth and scope of the AI audit swarms.</p>
+                <p class="text-sm text-slate-500 dark:text-dark-muted mb-6">Customize the depth and scope of the AI audit swarms.</p>
                 
                 <div class="space-y-4">
-                    <label class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
+                    <label class="flex items-center justify-between p-4 bg-white dark:bg-[#151925] border border-slate-200 dark:border-dark-border rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-brand-purple transition-all cursor-pointer group">
                         <div class="flex-1 mr-4">
-                            <span class="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors block mb-1">Deep Compliance Scan</span>
+                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-brand-purple transition-colors block mb-1">Deep Compliance Scan</span>
                             <span class="text-xs text-slate-400 leading-snug">Enables stricter regex patterns and RAG-based context checks.</span>
                         </div>
                         <div class="relative inline-flex items-center">
                             <input type="checkbox" id="enableRagDeepScan" class="sr-only peer" checked>
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                            <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-brand-purple transition-colors"></div>
                         </div>
                     </label>
 
-                    <label class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
+                    <label class="flex items-center justify-between p-4 bg-white dark:bg-[#151925] border border-slate-200 dark:border-dark-border rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-brand-purple transition-all cursor-pointer group">
                         <div class="flex-1 mr-4">
-                            <span class="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors block mb-1">Latency & Cost Profiling</span>
+                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-brand-purple transition-colors block mb-1">Latency & Cost Profiling</span>
                             <span class="text-xs text-slate-400 leading-snug">Activates the FinOps Architect agent to estimate token costs.</span>
                         </div>
                         <div class="relative inline-flex items-center">
                             <input type="checkbox" id="aiProfilingToggle" class="sr-only peer" checked>
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                            <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-brand-purple transition-colors"></div>
                         </div>
                     </label>
 
-                    <label class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
+                    <label class="flex items-center justify-between p-4 bg-white dark:bg-[#151925] border border-slate-200 dark:border-dark-border rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-brand-purple transition-all cursor-pointer group">
                         <div class="flex-1 mr-4">
-                            <span class="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors block mb-1">Green AI Analysis</span>
+                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-brand-purple transition-colors block mb-1">Green AI Analysis</span>
                             <span class="text-xs text-slate-400 leading-snug">Analyzes carbon footprint.</span>
                         </div>
                         <div class="relative inline-flex items-center">
                             <input type="checkbox" id="greenAIToggle" class="sr-only peer" checked>
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
+                            <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-brand-purple transition-colors"></div>
                         </div>
                     </label>
                 </div>
 
-                <div class="mt-8 pt-6 border-t border-slate-100">
-                    <button id="analyzeBtn" class="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 transform active:scale-[0.98]">
+                <div class="mt-8 pt-6 border-t border-slate-100 dark:border-dark-border">
+                    <button id="analyzeBtn" class="w-full flex items-center justify-center gap-2 bg-slate-900 dark:bg-brand-purple hover:bg-indigo-600 dark:hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 transform active:scale-[0.98]">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         Run Audit
                     </button>
@@ -205,68 +220,70 @@ Constraint: Never provide tax advice."></textarea>
         </div>
     </div>
 
-    <main class="flex-1 h-full overflow-y-auto custom-scroll relative bg-slate-50">
+    <main class="flex-1 h-full overflow-y-auto custom-scroll relative bg-slate-50 dark:bg-dark-bg transition-colors duration-300">
         
-        <header class="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
+        <header class="h-16 border-b border-slate-200 dark:border-dark-border bg-white/80 dark:bg-dark-panel/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10 transition-colors duration-300">
             <div>
-                <h1 class="font-heading font-bold text-slate-800 text-lg leading-none">Guardrails Analysis</h1>
+                <h1 class="font-heading font-bold text-slate-800 dark:text-white text-lg leading-none">Guardrails Analysis</h1>
                 <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">v3.0 Itadori</span>
             </div>
             
-            <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
-                <span class="relative flex h-2 w-2">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span class="text-xs font-bold text-emerald-700 uppercase">System Ready</span>
+            <div class="flex items-center gap-6">
+                <button onclick="toggleTheme()" class="p-2 rounded-full text-slate-400 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-yellow-400 transition-colors">
+                    <svg id="sunIcon" class="w-5 h-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <svg id="moonIcon" class="w-5 h-5 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                </button>
+
+                <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/50">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase">System Ready</span>
+                </div>
             </div>
         </header>
 
         <div class="p-8 pb-20 max-w-7xl mx-auto">
             
             <div id="emptyState" class="h-[60vh] flex flex-col items-center justify-center text-center opacity-60">
-                <div class="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center mb-6">
-                    <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                <div class="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-10 h-10 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-800 mb-2">No Analysis Yet</h2>
-                <p class="text-slate-500 max-w-md">Use the sidebar on the left to input your Agent Instruction, configure settings, and run the audit.</p>
-                <button onclick="handleNavClick('instruction')" class="mt-6 px-6 py-2 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">No Analysis Yet</h2>
+                <p class="text-slate-500 dark:text-slate-400 max-w-md">Use the sidebar on the left to input your Agent Instruction, configure settings, and run the audit.</p>
+                <button onclick="handleNavClick('instruction')" class="mt-6 px-6 py-2 bg-white dark:bg-dark-panel border border-slate-300 dark:border-dark-border text-slate-700 dark:text-white font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-sm">
                     Start New Analysis
                 </button>
             </div>
 
             <div id="loadingState" class="hidden animate-in fade-in zoom-in duration-300 max-w-3xl mx-auto mt-12">
-                <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 p-12 text-center">
+                <div class="bg-white dark:bg-dark-panel rounded-2xl shadow-lg border border-indigo-100 dark:border-dark-border p-12 text-center">
                     <div class="relative w-20 h-20 mx-auto mb-6">
-                        <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
-                        <div class="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+                        <div class="absolute inset-0 border-4 border-slate-100 dark:border-slate-700 rounded-full"></div>
+                        <div class="absolute inset-0 border-4 border-indigo-600 dark:border-brand-purple rounded-full border-t-transparent animate-spin"></div>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">Auditing Agents...</h3>
-                    <p class="text-slate-500 mb-8" id="progressText">Initializing CrewAI Swarm</p>
-                    <div class="max-w-md mx-auto h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div id="progressBar" class="h-full bg-indigo-600 loading-bar-striped animate-pulse transition-all duration-300" style="width: 5%"></div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Auditing Agents...</h3>
+                    <p class="text-slate-500 dark:text-slate-400 mb-8" id="progressText">Initializing CrewAI Swarm</p>
+                    <div class="max-w-md mx-auto h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div id="progressBar" class="h-full bg-indigo-600 dark:bg-brand-purple loading-bar-striped animate-pulse transition-all duration-300" style="width: 5%"></div>
                     </div>
                 </div>
             </div>
 
             <div id="errorState" class="hidden mb-8">
-                <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-4">
-                    <svg class="w-6 h-6 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl p-4 flex items-start gap-4">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     <div>
-                        <h3 class="font-bold text-red-900">Audit Failed</h3>
-                        <p id="errorMessage" class="text-sm text-red-700 mt-1">Connection error</p>
+                        <h3 class="font-bold text-red-900 dark:text-red-300">Audit Failed</h3>
+                        <p id="errorMessage" class="text-sm text-red-700 dark:text-red-400 mt-1">Connection error</p>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-8">
                 <div id="executive-summary"></div>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div id="greenAISection" class="hidden h-full"></div>
-                    <div id="latencyReportSection" class="hidden h-full"></div>
-                </div>
-
+                <div id="latencyReportSection" class="hidden h-full"></div>
                 <div id="resultsSection" class="hidden space-y-8"></div>
             </div>
 
@@ -277,6 +294,26 @@ Constraint: Never provide tax advice."></textarea>
         let isDrawerOpen = false;
         let currentSection = null;
 
+        // --- THEME TOGGLE LOGIC ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Initialize Theme on Load
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        // --- DRAWER LOGIC ---
         function handleNavClick(section) {
             const drawer = document.getElementById('controlDrawer');
             const drawerTitle = document.getElementById('drawerTitle');
@@ -287,40 +324,47 @@ Constraint: Never provide tax advice."></textarea>
                 'config': 'Analysis Configuration'
             };
 
-            // 1. If clicking same section that is open -> Close it
+            // Close if clicking same
             if (isDrawerOpen && currentSection === section) {
                 closeDrawer();
                 return;
             }
 
-            // 2. Open Logic
-            // Reset all icons
+            // Reset Styles
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('text-white', 'bg-white/10', 'border-purple-500'); // Clean up active states
-                btn.classList.add('text-slate-400', 'border-transparent'); // Reset to default
-            });
-
-            // Highlight Active Icon (Dark Theme logic)
-            const activeBtn = document.getElementById('btn-' + section);
-            if(activeBtn) {
-                activeBtn.classList.remove('text-slate-400', 'border-transparent');
-                activeBtn.classList.add('text-purple-400', 'bg-white/5', 'border-purple-500');
-            }
-
-            // Set Title
-            drawerTitle.textContent = titles[section];
-
-            // Toggle Contents (Exclusive View)
-            sections.forEach(sec => {
-                const el = document.getElementById('content-' + sec);
-                if (sec === section) {
-                    el.classList.remove('hidden');
+                btn.classList.remove('text-purple-400', 'bg-white/5', 'border-purple-500', 'text-indigo-600', 'bg-indigo-50', 'border-indigo-600');
+                btn.classList.add('border-transparent');
+                
+                // Dark Mode vs Light Mode handling
+                if (document.documentElement.classList.contains('dark')) {
+                    btn.classList.add('text-slate-500');
                 } else {
-                    el.classList.add('hidden');
+                    btn.classList.add('text-slate-400');
                 }
             });
 
-            // Animate Drawer Open
+            // Activate Styles
+            const activeBtn = document.getElementById('btn-' + section);
+            if(activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-400', 'text-slate-500');
+                
+                if (document.documentElement.classList.contains('dark')) {
+                    activeBtn.classList.add('text-purple-400', 'bg-white/5', 'border-purple-500');
+                } else {
+                    // Fallback to light mode color (e.g. indigo)
+                    activeBtn.classList.add('text-indigo-600', 'bg-indigo-50', 'border-indigo-600');
+                }
+            }
+
+            // Set Title & Content
+            drawerTitle.textContent = titles[section];
+            sections.forEach(sec => {
+                const el = document.getElementById('content-' + sec);
+                if (sec === section) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+
+            // Open Animation
             if (!isDrawerOpen) {
                 drawer.classList.remove('w-0');
                 drawer.classList.add('w-[450px]');
@@ -332,42 +376,41 @@ Constraint: Never provide tax advice."></textarea>
 
         function closeDrawer() {
             const drawer = document.getElementById('controlDrawer');
-            
-            // Animate Close
             drawer.classList.remove('w-[450px]');
             drawer.classList.add('w-0');
             isDrawerOpen = false;
             currentSection = null;
 
-            // Remove active styling from icons
+            // Clean styling
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('text-purple-400', 'bg-white/5', 'border-purple-500');
-                btn.classList.add('text-slate-400', 'border-transparent');
+                btn.classList.remove('text-purple-400', 'bg-white/5', 'border-purple-500', 'text-indigo-600', 'bg-indigo-50', 'border-indigo-600');
+                btn.classList.add('border-transparent');
+                
+                if (document.documentElement.classList.contains('dark')) {
+                    btn.classList.add('text-slate-500');
+                } else {
+                    btn.classList.add('text-slate-400');
+                }
             });
         }
 
-        // --- HIDE EMPTY STATE LOGIC ---
+        // --- RUN AUDIT LOGIC ---
         document.getElementById('analyzeBtn').addEventListener('click', () => {
             const key = document.getElementById('apiKey').value;
             const inst = document.getElementById('instructionInput').value;
-            
             if (key && inst) {
                 document.getElementById('emptyState').classList.add('hidden');
                 document.getElementById('loadingState').classList.remove('hidden');
-                
-                // Optional: Auto close drawer on mobile or small screens
-                // closeDrawer();
+                closeDrawer();
             }
         });
 
-        // Run Button Proxy
         function triggerRun() {
             if (!isDrawerOpen) {
                 handleNavClick('instruction');
                 return;
             }
-            const btn = document.getElementById('analyzeBtn');
-            if(btn) btn.click();
+            document.getElementById('analyzeBtn').click();
         }
     </script>
 
