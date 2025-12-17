@@ -36,7 +36,6 @@
 
         const statusLower = String(data.status).toLowerCase();
         
-        // Configuration: Matching Summary Cards (Square, Top Border Only)
         const config = {
             green: { svg: PLANT_SVGS.green, color: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
             amber: { svg: PLANT_SVGS.amber, color: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
@@ -45,24 +44,18 @@
 
         const theme = config[statusLower] || config.green;
 
-        // Matches 'Safety Score' card structure EXACTLY
+        // UPDATED: No Top Tags, text-8xl score, Carbon Impact Badge
         const html = `
             <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center h-full">
                 
                 <div class="absolute top-0 left-0 w-full h-1 ${theme.color}"></div>
                 
-                <div class="flex items-center gap-2 mb-2 absolute top-6 left-6">
-                    <span class="px-2 py-0.5 rounded-none text-[10px] font-black uppercase tracking-widest ${theme.color} text-white">
-                        Carbon Impact
-                    </span>
-                </div>
-
                 <div class="w-40 h-40 mt-4 mb-2 transition-transform duration-700 hover:scale-110">
                     ${theme.svg}
                 </div>
 
                 <div class="text-center">
-                    <div class="text-7xl font-black ${theme.text} tracking-tighter drop-shadow-sm mb-1">
+                    <div class="text-8xl font-black ${theme.text} tracking-tighter drop-shadow-sm mb-1">
                         ${data.energy_score}
                     </div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">
