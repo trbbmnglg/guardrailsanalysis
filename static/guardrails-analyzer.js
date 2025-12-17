@@ -100,50 +100,6 @@
         progressBar = document.getElementById('progressBar');
         progressText = document.getElementById('progressText');
 
-        if (analyzeBtn) {
-            const btnContainer = analyzeBtn.parentElement; 
-            if (btnContainer && btnContainer.parentElement && !document.getElementById('analysisControlsContainer')) {
-                const controlsContainer = document.createElement('div');
-                controlsContainer.id = 'analysisControlsContainer';
-                controlsContainer.className = "mt-6 space-y-4 p-5 border border-slate-200 rounded-xl bg-slate-50/50";
-
-                // --- NEW DESIGN: Clickable Cards with Modern Toggles ---
-                controlsContainer.innerHTML = `
-                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
-                        <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                        Advanced Analysis Settings
-                    </h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        
-                        <label class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
-                            <div class="flex-1 mr-4">
-                                <span class="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Deep Compliance Scan</span>
-                                <span class="text-xs text-slate-500 block mt-1 leading-snug">Enables stricter regex & RAG checks</span>
-                            </div>
-                            <div class="relative inline-flex items-center">
-                                <input type="checkbox" id="enableRagDeepScan" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
-                            </div>
-                        </label>
-
-                        <label class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
-                            <div class="flex-1 mr-4">
-                                <span class="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Latency & Cost Profiling</span>
-                                <span class="text-xs text-slate-500 block mt-1 leading-snug">Activates FinOps Architect agent</span>
-                            </div>
-                            <div class="relative inline-flex items-center">
-                                <input type="checkbox" id="aiProfilingToggle" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div>
-                            </div>
-                        </label>
-
-                    </div>
-                `;
-                btnContainer.parentElement.insertBefore(btnContainer);
-            }
-        }
-
         setupEventListeners();
         loadCachedApiKey();
         setupToggleButtons();
