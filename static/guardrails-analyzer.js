@@ -252,38 +252,63 @@
         if (!analysisResults) return;
 
         const container = document.getElementById('resultsSection');
+        
+        // 1. Calculate Stats
         const gapData = performGapAnalysis(analysisResults.guardrails);
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
 
+        // Determine Theme for Score Card based on score
         let topBarColor = "bg-red-500";
-        if (gapData.score >= 80) topBarColor = "bg-emerald-500";
-        else if (gapData.score >= 50) topBarColor = "bg-amber-500";
+        let scoreTextColor = "text-red-500";
+        let cardHover = "hover:bg-red-50/50 dark:hover:bg-red-900/10";
+        
+        if (gapData.score >= 80) {
+            topBarColor = "bg-emerald-500";
+            scoreTextColor = "text-emerald-500";
+            cardHover = "hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10";
+        } else if (gapData.score >= 50) {
+            topBarColor = "bg-amber-500";
+            scoreTextColor = "text-amber-500";
+            cardHover = "hover:bg-amber-50/50 dark:hover:bg-amber-900/10";
+        }
 
-        // UPDATED: All numbers are now text-8xl for consistency. Removed tags.
+        // 2. Render Executive Summary
         const summaryGridCols = enableGreenAI ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3';
 
         const summaryHTML = `
         <div id="executive-summary" class="grid ${summaryGridCols} gap-6 mb-10 fade-in">
             
-            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
+            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md ${cardHover} aspect-square flex flex-col justify-center items-center cursor-default">
                 <div class="absolute top-0 left-0 w-full h-1 ${topBarColor}"></div>
-                <div class="mt-4">${renderScoreChart(gapData.score)}</div>
-                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-4">Safety Rating</p>
+                <div class="mt-4 scale-110">
+                    ${renderScoreChart(gapData.score)}
+                </div>
+                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-6">Safety Rating</p>
             </div>
 
-            <div onclick="window.guardrailAnalyzer.filterByStatus('active')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
+            <div onclick="window.guardrailAnalyzer.filterByStatus('active')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md hover:bg-blue-50/50 dark:hover:bg-blue-900/10 aspect-square flex flex-col justify-center items-center">
                 <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div> 
-                <div class="text-center mt-2">
-                    <div class="text-8xl font-black text-blue-600 dark:text-blue-400 tracking-tighter drop-shadow-sm mb-1">${presentGuardrails.length}</div>
+                
+                <div class="absolute -bottom-8 -right-8 w-48 h-48 text-blue-50 dark:text-blue-900/20 opacity-50 dark:opacity-20 transform group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+                    <svg class="w-full h-full" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.89v9.59z"/></svg>
+                </div>
+
+                <div class="text-center mt-2 relative z-10">
+                    <div class="text-7xl lg:text-8xl font-black text-blue-600 dark:text-blue-400 tracking-tighter drop-shadow-sm mb-1">${presentGuardrails.length}</div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Active Guardrails</p>
                 </div>
             </div>
 
-            <div onclick="window.guardrailAnalyzer.filterByStatus('missing')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
+            <div onclick="window.guardrailAnalyzer.filterByStatus('missing')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md hover:bg-red-50/50 dark:hover:bg-red-900/10 aspect-square flex flex-col justify-center items-center">
                 <div class="absolute top-0 left-0 w-full h-1 bg-red-500"></div> 
-                <div class="text-center mt-2">
-                    <div class="text-8xl font-black text-red-500 dark:text-red-400 tracking-tighter drop-shadow-sm mb-1">${missingGuardrails.length}</div>
+                
+                <div class="absolute -bottom-8 -right-8 w-48 h-48 text-red-50 dark:text-red-900/20 opacity-50 dark:opacity-20 transform group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+                    <svg class="w-full h-full" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                </div>
+
+                <div class="text-center mt-2 relative z-10">
+                    <div class="text-7xl lg:text-8xl font-black text-red-500 dark:text-red-400 tracking-tighter drop-shadow-sm mb-1">${missingGuardrails.length}</div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Missing Guards</p>
                 </div>
             </div>
@@ -291,6 +316,9 @@
             ${enableGreenAI ? `<div id="slot-green-ai" class="h-full"></div>` : ''}
         </div>`;
 
+        // ... (Rest of the function remains exactly the same: Performance Row, Filters, Init)
+        
+        // 3. PERFORMANCE DASHBOARD
         let performanceRowHTML = '';
         if (enableProfiling) {
             performanceRowHTML = `
