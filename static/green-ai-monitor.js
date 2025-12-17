@@ -10,6 +10,8 @@
             <path d="M50 75 Q 50 45 50 20" stroke="#059669" stroke-width="2" stroke-linecap="round" />
             <path d="M50 60 L 25 45" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
             <path d="M50 60 L 75 45" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
+            <path d="M50 45 L 30 30" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
+            <path d="M50 45 L 70 30" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>
             <circle cx="30" cy="35" r="3" fill="#E0F2FE" stroke="#BAE6FD" />
         </svg>`,
         amber: `
@@ -34,7 +36,7 @@
 
         const statusLower = String(data.status).toLowerCase();
         
-        // Configuration: Matching the Summary Cards (Square, Top Border Only)
+        // Configuration: Matching Summary Cards (Square, Top Border Only)
         const config = {
             green: { svg: PLANT_SVGS.green, color: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
             amber: { svg: PLANT_SVGS.amber, color: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
@@ -55,21 +57,21 @@
                     </span>
                 </div>
 
-                <div class="w-32 h-32 mb-2 mt-4 transition-transform duration-700 hover:scale-110">
+                <div class="w-40 h-40 mt-4 mb-2 transition-transform duration-700 hover:scale-110">
                     ${theme.svg}
                 </div>
 
                 <div class="text-center">
-                    <div class="text-6xl font-black ${theme.text} tracking-tighter drop-shadow-sm mb-1">
+                    <div class="text-7xl font-black ${theme.text} tracking-tighter drop-shadow-sm mb-1">
                         ${data.energy_score}
                     </div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">
                         Green AI Score
                     </p>
                     
-                    <div class="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-none border border-slate-200 dark:border-slate-700">
+                    <div class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-none border border-slate-200 dark:border-slate-700">
                          <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                         <span class="text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300">
+                         <span class="text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
                             ~${data.estimated_kwh_per_1k_req || '0'} kWh <span class="text-slate-400 font-normal">/ 1k</span>
                         </span>
                     </div>
