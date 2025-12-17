@@ -17,7 +17,6 @@
     let progressBar, progressText;
 
     // --- CONFIG: Flat UI Colors & Icons ---
-    // UPDATED: Removed padding/margin issues in SVGs
     const categoryStyles = {
         "responsible ai": { 
             border: "border-purple-200 dark:border-purple-800/50", 
@@ -104,7 +103,7 @@
         const saveKeyCheckbox = document.getElementById('saveApiKey');
         if (saveKeyCheckbox && saveKeyCheckbox.parentElement && saveKeyCheckbox.type === 'checkbox' && !saveKeyCheckbox.classList.contains('sr-only')) {
              const parent = saveKeyCheckbox.parentElement;
-             const toggleHTML = `<label class="flex items-center gap-3 cursor-pointer group select-none"><div class="relative inline-flex items-center"><input type="checkbox" id="saveApiKey" class="sr-only peer"><div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600 transition-colors"></div></div><span class="text-sm text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors font-medium">Remember API key</span></label>`;
+             const toggleHTML = `<label class="flex items-center gap-3 cursor-pointer group select-none"><div class="relative inline-flex items-center"><input type="checkbox" id="saveApiKey" class="sr-only peer"><div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors"></div></div><span class="text-sm text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors font-medium">Remember API key</span></label>`;
              const tempDiv = document.createElement('div');
              tempDiv.innerHTML = toggleHTML;
              if (tempDiv.firstElementChild) {
@@ -218,36 +217,76 @@
         </div>`;
     }
 
+    // --- MAIN ANALYSIS ---
     async function analyzeInstruction(apiKey, instruction) {
-        hideError(); hideResults(); showLoading();
+        hideError();
+        hideResults();
+        showLoading();
+    
         try {
             const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
             const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
             const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
+          
             updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
+    
             const response = await fetch('/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ instruction: instruction, api_key: apiKey, enable_profiling: enableProfiling, enable_rag_deep_scan: enableRagDeepScan, enable_greenai_analysis: enableGreenAI })
+                body: JSON.stringify({ 
+                    instruction: instruction, 
+                    api_key: apiKey,
+                    enable_profiling: enableProfiling, 
+                    enable_rag_deep_scan: enableRagDeepScan,
+                    enable_greenai_analysis: enableGreenAI
+                })
             });
-            if (!response.ok) { const errData = await response.json().catch(() => ({})); throw new Error(errData.detail || `Backend Error: ${response.status}`); }
+    
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.detail || `Backend Error: ${response.status}`);
+            }
+    
             updateProgress(75, 'Generating Report...');
             const data = await response.json();
+            
             if (!data.result) throw new Error("Backend returned empty result.");
+            
             let parsed = cleanAndParseJSON(data.result); 
+            
             if (parsed.guardrails) {
-                parsed.guardrails = parsed.guardrails.map(g => ({ ...g, severity: g.risk_level || g.severity || "Medium", mechanism: g.recommendation || g.mechanism || "No recommendation provided.", triggers: Array.isArray(g.triggers) ? g.triggers : [], enforcement: g.enforcement || "Review", location: g.location || "" }));
+                parsed.guardrails = parsed.guardrails.map(g => ({
+                    ...g,
+                    severity: g.risk_level || g.severity || "Medium", 
+                    mechanism: g.recommendation || g.mechanism || "No recommendation provided.",
+                    triggers: Array.isArray(g.triggers) ? g.triggers : [],
+                    enforcement: g.enforcement || "Review", 
+                    location: g.location || "" 
+                }));
             }
+            
             analysisResults = parsed;
             updateProgress(100, 'Report Ready!');
-            setTimeout(() => { hideLoading(); displayResults(enableProfiling, enableRagDeepScan, enableGreenAI); scrollToSummary(); }, 500);
+            
+            setTimeout(() => { 
+                hideLoading(); 
+                displayResults(enableProfiling, enableRagDeepScan, enableGreenAI);
+                scrollToSummary();
+            }, 500);
+    
         } catch (error) {
-            console.error("Analysis failed:", error); hideLoading(); showError(error.message || 'Connection to backend failed.');
+            console.error("Analysis failed:", error);
+            hideLoading();
+            showError(error.message || 'Connection to backend failed.');
         }
     }
 
-    function scrollToSummary() { const el = document.getElementById("executive-summary"); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    function scrollToSummary() { 
+        const el = document.getElementById("executive-summary");
+        if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+    }
   
+    // --- DISPLAY ENGINE ---
     function displayResults(enableProfiling, enableRagDeepScan, enableGreenAI) {
         if (!analysisResults) return;
 
@@ -258,57 +297,37 @@
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
 
-        // Determine Theme for Score Card based on score
+        // Determine Theme for Score Card based on score (Only Top Bar)
         let topBarColor = "bg-red-500";
-        let scoreTextColor = "text-red-500";
-        let cardHover = "hover:bg-red-50/50 dark:hover:bg-red-900/10";
-        
-        if (gapData.score >= 80) {
-            topBarColor = "bg-emerald-500";
-            scoreTextColor = "text-emerald-500";
-            cardHover = "hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10";
-        } else if (gapData.score >= 50) {
-            topBarColor = "bg-amber-500";
-            scoreTextColor = "text-amber-500";
-            cardHover = "hover:bg-amber-50/50 dark:hover:bg-amber-900/10";
-        }
+        if (gapData.score >= 80) topBarColor = "bg-emerald-500";
+        else if (gapData.score >= 50) topBarColor = "bg-amber-500";
 
-        // 2. Render Executive Summary
+        // 2. Render Executive Summary (SQUARE Cards, Text-8xl, No Tags)
         const summaryGridCols = enableGreenAI ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3';
 
         const summaryHTML = `
         <div id="executive-summary" class="grid ${summaryGridCols} gap-6 mb-10 fade-in">
             
-            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md ${cardHover} aspect-square flex flex-col justify-center items-center cursor-default">
+            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
                 <div class="absolute top-0 left-0 w-full h-1 ${topBarColor}"></div>
-                <div class="mt-4 scale-110">
+                <div class="mt-4">
                     ${renderScoreChart(gapData.score)}
                 </div>
-                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-6">Safety Rating</p>
+                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-4">Safety Rating</p>
             </div>
 
-            <div onclick="window.guardrailAnalyzer.filterByStatus('active')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md hover:bg-blue-50/50 dark:hover:bg-blue-900/10 aspect-square flex flex-col justify-center items-center">
+            <div onclick="window.guardrailAnalyzer.filterByStatus('active')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
                 <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div> 
-                
-                <div class="absolute -bottom-8 -right-8 w-48 h-48 text-blue-50 dark:text-blue-900/20 opacity-50 dark:opacity-20 transform group-hover:scale-110 transition-transform duration-500 pointer-events-none">
-                    <svg class="w-full h-full" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.89v9.59z"/></svg>
-                </div>
-
-                <div class="text-center mt-2 relative z-10">
-                    <div class="text-7xl lg:text-8xl font-black text-blue-600 dark:text-blue-400 tracking-tighter drop-shadow-sm mb-1">${presentGuardrails.length}</div>
+                <div class="text-center mt-2">
+                    <div class="text-8xl font-black text-blue-600 dark:text-blue-400 tracking-tighter drop-shadow-sm mb-1">${presentGuardrails.length}</div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Active Guardrails</p>
                 </div>
             </div>
 
-            <div onclick="window.guardrailAnalyzer.filterByStatus('missing')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md hover:bg-red-50/50 dark:hover:bg-red-900/10 aspect-square flex flex-col justify-center items-center">
+            <div onclick="window.guardrailAnalyzer.filterByStatus('missing')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-center items-center">
                 <div class="absolute top-0 left-0 w-full h-1 bg-red-500"></div> 
-                
-                <div class="absolute -bottom-8 -right-8 w-48 h-48 text-red-50 dark:text-red-900/20 opacity-50 dark:opacity-20 transform group-hover:scale-110 transition-transform duration-500 pointer-events-none">
-                    <svg class="w-full h-full" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                </div>
-
-                <div class="text-center mt-2 relative z-10">
-                    <div class="text-7xl lg:text-8xl font-black text-red-500 dark:text-red-400 tracking-tighter drop-shadow-sm mb-1">${missingGuardrails.length}</div>
+                <div class="text-center mt-2">
+                    <div class="text-8xl font-black text-red-500 dark:text-red-400 tracking-tighter drop-shadow-sm mb-1">${missingGuardrails.length}</div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Missing Guards</p>
                 </div>
             </div>
@@ -316,8 +335,6 @@
             ${enableGreenAI ? `<div id="slot-green-ai" class="h-full"></div>` : ''}
         </div>`;
 
-        // ... (Rest of the function remains exactly the same: Performance Row, Filters, Init)
-        
         // 3. PERFORMANCE DASHBOARD
         let performanceRowHTML = '';
         if (enableProfiling) {
@@ -328,19 +345,32 @@
             </div>`;
         }
 
+        // 4. Filter Bar
         const filterHTML = `
             <div class="sticky top-0 z-40 bg-slate-50/90 dark:bg-[#0f111a]/90 backdrop-blur-md py-4 mb-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4 overflow-x-auto custom-scroll px-2" id="categoryFilters">
             </div>`;
 
+        // 5. Build Final Layout
         container.innerHTML = summaryHTML + performanceRowHTML + filterHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>';
 
-        if (enableGreenAI && window.greenAIMonitor) window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'slot-green-ai');
-        if (enableProfiling && window.latencyProfiler) window.latencyProfiler.analyze(analysisResults.guardrails, analysisResults.tiering_strategy, { engine: 'slot-latency-engine', waterfall: 'slot-latency-waterfall' });
+        // 6. Initialize Modules
+        if (enableGreenAI && window.greenAIMonitor) {
+            window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'slot-green-ai');
+        }
+        
+        if (enableProfiling && window.latencyProfiler) {
+            window.latencyProfiler.analyze(
+                analysisResults.guardrails, 
+                analysisResults.tiering_strategy,
+                { engine: 'slot-latency-engine', waterfall: 'slot-latency-waterfall' }
+            );
+        }
 
         container.classList.remove('hidden');
         applyFilters();
     }
 
+    // --- CARD RENDERER (SQUARE Grid Tiles - Flat) ---
     function renderGuardrails(guardrails) { 
         const container = document.getElementById('guardrailsDisplay');
         if (guardrails.length === 0) { 
@@ -350,89 +380,92 @@
         
         container.innerHTML = guardrails.map((g, idx) => {
              const isMissing = g.name.toUpperCase().startsWith('MISSING') || !g.location || g.location.trim() === "";
+             
+             // Theme
              const catLower = (g.category || 'default').toLowerCase();
              let theme = categoryStyles['default']; 
              for (const [key, style] of Object.entries(categoryStyles)) {
                  if (catLower.includes(key)) { theme = style; break; }
              }
+
              const badgeClass = isMissing ? "bg-red-500 shadow-none" : "bg-emerald-500 shadow-none";
              const statusText = isMissing ? "MISSING" : "ACTIVE";
              
              return `
             <div class="relative group bg-white dark:bg-[#1e2130] rounded-none shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-all duration-500 hover:shadow-md hover:-translate-y-1 fade-in aspect-square flex flex-col" style="animation-delay: ${idx * 0.05}s">
-                <div class="absolute top-5 left-5 z-20"><span class="px-3 py-1 rounded-none text-[10px] font-black uppercase tracking-widest text-white ${badgeClass}">${statusText}</span></div>
-                <div class="absolute top-5 right-5 z-20"><span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">${escapeHtml(g.severity)}</span></div>
+                
+                <div class="absolute top-5 left-5 z-20">
+                    <span class="px-3 py-1 rounded-none text-[10px] font-black uppercase tracking-widest text-white ${badgeClass}">
+                        ${statusText}
+                    </span>
+                </div>
+                
+                <div class="absolute top-5 right-5 z-20">
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">${escapeHtml(g.severity)}</span>
+                </div>
+
                 <div class="p-6 flex-1 flex flex-col items-center justify-center text-center relative z-10">
+                    
                     <div class="w-16 h-16 mb-4 ${theme.text} transition-transform duration-500 group-hover:scale-110 opacity-90 flex items-center justify-center">
                         ${theme.icon}
                     </div>
-                    <h3 class="text-base font-black text-slate-800 dark:text-white leading-tight mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">${escapeHtml(g.name.replace(/^MISSING:\s*/i, ''))}</h3>
-                    <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">${escapeHtml(g.category)}</p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 px-2">${escapeHtml(g.description)}</p>
+
+                    <h3 class="text-base font-black text-slate-800 dark:text-white leading-tight mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
+                        ${escapeHtml(g.name.replace(/^MISSING:\s*/i, ''))}
+                    </h3>
+                    
+                    <p class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
+                        ${escapeHtml(g.category)}
+                    </p>
+
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 px-2">
+                        ${escapeHtml(g.description)}
+                    </p>
                 </div>
+
                 <div class="absolute inset-x-0 bottom-0 z-30 transform translate-y-[105%] transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) group-hover:translate-y-0 h-2/3">
                     <div class="bg-white/95 dark:bg-[#151925]/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-700 p-5 shadow-2xl h-full flex flex-col rounded-none">
+                        
                         <div class="w-10 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-3 shrink-0"></div>
+
                         <div class="overflow-y-auto custom-scroll pr-1 space-y-3 text-left">
-                            <div><h4 class="text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-1">Mechanism</h4><div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-none p-2 text-[10px] font-medium text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50">${escapeHtml(g.mechanism)}</div></div>
-                            <div><h4 class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Context</h4>${!isMissing ? `<div class="bg-slate-100 dark:bg-slate-800 rounded-none p-2 font-mono text-[10px] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 leading-relaxed break-words">"${escapeHtml(g.location)}"</div>` : `<div class="text-[10px] italic text-slate-400">Not detected in prompt</div>`}</div>
+                            <div>
+                                <h4 class="text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-1">Mechanism</h4>
+                                <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-none p-2 text-[10px] font-medium text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50">
+                                    ${escapeHtml(g.mechanism)}
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Context</h4>
+                                ${!isMissing ? 
+                                    `<div class="bg-slate-100 dark:bg-slate-800 rounded-none p-2 font-mono text-[10px] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 leading-relaxed break-words">"${escapeHtml(g.location)}"</div>` 
+                                    : 
+                                    `<div class="text-[10px] italic text-slate-400">Not detected in prompt</div>`
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>`;
         }).join('');
     }
 
+    // ... (Utils & Export logic same as before) ...
     function filterByStatus(status) { currentStatusFilter = status; applyFilters(); }
     function filterByCategory(category) { currentCategoryFilter = category; applyFilters(); }
-    
-    function applyFilters() {
-        if (!analysisResults) return;
-        let filtered = analysisResults.guardrails;
-        if (currentStatusFilter === 'active') filtered = filtered.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
-        else if (currentStatusFilter === 'missing') filtered = filtered.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
-        if (currentCategoryFilter !== 'all') filtered = filtered.filter(g => g.category === currentCategoryFilter);
-        renderGuardrails(filtered);
-        updateCategoryChips();
-    }
-
-    function updateCategoryChips() {
-        const allCats = ['all', ...new Set(analysisResults.guardrails.map(g => g.category))];
-        const counts = {};
-        analysisResults.guardrails.forEach(g => counts[g.category] = (counts[g.category] || 0) + 1);
-        
-        const container = document.getElementById('categoryFilters');
-        if (container) {
-            container.innerHTML = allCats.map(cat => {
-                const count = cat === 'all' ? analysisResults.guardrails.length : counts[cat];
-                const isSelected = currentCategoryFilter === cat;
-                const activeClass = "bg-indigo-600 text-white shadow-lg border-transparent";
-                const inactiveClass = "bg-white dark:bg-[#151925] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700";
-                return `<button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" class="shrink-0 px-4 py-2 rounded-none text-xs font-bold transition-all duration-300 border flex items-center gap-2 ${isSelected ? activeClass : inactiveClass}"><span>${escapeHtml(cat === 'all' ? 'All Categories' : cat)}</span><span class="px-1.5 py-0.5 rounded-none text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">${count}</span></button>`;
-            }).join('');
-        }
-    }
-
-    function exportPdf() {
-        const element = document.getElementById('resultsSection');
-        if (!element || element.classList.contains('hidden')) { showError("No analysis results to export."); return; }
-        const btn = document.getElementById('exportPdfBtn');
-        const originalText = btn.innerHTML; btn.innerHTML = `Generating...`; btn.disabled = true;
-        const opt = { margin: [0.3, 0.3, 0.3, 0.3], filename: `Guardrail_Audit.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0, windowWidth: 1400 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } };
-        setTimeout(() => { window.html2pdf().set(opt).from(element).save().then(() => { btn.innerHTML = originalText; btn.disabled = false; }).catch(err => { console.error("PDF Export failed:", err); btn.innerHTML = originalText; btn.disabled = false; showError("PDF Export failed. Check console for details."); }); }, 500);
-    }
-    
+    function applyFilters() { if (!analysisResults) return; let filtered = analysisResults.guardrails; if (currentStatusFilter === 'active') filtered = filtered.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== ""); else if (currentStatusFilter === 'missing') filtered = filtered.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === ""); if (currentCategoryFilter !== 'all') filtered = filtered.filter(g => g.category === currentCategoryFilter); renderGuardrails(filtered); updateCategoryChips(); }
+    function updateCategoryChips() { const allCats = ['all', ...new Set(analysisResults.guardrails.map(g => g.category))]; const counts = {}; analysisResults.guardrails.forEach(g => counts[g.category] = (counts[g.category] || 0) + 1); const container = document.getElementById('categoryFilters'); if (container) { container.innerHTML = allCats.map(cat => { const count = cat === 'all' ? analysisResults.guardrails.length : counts[cat]; const isSelected = currentCategoryFilter === cat; const activeClass = "bg-indigo-600 text-white shadow-lg border-transparent"; const inactiveClass = "bg-white dark:bg-[#151925] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700"; return `<button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" class="shrink-0 px-4 py-2 rounded-none text-xs font-bold transition-all duration-300 border flex items-center gap-2 ${isSelected ? activeClass : inactiveClass}"><span>${escapeHtml(cat === 'all' ? 'All Categories' : cat)}</span><span class="px-1.5 py-0.5 rounded-none text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">${count}</span></button>`; }).join(''); } }
+    function exportPdf() { const element = document.getElementById('resultsSection'); if (!element || element.classList.contains('hidden')) { showError("No analysis results to export."); return; } const btn = document.getElementById('exportPdfBtn'); const originalText = btn.innerHTML; btn.innerHTML = `Generating...`; btn.disabled = true; const opt = { margin: [0.3, 0.3, 0.3, 0.3], filename: `Guardrail_Audit.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0, windowWidth: 1400 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } }; setTimeout(() => { window.html2pdf().set(opt).from(element).save().then(() => { btn.innerHTML = originalText; btn.disabled = false; }).catch(err => { console.error("PDF Export failed:", err); btn.innerHTML = originalText; btn.disabled = false; showError("PDF Export failed. Check console for details."); }); }, 500); }
     function exportJson() { if(analysisResults) saveAsJson(analysisResults); }
-    function exportCsv() { /* ... CSV Logic ... */ } 
-
+    function exportCsv() { /* ... */ } 
     function showLoading() { loadingState.classList.remove('hidden'); analyzeBtn.disabled = true; }
     function hideLoading() { loadingState.classList.add('hidden'); analyzeBtn.disabled = false; progressBar.style.width = '0%'; }
     function updateProgress(percent, text) { progressBar.style.width = percent + '%'; progressText.textContent = text; }
     function showError(msg) { errorState.classList.remove('hidden'); document.getElementById('errorMessage').textContent = msg; setTimeout(hideError, 5000); }
     function hideError() { errorState.classList.add('hidden'); }
     function hideResults() { resultsSection.classList.add('hidden'); }
-
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
-
-    window.guardrailAnalyzer = { filterByCategory: filterByCategory, filterByStatus: filterByStatus, version: '4.5.0-consistent-ui' };
+    window.guardrailAnalyzer = { filterByCategory: filterByCategory, filterByStatus: filterByStatus, version: '4.6.0-refined-ui' };
 })();
