@@ -7,7 +7,7 @@
         green: `
             <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <style>
-                    .leaf-blade { fill: #1E7F43; }
+                    .leaf-blade { fill: #059669; }
                     .leaf-vein { stroke: #6BC46D; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
                 </style>
                 <path class="leaf-blade" d="M50 60 C40 60 10 55 15 30 C25 20 45 40 50 60 Z" />
