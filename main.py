@@ -185,7 +185,7 @@ class GuardrailsAuditCrew:
     def main_llm(self):
         return ChatOpenAI(
             #model="openai/meta-llama/Llama-3.3-70B-Instruct",
-            model="openai/deepseek-ai/DeepSeek-R1",
+            model="openai/deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
             base_url="https://router.huggingface.co/v1",
             api_key=self.api_key,
             temperature=0.6,
