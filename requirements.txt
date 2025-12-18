@@ -11,3 +11,4 @@ fastapi-sso
 sentence-transformers
 huggingface-hub
 pyyaml
+chromadb
