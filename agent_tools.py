@@ -2,6 +2,7 @@ import os
 import sys
 from crewai_tools import PDFSearchTool
 from chromadb.config import Settings
+from sentence_transformers import SentenceTransformer
 
 
 def get_owasp_rag_tool():
