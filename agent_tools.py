@@ -8,11 +8,8 @@ def get_owasp_rag_tool():
     """
     Creates a RAG tool for the OWASP LLM Top 10 PDF.
     
-    CRITICAL FIXES:
-    1. Sets 'HUGGINGFACE_ACCESS_TOKEN' (Required by Embedchain).
-    2. Sets 'HUGGINGFACEHUB_API_TOKEN' (Required by other HF libraries).
-    3. Keeps 'OPENAI_API_KEY' as 'NA' to satisfy CrewAI validation, 
-       but forces the config to use Hugging Face so 'NA' is never used.
+    Uses HuggingFace embeddings and ChromaDB for vector storage.
+    Handles API key mapping to work with CrewAI's requirements.
     """
     
     pdf_path = "kb/LLMAll_en-US_FINAL.pdf"
@@ -21,51 +18,61 @@ def get_owasp_rag_tool():
         print(f"⚠️ Warning: Knowledge base not found at {pdf_path}")
         return None
     
-    # --- 1. KEY MAPPING ---
-    # Capture the real key from main.py
+    # Capture the real HF key from environment
     real_hf_key = os.environ.get("OPENAI_API_KEY")
     
     if real_hf_key:
-        # Embedchain specifically looks for this one:
+        # Set HuggingFace tokens for embeddings
         os.environ["HUGGINGFACE_ACCESS_TOKEN"] = real_hf_key
-        # Older libraries look for this one:
         os.environ["HUGGINGFACEHUB_API_TOKEN"] = real_hf_key
-        # Generic fallback:
         os.environ["HF_TOKEN"] = real_hf_key
+    else:
+        print("⚠️ Warning: No HuggingFace token found in OPENAI_API_KEY")
     
+    # Temporarily set OpenAI key to placeholder
     os.environ["OPENAI_API_KEY"] = "NA"
     
     try:
+        # Use a proper sentence-transformer model for embeddings
         tool = PDFSearchTool(
             pdf=pdf_path,
             config={
-                "embedding_model": {
+                "llm": {
                     "provider": "huggingface",
                     "config": {
                         "model": "mistralai/Mistral-7B-Instruct-v0.2",
+                        "temperature": 0.7,
+                    },
+                },
+                "embedder": {
+                    "provider": "huggingface",
+                    "config": {
+                        "model": "sentence-transformers/all-MiniLM-L6-v2",
                     },
                 },
                 "vectordb": {
                     "provider": "chroma",
                     "config": {
-                        "settings": Settings(
-                            persist_directory="/content/chroma",
-                            allow_reset=True,
-                            is_persistent=True,
-                        ),
+                        "collection_name": "owasp_llm_top10",
+                        "dir": "/content/chroma",
+                        "allow_reset": True,
                     },
                 },
             }
         )
+        
+        print(f"✅ OWASP RAG tool initialized successfully with {pdf_path}")
         return tool
     
     except Exception as e:
         print(f"❌ Error initializing OWASP Tool: {e}")
+        print(f"   Error type: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
     
     finally:
-        # --- 4. RESTORE REAL KEY ---
-        # We must put the real key back into OPENAI_API_KEY 
-        # so the Agents in main.py (which use ChatOpenAI) can function.
+        # Restore the real key for other agents
         if real_hf_key:
             os.environ["OPENAI_API_KEY"] = real_hf_key
+            print("🔄 Restored OPENAI_API_KEY for other agents")
