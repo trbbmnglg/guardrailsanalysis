@@ -3,10 +3,12 @@
 
     // --- CUSTOM "SIMPLE LEAF" ILLUSTRATION (SVG) ---
     const PLANT_SVGS = {
+        // FIXED: Added the opening <svg> tag with viewBox and classes
         green: `
-              <style>
-                  .leaf-blade { fill: #1E7F43; } /* Dark Green */
-                  .leaf-vein { stroke: #6BC46D; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; } /* Light Green */
+            <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <style>
+                    .leaf-blade { fill: #1E7F43; }
+                    .leaf-vein { stroke: #6BC46D; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
                 </style>
                 <path class="leaf-blade" d="M50 60 C40 60 10 55 15 30 C25 20 45 40 50 60 Z" />
                 <path class="leaf-blade" d="M50 60 C60 60 90 55 85 30 C75 20 55 40 50 60 Z" />
@@ -15,8 +17,8 @@
                 <path class="leaf-vein" d="M50 60 L50 20" stroke-width="2" />
                 <path class="leaf-vein" d="M50 60 Q40 50 25 38" stroke-width="2" />
                 <path class="leaf-vein" d="M50 60 Q60 50 75 38" stroke-width="2" />
-              </svg>
-              `,
+            </svg>
+        `,
         amber: `<svg viewBox="0 0 100 100" fill="none" class="w-full h-full"><path d="M50 15 Q 90 20 85 55 Q 80 90 50 85 Q 15 80 15 50 Q 20 15 50 15 Z" fill="#FBBF24" stroke="#D97706" stroke-width="2" /></svg>`,
         red: `<svg viewBox="0 0 100 100" fill="none" class="w-full h-full"><path d="M50 15 Q 80 25 80 50 Q 75 80 50 85 Q 20 80 20 50 Q 20 25 50 15 Z" fill="#92400E" stroke="#78350F" stroke-width="2" /></svg>`
     };
