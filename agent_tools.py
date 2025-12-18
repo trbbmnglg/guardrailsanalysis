@@ -29,8 +29,6 @@ def get_owasp_rag_tool():
     os.environ["OPENAI_API_KEY"] = "NA"
     
     try:
-        print("🔧 Attempting to initialize PDFSearchTool with HuggingFace embeddings...")
-        
         tool = PDFSearchTool(
             pdf=pdf_path,
             config={
@@ -42,81 +40,21 @@ def get_owasp_rag_tool():
                 },
                 "vectordb": {
                     "provider": "chromadb",
-                    "config": {
-                        "settings": Settings(
-                            persist_directory="./chroma_db",
-                            allow_reset=True,
-                            is_persistent=True,
-                        ),
-                    },
+                    "config": {},
                 },
             }
         )
-        
-        print(f"✅ OWASP RAG tool initialized successfully with {pdf_path}")
+        print(f"✅ OWASP RAG tool initialized with default ChromaDB settings")
         return tool
-    
-    except TypeError as te:
-        if "validate()" in str(te):
-            print(f"⚠️ Pydantic compatibility issue detected: {te}")
-            print("🔄 Attempting fallback: simplified configuration...")
-            
-            try:
-                tool = PDFSearchTool(
-                    pdf=pdf_path,
-                    config={
-                        "embedding_model": {
-                            "provider": "huggingface",
-                            "config": {
-                                "model": "sentence-transformers/all-MiniLM-L6-v2",
-                            },
-                        },
-                        "vectordb": {
-                            "provider": "chromadb",
-                            "config": {},
-                        },
-                    }
-                )
-                print(f"✅ OWASP RAG tool initialized with default ChromaDB settings")
-                return tool
-                
-            except Exception as e2:
-                print(f"⚠️ Simplified config failed: {e2}")
-                print("🔄 Attempting fallback: basic initialization without custom config...")
-                
-                try:
-                    os.environ["OPENAI_API_KEY"] = original_openai_key or "NA"
-                    
-                    tool = PDFSearchTool(pdf=pdf_path)
-                    print(f"✅ OWASP RAG tool initialized with default configuration")
-                    print("⚠️ Note: Using OpenAI embeddings instead of HuggingFace")
-                    return tool
-                    
-                except Exception as e3:
-                    print(f"❌ All initialization methods failed: {e3}")
-                    return None
-        else:
-            raise te
-    
-    except Exception as e:
-        print(f"❌ Error initializing OWASP Tool: {e}")
-        print(f"   Error type: {type(e).__name__}")
-        import traceback
-        traceback.print_exc()
         
-        # Try one last fallback without config
-        print("🔄 Final fallback: attempting basic initialization...")
-        try:
-            os.environ["OPENAI_API_KEY"] = original_openai_key or "NA"
-            tool = PDFSearchTool(pdf=pdf_path)
-            print(f"✅ OWASP RAG tool initialized with basic configuration")
-            return tool
-        except:
-            print("❌ All initialization attempts failed. Returning None.")
-            return None
+    except Exception as e:
+        print(f"⚠️ Simplified config failed: {e}")
+        print("🔄 Attempting fallback: basic initialization without custom config...")
     
     finally:
         # Always restore the real key for other agents
         if original_openai_key:
             os.environ["OPENAI_API_KEY"] = original_openai_key
             print("🔄 Restored original OPENAI_API_KEY")
+
+        sys.exit(1)
