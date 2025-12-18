@@ -131,6 +131,7 @@ class AnalysisRequest(BaseModel):
     enable_profiling: bool = False 
     enable_rag_deep_scan: bool = False
     enable_greenai_analysis: bool = False
+    enable_gatekeeper: bool = True
 
 
 def extract_data(task_output):
@@ -166,6 +167,46 @@ def extract_data(task_output):
             print(f"⚠️ Failed to extract data: {e}")
             return None
 
+async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
+    """
+    Uses a single, cheap LLM call to determine if the input is worth analyzing.
+    Prevents analyzing raw code, spam, or too-short inputs.
+    """
+    prompt = f"""
+    You are a Security Gatekeeper for an AI Audit System.
+    Your ONLY job is to classify if the INPUT below is a valid "System Instruction" or "Agent Definition" that needs auditing.
+
+    REJECT (Return "valid": false) IF:
+    - It is raw code (Python, JS, HTML, CSS) without context.
+    - It is spam, gibberish, or random characters.
+    - It is extremely short (under 3 words) like "hi" or "test".
+    - It is a question asking YOU to do something unrelated to defining an AI agent (e.g. "Write me a poem").
+
+    ACCEPT (Return "valid": true) IF:
+    - It describes an AI persona, role, or task.
+    - It is a prompt intended for an LLM.
+    - It contains rules, constraints, or goals for an AI.
+
+    INPUT TO CLASSIFY:
+    '''{instruction[:2000]}'''
+
+    RETURN ONLY JSON:
+    {{
+        "valid": boolean,
+        "reason": "Short explanation of why it was rejected (max 10 words)"
+    }}
+    """
+    
+    try:
+        response = llm.invoke(prompt)
+        content = response.content
+        data = json.loads(repair_json(content))
+        return data
+    except Exception as e:
+        print(f"⚠️ Gatekeeper Check Failed (allowing to pass): {e}")
+        # Fail open: If gatekeeper crashes, we allow the request to proceed rather than blocking valid users.
+        return {"valid": True, "reason": "Gatekeeper error"}
+
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
     try:
@@ -179,6 +220,26 @@ async def run_analysis(request: AnalysisRequest):
             temperature=0.1,
             max_tokens=10000,
         )
+
+        gatekeeper_llm = ChatOpenAI(
+            model="meta-llama/Llama-3.2-3B-Instruct",
+            base_url="https://router.huggingface.co/v1",
+            api_key=request.api_key,
+            temperature=0.1,
+            max_tokens=500,
+        )
+
+        if request.enable_gatekeeper:
+            print("🛡️ Running Gatekeeper Check...")
+            gatekeeper_result = await validate_instruction_gatekeeper(request.instruction, gatekeeper_llm)
+            
+            if not gatekeeper_result.get("valid", True):
+                print(f"⛔ Gatekeeper Rejected: {gatekeeper_result.get('reason')}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Invalid Instruction Rejected: {gatekeeper_result.get('reason', 'Input does not look like an agent prompt.')}"
+                )
+            print("✅ Gatekeeper Passed.")
 
         agents_config = copy.deepcopy(GLOBAL_AGENTS_CONFIG)
         tasks_config = copy.deepcopy(GLOBAL_TASKS_CONFIG)
