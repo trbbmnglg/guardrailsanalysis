@@ -4,15 +4,19 @@
     // --- CUSTOM "SIMPLE LEAF" ILLUSTRATION (SVG) ---
     const PLANT_SVGS = {
         green: `
-        <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-xl filter saturate-110">
-            <path d="M50 15 Q 90 15 90 50 Q 90 85 50 85 Q 10 85 10 50 Q 10 15 50 15 Z" fill="#34D399" stroke="#059669" stroke-width="2" />
-            <path d="M50 85 L 50 95" stroke="#059669" stroke-width="3" stroke-linecap="round" />
-            <path d="M50 15 L 50 85" stroke="#059669" stroke-width="2" />
-            <path d="M50 30 L 80 40" stroke="#059669" stroke-width="1.5" opacity="0.6"/>
-            <path d="M50 30 L 20 40" stroke="#059669" stroke-width="1.5" opacity="0.6"/>
-            <path d="M50 50 L 85 60" stroke="#059669" stroke-width="1.5" opacity="0.6"/>
-            <path d="M50 50 L 15 60" stroke="#059669" stroke-width="1.5" opacity="0.6"/>
-        </svg>`,
+              <style>
+                  .leaf-blade { fill: #1E7F43; } /* Dark Green */
+                  .leaf-vein { stroke: #6BC46D; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; } /* Light Green */
+                </style>
+                <path class="leaf-blade" d="M50 60 C40 60 10 55 15 30 C25 20 45 40 50 60 Z" />
+                <path class="leaf-blade" d="M50 60 C60 60 90 55 85 30 C75 20 55 40 50 60 Z" />
+                <path class="leaf-blade" d="M50 60 C30 40 30 20 50 5 C70 20 70 40 50 60 Z" />
+                <path class="leaf-vein" d="M50 95 Q48 80 50 60" stroke-width="3" />
+                <path class="leaf-vein" d="M50 60 L50 20" stroke-width="2" />
+                <path class="leaf-vein" d="M50 60 Q40 50 25 38" stroke-width="2" />
+                <path class="leaf-vein" d="M50 60 Q60 50 75 38" stroke-width="2" />
+              </svg>
+              `,
         amber: `<svg viewBox="0 0 100 100" fill="none" class="w-full h-full"><path d="M50 15 Q 90 20 85 55 Q 80 90 50 85 Q 15 80 15 50 Q 20 15 50 15 Z" fill="#FBBF24" stroke="#D97706" stroke-width="2" /></svg>`,
         red: `<svg viewBox="0 0 100 100" fill="none" class="w-full h-full"><path d="M50 15 Q 80 25 80 50 Q 75 80 50 85 Q 20 80 20 50 Q 20 25 50 15 Z" fill="#92400E" stroke="#78350F" stroke-width="2" /></svg>`
     };
