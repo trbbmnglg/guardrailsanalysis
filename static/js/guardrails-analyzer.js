@@ -261,6 +261,11 @@
         const el = document.getElementById("executive-summary");
         if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); 
     }
+
+    const BG_ICONS = {
+        active: `<svg class="w-full h-full" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg>`,
+        missing: `<svg class="w-full h-full" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" /></svg>`
+    };
   
     // --- DISPLAY ENGINE ---
     function displayResults(enableProfiling, enableRagDeepScan, enableGreenAI) {
@@ -273,10 +278,11 @@
         const presentGuardrails = analysisResults.guardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         const missingGuardrails = analysisResults.guardrails.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
 
-        // Determine Theme for Score Card based on score (Only Top Bar)
-        let topBarColor = "bg-red-500";
-        if (gapData.score >= 80) topBarColor = "bg-emerald-500";
-        else if (gapData.score >= 50) topBarColor = "bg-amber-500";
+        // Determine Theme for Score Card based on score
+        let scoreColor = "text-red-500";
+        let barColor = "bg-red-500";
+        if (gapData.score >= 80) { scoreColor = "text-emerald-500"; barColor = "bg-emerald-500"; }
+        else if (gapData.score >= 50) { scoreColor = "text-amber-500"; barColor = "bg-amber-500"; }
 
         // 2. Render Executive Summary
         const summaryGridCols = enableGreenAI ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3';
@@ -284,38 +290,50 @@
         const summaryHTML = `
         <div id="executive-summary" class="grid ${summaryGridCols} gap-6 mb-10 fade-in">
             
-            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col items-center">
-                <div class="absolute top-0 left-0 w-full h-1 ${topBarColor}"></div>
+            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col justify-between">
+                <div class="absolute top-0 left-0 w-full h-1 ${barColor}"></div>
                 
-                <div class="flex-1 flex flex-col items-center justify-center pt-4">
+                <div class="absolute inset-0 flex flex-col items-center justify-center z-10">
                     ${renderScoreChart(gapData.score)}
                 </div>
-                
-                <div class="absolute bottom-8 w-full text-center">
+
+                <div class="absolute bottom-6 w-full text-center z-20">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Safety Rating</p>
                 </div>
             </div>
 
-            <div onclick="window.guardrailAnalyzer.filterByStatus('active')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col items-center">
-                <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div> 
+            <div onclick="window.guardrailAnalyzer.filterByStatus('active')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all hover:shadow-md aspect-square">
+                <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
                 
-                <div class="flex-1 flex flex-col items-center justify-center pb-8">
-                    <div class="text-8xl font-black text-blue-600 dark:text-blue-400 tracking-tighter drop-shadow-sm leading-none">${presentGuardrails.length}</div>
+                <div class="absolute -bottom-6 -right-6 w-40 h-40 text-blue-50 dark:text-blue-900/10 opacity-50 dark:opacity-20 transform -rotate-12 transition-transform group-hover:scale-110 pointer-events-none">
+                    ${BG_ICONS.active}
                 </div>
 
-                <div class="absolute bottom-8 w-full text-center">
+                <div class="absolute inset-0 flex flex-col items-center justify-center z-10">
+                    <div class="text-8xl font-black text-blue-600 dark:text-blue-400 tracking-tighter drop-shadow-sm leading-none">
+                        ${presentGuardrails.length}
+                    </div>
+                </div>
+
+                <div class="absolute bottom-6 w-full text-center z-20">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Active Guardrails</p>
                 </div>
             </div>
 
-            <div onclick="window.guardrailAnalyzer.filterByStatus('missing')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col items-center">
-                <div class="absolute top-0 left-0 w-full h-1 bg-red-500"></div> 
+            <div onclick="window.guardrailAnalyzer.filterByStatus('missing')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all hover:shadow-md aspect-square">
+                <div class="absolute top-0 left-0 w-full h-1 bg-red-500"></div>
                 
-                <div class="flex-1 flex flex-col items-center justify-center pb-8">
-                    <div class="text-8xl font-black text-red-500 dark:text-red-400 tracking-tighter drop-shadow-sm leading-none">${missingGuardrails.length}</div>
+                <div class="absolute -bottom-6 -right-6 w-40 h-40 text-red-50 dark:text-red-900/10 opacity-50 dark:opacity-20 transform -rotate-12 transition-transform group-hover:scale-110 pointer-events-none">
+                    ${BG_ICONS.missing}
                 </div>
 
-                <div class="absolute bottom-8 w-full text-center">
+                <div class="absolute inset-0 flex flex-col items-center justify-center z-10">
+                    <div class="text-8xl font-black text-red-500 dark:text-red-400 tracking-tighter drop-shadow-sm leading-none">
+                        ${missingGuardrails.length}
+                    </div>
+                </div>
+
+                <div class="absolute bottom-6 w-full text-center z-20">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Missing Guardrails</p>
                 </div>
             </div>
@@ -323,39 +341,33 @@
             ${enableGreenAI ? `<div id="slot-green-ai" class="h-full"></div>` : ''}
         </div>`;
 
-        // 3. PERFORMANCE DASHBOARD
-        let performanceRowHTML = '';
-        if (enableProfiling) {
-            performanceRowHTML = `
+        const performanceRowHTML = enableProfiling ? `
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12 fade-in">
                 <div id="slot-latency-engine" class="lg:col-span-4 h-full"></div>
                 <div id="slot-latency-waterfall" class="lg:col-span-8 h-full"></div>
-            </div>`;
-        }
+            </div>` : '';
 
-        // 4. Filter Bar
         const filterHTML = `
             <div class="sticky top-0 z-40 bg-slate-50/90 dark:bg-[#0f111a]/90 backdrop-blur-md py-4 mb-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4 overflow-x-auto custom-scroll px-2" id="categoryFilters">
             </div>`;
 
-        // 5. Build Final Layout
-          container.innerHTML = summaryHTML + filterHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>' + performanceRowHTML;
+        container.innerHTML = summaryHTML + filterHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>' + performanceRowHTML;
 
-        // 6. Initialize Modules
+        // Initialize Modules
         if (enableGreenAI && window.greenAIMonitor) {
             window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'slot-green-ai');
         }
-        
+        // ... (rest of function)
         if (enableProfiling && window.latencyProfiler) {
-            window.latencyProfiler.analyze(
-                analysisResults.guardrails, 
-                analysisResults.tiering_strategy,
-                { engine: 'slot-latency-engine', waterfall: 'slot-latency-waterfall' }
-            );
-        }
-
-        container.classList.remove('hidden');
-        applyFilters();
+             window.latencyProfiler.analyze(
+                 analysisResults.guardrails, 
+                 analysisResults.tiering_strategy,
+                 { engine: 'slot-latency-engine', waterfall: 'slot-latency-waterfall' }
+             );
+         }
+ 
+         container.classList.remove('hidden');
+         applyFilters();
     }
 
     // --- CARD RENDERER (SQUARE Grid Tiles) ---
