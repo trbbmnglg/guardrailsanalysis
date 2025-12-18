@@ -1,5 +1,8 @@
 import os
+import sys
 from crewai_tools import PDFSearchTool
+from chromadb.config import Settings
+
 
 def get_owasp_rag_tool():
     """
@@ -17,7 +20,7 @@ def get_owasp_rag_tool():
     if not os.path.exists(pdf_path):
         print(f"⚠️ Warning: Knowledge base not found at {pdf_path}")
         return None
-
+    
     # --- 1. KEY MAPPING ---
     # Capture the real key from main.py
     real_hf_key = os.environ.get("OPENAI_API_KEY")
@@ -29,46 +32,37 @@ def get_owasp_rag_tool():
         os.environ["HUGGINGFACEHUB_API_TOKEN"] = real_hf_key
         # Generic fallback:
         os.environ["HF_TOKEN"] = real_hf_key
-
-    # --- 2. BYPASS OPENAI VALIDATION ---
-    # We must set this to SOMETHING so Pydantic doesn't crash.
-    # We use "NA" because our config below forces 'huggingface' provider,
-    # so the code should never actually try to use this key.
+    
     os.environ["OPENAI_API_KEY"] = "NA"
-
+    
     try:
-        # --- 3. INITIALIZE TOOL ---
-        # Explicitly defining the config tells Embedchain to use HF 
-        # for both the LLM (summarization) and the Embedder (vectorizing).
         tool = PDFSearchTool(
             pdf=pdf_path,
-            config=dict(
-                llm=dict(
-                    provider="huggingface",
-                    config=dict(
-                        model="mistralai/Mistral-7B-Instruct-v0.2",
-                        temperature=0.1,
-                        max_new_tokens=512,
-                    ),
-                ),
-                embedder=dict(
-                    provider="huggingface",
-                    config=dict(
-                        model="sentence-transformers/all-MiniLM-L6-v2",
-                    ),
-                ),
-            )
+            config={
+                "embedding_model": {
+                    "provider": "huggingface",
+                    "config": {
+                        "model": "mistralai/Mistral-7B-Instruct-v0.2",
+                    },
+                },
+                "vectordb": {
+                    "provider": "chroma",
+                    "config": {
+                        "settings": Settings(
+                            persist_directory="/content/chroma",
+                            allow_reset=True,
+                            is_persistent=True,
+                        ),
+                    },
+                },
+            }
         )
         return tool
-
+    
     except Exception as e:
-        print(f"❌ Error initializing OWASP Tool: {e}")    
-        raise HTTPException(
-            status_code=503,
-            detail=f"Gatekeeper LLM Error: Unable to verify input safety. ({e})"
-        ) 
-        return None
-
+        print(f"❌ Error initializing OWASP Tool: {e}")
+        sys.exit(1)
+    
     finally:
         # --- 4. RESTORE REAL KEY ---
         # We must put the real key back into OPENAI_API_KEY 
