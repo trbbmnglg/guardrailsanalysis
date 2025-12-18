@@ -217,7 +217,7 @@ async def run_analysis(request: AnalysisRequest):
             model="meta-llama/meta-llama/Llama-3.3-70B-Instruct",
             base_url="https://router.huggingface.co/v1",
             #api_key=request.api_key,
-            api_key=os.environ["HF_TOKEN"],
+            api_key=request.api_key,
             temperature=0.1,
             max_tokens=10000,
         )
@@ -226,7 +226,7 @@ async def run_analysis(request: AnalysisRequest):
             model="meta-llama/Llama-3.2-3B-Instruct",
             base_url="https://router.huggingface.co/v1",
             #api_key=request.api_key,
-            api_key=os.environ["HF_TOKEN"],
+            api_key=request.api_key,
             temperature=0.1,
             max_tokens=500,
         )
