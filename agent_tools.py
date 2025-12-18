@@ -6,12 +6,6 @@ from sentence_transformers import SentenceTransformer
 
 
 def get_owasp_rag_tool():
-    """
-    Creates a RAG tool for the OWASP LLM Top 10 PDF.
-    
-    Uses HuggingFace embeddings and ChromaDB based on official CrewAI documentation.
-    Handles API key mapping and Pydantic compatibility issues.
-    """
     
     pdf_path = "kb/LLMAll_en-US_FINAL.pdf"
     
@@ -31,12 +25,10 @@ def get_owasp_rag_tool():
     else:
         print("⚠️ Warning: No HuggingFace token found in OPENAI_API_KEY")
     
-    # Temporarily set OpenAI key to placeholder
     original_openai_key = os.environ.get("OPENAI_API_KEY")
     os.environ["OPENAI_API_KEY"] = "NA"
     
     try:
-        # Method 1: Try with full configuration
         print("🔧 Attempting to initialize PDFSearchTool with HuggingFace embeddings...")
         
         tool = PDFSearchTool(
@@ -70,7 +62,6 @@ def get_owasp_rag_tool():
             print("🔄 Attempting fallback: simplified configuration...")
             
             try:
-                # Method 2: Try without ChromaDB Settings (let it use defaults)
                 tool = PDFSearchTool(
                     pdf=pdf_path,
                     config={
@@ -94,8 +85,6 @@ def get_owasp_rag_tool():
                 print("🔄 Attempting fallback: basic initialization without custom config...")
                 
                 try:
-                    # Method 3: Use basic initialization (relies on OpenAI defaults)
-                    # This requires a valid OpenAI key, so we restore it temporarily
                     os.environ["OPENAI_API_KEY"] = original_openai_key or "NA"
                     
                     tool = PDFSearchTool(pdf=pdf_path)
