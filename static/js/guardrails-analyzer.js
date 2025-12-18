@@ -470,23 +470,37 @@
         updateCategoryChips();
     }
 
-    function updateCategoryChips() {
-        const allCats = ['all', ...new Set(analysisResults.guardrails.map(g => g.category))];
+function updateCategoryChips() {
+        if (!analysisResults) return;
+
+        let pool = analysisResults.guardrails;
+
+        if (currentStatusFilter === 'active') {
+            pool = pool.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
+        } else if (currentStatusFilter === 'missing') {
+            pool = pool.filter(g => g.name.toUpperCase().startsWith('MISSING') || g.location === "");
+        }
+
         const counts = {};
-        analysisResults.guardrails.forEach(g => counts[g.category] = (counts[g.category] || 0) + 1);
+        pool.forEach(g => counts[g.category] = (counts[g.category] || 0) + 1);
+        
+        const allCats = ['all', ...new Set(analysisResults.guardrails.map(g => g.category))];
         
         const container = document.getElementById('categoryFilters');
         if (container) {
             container.innerHTML = allCats.map(cat => {
-                const count = cat === 'all' ? analysisResults.guardrails.length : counts[cat];
+              
+                const count = cat === 'all' ? pool.length : (counts[cat] || 0);
                 const isSelected = currentCategoryFilter === cat;
                 
                 const activeClass = "bg-indigo-600 text-white shadow-lg border-transparent";
                 const inactiveClass = "bg-white dark:bg-[#151925] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700";
                 
+                const opacityClass = count === 0 && cat !== 'all' ? "opacity-50" : "opacity-100";
+
                 return `
                 <button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" 
-                    class="shrink-0 px-4 py-2 rounded-none text-xs font-bold transition-all duration-300 border flex items-center gap-2 ${isSelected ? activeClass : inactiveClass}">
+                    class="shrink-0 px-4 py-2 rounded-none text-xs font-bold transition-all duration-300 border flex items-center gap-2 ${isSelected ? activeClass : inactiveClass} ${opacityClass}">
                     <span>${escapeHtml(cat === 'all' ? 'All Categories' : cat)}</span>
                     <span class="px-1.5 py-0.5 rounded-none text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">
                         ${count}
@@ -496,7 +510,6 @@
         }
     }
 
-    // --- ROBUST PDF EXPORT ---
     function exportPdf() {
         const element = document.getElementById('resultsSection');
         if (!element || element.classList.contains('hidden')) { 
