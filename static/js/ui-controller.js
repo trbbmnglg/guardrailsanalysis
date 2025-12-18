@@ -1,3 +1,4 @@
+// v3/static/js/ui-controller.js
 let isDrawerOpen = false;
 let currentSection = null;
 
@@ -117,10 +118,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function triggerRun() {
+// FIXED: Removed programmatic .click() to prevent double execution
+function triggerRun(event) {
     if (!isDrawerOpen) {
+        // If drawer is closed, just open it.
+        // STOP the event here so the analyzer doesn't try to run immediately (which would fail validation).
+        if(event) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
         handleNavClick('instruction');
         return;
     }
-    document.getElementById('analyzeBtn').click();
+    // If drawer is open, we do NOTHING. 
+    // We let the natural click event bubble up to the event listeners in 
+    // ui-controller.js and guardrails-analyzer.js which will run the audit.
 }
