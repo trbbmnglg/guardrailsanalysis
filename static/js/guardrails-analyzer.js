@@ -75,37 +75,36 @@
         return div.innerHTML;
     }
 
-    // --- NEW: Error Cleaning Helper ---
+    // --- NEW: Advanced Error Cleaning Helper ---
     function cleanErrorMessage(errData, status) {
-        // Fallback for network errors or empty responses
         if (!errData) return `Server Error (${status})`;
-        
-        // 1. Identify the payload
         let msg = errData.detail || errData.message || errData.error;
         if (!msg) return `Error (${status})`;
 
-        // 2. Handle FastAPI/Pydantic Arrays (List of validation errors)
-        if (Array.isArray(msg)) {
-            // Join messages, removing "value_error" types if possible or just taking the msg
-            return msg.map(m => m.msg || JSON.stringify(m)).join(' | ');
-        }
+        // 1. Handle Array errors (FastAPI validation)
+        if (Array.isArray(msg)) return msg.map(m => m.msg || JSON.stringify(m)).join(' | ');
 
-        // 3. Handle Python string artifacts (str(e))
-        // Example: "['Login failed']" or "('Login failed',)"
         if (typeof msg === 'string') {
             msg = msg.trim();
-            
-            // Regex to remove ["..."] or ['...']
+
+            // 2. [NEW] Extract "You have reached..." from inside {'error': '...'} structure
+            // Matches anything looking like: { ... 'error': 'THE MESSAGE' ... }
+            const innerErrorMatch = msg.match(/\{.*['"]error['"]\s*:\s*['"]([^'"]+)['"].*\}/);
+            if (innerErrorMatch && innerErrorMatch[1]) {
+                // Return just the clean inner message found in the dictionary
+                return innerErrorMatch[1]; 
+            }
+
+            // 3. Remove Python list/tuple wrappers ["..."] or ('...',)
             if (/^\[['"](.+)['"]\]$/.test(msg)) {
                 msg = msg.replace(/^\[['"]|['"]\]$/g, '');
-            }
-            // Regex to remove ('...',)
-            else if (/^\(['"](.+)['"],?\)$/.test(msg)) {
+            } else if (/^\(['"](.+)['"],?\)$/.test(msg)) {
                 msg = msg.replace(/^\(['"]|['"],?\)$/g, '');
             }
             
-            // Clean up typical "Error: " prefix if duplicate
+            // 4. Clean common prefixes
             if (msg.startsWith('Error:')) msg = msg.substring(6).trim();
+            if (msg.startsWith('Gatekeeper LLM Error:')) msg = msg.replace('Gatekeeper LLM Error:', '').trim();
         }
         
         return msg;
@@ -261,7 +260,7 @@
     
             if (!response.ok) {
                 const errData = await response.json().catch(() => null);
-                // USE THE NEW CLEANING FUNCTION HERE
+                // Clean the error message using our new helper
                 const cleanMsg = cleanErrorMessage(errData, response.status);
                 throw new Error(cleanMsg);
             }
