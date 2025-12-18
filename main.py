@@ -298,7 +298,7 @@ async def run_analysis(request: AnalysisRequest):
         if request.enable_gatekeeper:
             gatekeeper_llm = ChatOpenAI(
                 #model="openai/meta-llama/Llama-3.2-3B-Instruct",
-                model="openai/deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+                model="openai/Qwen/Qwen2.5-72B-Instruct",
                 base_url="https://router.huggingface.co/v1",
                 api_key=request.api_key,
                 temperature=0.6,
