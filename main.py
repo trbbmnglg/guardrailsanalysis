@@ -214,9 +214,10 @@ async def run_analysis(request: AnalysisRequest):
         os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
         
         llm = ChatOpenAI(
-            model="openai/meta-llama/Llama-3.3-70B-Instruct",
+            model="meta-llama/meta-llama/Llama-3.3-70B-Instruct",
             base_url="https://router.huggingface.co/v1",
-            api_key=request.api_key,
+            #api_key=request.api_key,
+            api_key=os.environ["HF_TOKEN"],
             temperature=0.1,
             max_tokens=10000,
         )
@@ -224,7 +225,8 @@ async def run_analysis(request: AnalysisRequest):
         gatekeeper_llm = ChatOpenAI(
             model="meta-llama/Llama-3.2-3B-Instruct",
             base_url="https://router.huggingface.co/v1",
-            api_key=request.api_key,
+            #api_key=request.api_key,
+            api_key=os.environ["HF_TOKEN"],
             temperature=0.1,
             max_tokens=500,
         )
