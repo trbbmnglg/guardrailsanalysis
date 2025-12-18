@@ -48,4 +48,5 @@ def get_owasp_rag_tool():
         
     except Exception as e:
         print(f"❌ Error initializing RAG tool: {e}")
+        sys.exit(1)
         return None
