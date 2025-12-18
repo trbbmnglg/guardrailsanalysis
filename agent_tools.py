@@ -5,34 +5,41 @@ def get_owasp_rag_tool():
     """
     Creates a RAG tool for the OWASP LLM Top 10 PDF.
     
-    CRITICAL CONFIGURATION:
-    1. Embedder: Uses 'sentence-transformers/all-MiniLM-L6-v2' (Local/Free)
-    2. LLM: Uses 'mistralai/Mistral-7B-Instruct-v0.2' (Hugging Face)
-    3. Auth: Sets a DUMMY OpenAI key to bypass Pydantic validation, 
-       while forcing the tool to use the HUGGINGFACEHUB_API_TOKEN.
+    CRITICAL FIXES:
+    1. Sets 'HUGGINGFACE_ACCESS_TOKEN' (Required by Embedchain).
+    2. Sets 'HUGGINGFACEHUB_API_TOKEN' (Required by other HF libraries).
+    3. Keeps 'OPENAI_API_KEY' as 'NA' to satisfy CrewAI validation, 
+       but forces the config to use Hugging Face so 'NA' is never used.
     """
     
     pdf_path = "kb/LLMAll_en-US_FINAL.pdf"
     
-    # 1. Check file existence
     if not os.path.exists(pdf_path):
         print(f"⚠️ Warning: Knowledge base not found at {pdf_path}")
         return None
 
-    # --- KEY MANAGEMENT ---
-    # Capture the real key (which main.py puts in OPENAI_API_KEY)
-    real_key = os.environ.get("OPENAI_API_KEY")
+    # --- 1. KEY MAPPING ---
+    # Capture the real key from main.py
+    real_hf_key = os.environ.get("OPENAI_API_KEY")
     
-    # Set the key that Embedchain/HuggingFace actually needs
-    if real_key:
-        os.environ["HUGGINGFACEHUB_API_TOKEN"] = real_key
+    if real_hf_key:
+        # Embedchain specifically looks for this one:
+        os.environ["HUGGINGFACE_ACCESS_TOKEN"] = real_hf_key
+        # Older libraries look for this one:
+        os.environ["HUGGINGFACEHUB_API_TOKEN"] = real_hf_key
+        # Generic fallback:
+        os.environ["HF_TOKEN"] = real_hf_key
 
-    # BYPASS VALIDATION: Set dummy key so Pydantic doesn't crash with "Not Set"
+    # --- 2. BYPASS OPENAI VALIDATION ---
+    # We must set this to SOMETHING so Pydantic doesn't crash.
+    # We use "NA" because our config below forces 'huggingface' provider,
+    # so the code should never actually try to use this key.
     os.environ["OPENAI_API_KEY"] = "NA"
 
     try:
-        # 2. INITIALIZE TOOL
-        # The config forces provider="huggingface", so it won't use the dummy key.
+        # --- 3. INITIALIZE TOOL ---
+        # Explicitly defining the config tells Embedchain to use HF 
+        # for both the LLM (summarization) and the Embedder (vectorizing).
         tool = PDFSearchTool(
             pdf=pdf_path,
             config=dict(
@@ -55,11 +62,15 @@ def get_owasp_rag_tool():
         return tool
 
     except Exception as e:
-        print(f"❌ Error initializing OWASP Tool: {e}")
+        raise HTTPException(
+            status_code=503,
+            print(f"❌ Error initializing OWASP Tool: {e}")
+        )        
         return None
 
     finally:
-        # 3. RESTORE REAL KEY
-        # Vital: Put the key back so the main Agents (Security, Privacy) can run!
-        if real_key:
-            os.environ["OPENAI_API_KEY"] = real_key
+        # --- 4. RESTORE REAL KEY ---
+        # We must put the real key back into OPENAI_API_KEY 
+        # so the Agents in main.py (which use ChatOpenAI) can function.
+        if real_hf_key:
+            os.environ["OPENAI_API_KEY"] = real_hf_key
