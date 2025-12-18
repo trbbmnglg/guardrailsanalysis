@@ -8,10 +8,10 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from crewai import Agent, Task, Crew, Process
-# [NEW] Import 'llm' from project annotations
 from crewai.project import CrewBase, agent, crew, task, llm
 from langchain_openai import ChatOpenAI
-from green_ai_plugin import GreenAIAnalysis  # Imported for the Pydantic model
+from green_ai_plugin import GreenAIAnalysis
+from agent_tools import get_owasp_rag_tool
 
 app = FastAPI()
 
@@ -196,7 +196,9 @@ class GuardrailsAuditCrew:
     # --- 2. AGENTS ---
     @agent
     def security_auditor(self) -> Agent:
-        return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+        owasp_tool = get_owasp_rag_tool()
+        tools_list = [owasp_tool] if owasp_tool else []
+        return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), tools=tools_list, allow_delegation=False, verbose=True)
 
     @agent
     def privacy_officer(self) -> Agent:
