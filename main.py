@@ -163,8 +163,9 @@ async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
         data = json.loads(repair_json(content))
         return data
     except Exception as e:
-        print(f"⚠️ Gatekeeper Check Failed (allowing to pass): {e}")
-        return {"valid": True, "reason": "Gatekeeper error"}
+        # 🔴 CHANGED: Return a specific error key instead of defaulting to Valid=True
+        print(f"⚠️ Gatekeeper System Error: {e}")
+        return {"system_error": str(e)}
 
 # --- CREW DEFINITION ---
 @CrewBase
@@ -294,11 +295,10 @@ async def run_analysis(request: AnalysisRequest):
         os.environ["OPENAI_API_KEY"] = request.api_key
         os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
         
-        # 1. Gatekeeper (Runs Outside Crew)
+        # 1. Gatekeeper
         if request.enable_gatekeeper:
             gatekeeper_llm = ChatOpenAI(
-                #model="openai/meta-llama/Llama-3.2-3B-Instruct",
-                model="openai/Qwen/Qwen2.5-72B-Instruct",
+                model="Qwen/Qwen2.5-72B-Instruct",
                 base_url="https://router.huggingface.co/v1",
                 api_key=request.api_key,
                 temperature=0.6,
@@ -307,12 +307,21 @@ async def run_analysis(request: AnalysisRequest):
             print("🛡️ Running Gatekeeper Check...")
             gatekeeper_result = await validate_instruction_gatekeeper(request.instruction, gatekeeper_llm)
             
+            if "system_error" in gatekeeper_result:
+                error_msg = gatekeeper_result["system_error"]
+                print(f"⛔ Gatekeeper Failed to Run: {error_msg}")
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Gatekeeper LLM Error: Unable to verify input safety. ({error_msg})"
+                )
+
             if not gatekeeper_result.get("valid", True):
-                print(f"⛔ Gatekeeper Rejected: {gatekeeper_result.get('reason')}")
+                print(f"⛔ Gatekeeper Rejected Content: {gatekeeper_result.get('reason')}")
                 raise HTTPException(
                     status_code=400, 
                     detail=f"Invalid Instruction Rejected: {gatekeeper_result.get('reason', 'Input does not look like an agent prompt.')}"
                 )
+            
             print("✅ Gatekeeper Passed.")
 
         # 2. Run Crew
@@ -336,7 +345,7 @@ async def run_analysis(request: AnalysisRequest):
         if not parsed_result:
              parsed_result = json.loads(repair_json(str(result)))
 
-        # 4. Merge Optional Data (since kickoff returns the final task output only)
+        # 4. Merge Optional Data
         if request.enable_profiling:
              tier_task = audit_crew.cost_profiling_task()
              if tier_task and tier_task.output:
