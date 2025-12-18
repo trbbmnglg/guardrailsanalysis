@@ -22,72 +22,48 @@
             border: "border-purple-200 dark:border-purple-800/50", 
             bg: "bg-purple-50 dark:bg-purple-900/10", 
             text: "text-purple-700 dark:text-purple-300", 
-            accent: "bg-purple-600", 
-            iconBg: "bg-purple-100 dark:bg-purple-900/30", 
-            iconColor: "text-purple-600 dark:text-purple-300",
             icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>` 
         },
         "scope control": { 
             border: "border-blue-200 dark:border-blue-800/50", 
             bg: "bg-blue-50 dark:bg-blue-900/10", 
             text: "text-blue-700 dark:text-blue-300", 
-            accent: "bg-blue-600", 
-            iconBg: "bg-blue-100 dark:bg-blue-900/30", 
-            iconColor: "text-blue-600 dark:text-blue-300",
             icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>`
         },
         "security": { 
             border: "border-red-200 dark:border-red-800/50", 
             bg: "bg-red-50 dark:bg-red-900/10", 
             text: "text-red-700 dark:text-red-300", 
-            accent: "bg-red-600", 
-            iconBg: "bg-red-100 dark:bg-red-900/30", 
-            iconColor: "text-red-600 dark:text-red-300",
             icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`
         },
         "privacy": { 
             border: "border-emerald-200 dark:border-emerald-800/50", 
             bg: "bg-emerald-50 dark:bg-emerald-900/10", 
             text: "text-emerald-700 dark:text-emerald-300", 
-            accent: "bg-emerald-600", 
-            iconBg: "bg-emerald-100 dark:bg-emerald-900/30", 
-            iconColor: "text-emerald-600 dark:text-emerald-300",
             icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>`
         },
         "input validation": { 
             border: "border-cyan-200 dark:border-cyan-800/50", 
             bg: "bg-cyan-50 dark:bg-cyan-900/10", 
             text: "text-cyan-700 dark:text-cyan-300", 
-            accent: "bg-cyan-600", 
-            iconBg: "bg-cyan-100 dark:bg-cyan-900/30", 
-            iconColor: "text-cyan-600 dark:text-cyan-300",
             icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>`
         },
         "output control": { 
             border: "border-pink-200 dark:border-pink-800/50", 
             bg: "bg-pink-50 dark:bg-pink-900/10", 
             text: "text-pink-700 dark:text-pink-300", 
-            accent: "bg-pink-600", 
-            iconBg: "bg-pink-100 dark:bg-pink-900/30", 
-            iconColor: "text-pink-600 dark:text-pink-300",
             icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>`
         },
         "qa": { 
             border: "border-blue-200 dark:border-blue-800/50", 
             bg: "bg-blue-50 dark:bg-blue-900/10", 
             text: "text-blue-700 dark:text-blue-300", 
-            accent: "bg-blue-600", 
-            iconBg: "bg-blue-100 dark:bg-blue-900/30", 
-            iconColor: "text-blue-600 dark:text-blue-300",
             icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
         },
         "default": { 
             border: "border-slate-200 dark:border-slate-700", 
             bg: "bg-slate-50 dark:bg-slate-800/50", 
             text: "text-slate-600 dark:text-slate-400", 
-            accent: "bg-slate-500", 
-            iconBg: "bg-slate-100 dark:bg-slate-700", 
-            iconColor: "text-slate-500 dark:text-slate-400",
             icon: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
         }
     };
@@ -103,9 +79,12 @@
         const saveKeyCheckbox = document.getElementById('saveApiKey');
         if (saveKeyCheckbox && saveKeyCheckbox.parentElement && saveKeyCheckbox.type === 'checkbox' && !saveKeyCheckbox.classList.contains('sr-only')) {
              const parent = saveKeyCheckbox.parentElement;
-             const toggleHTML = `<label class="flex items-center gap-3 cursor-pointer group select-none"><div class="relative inline-flex items-center"><input type="checkbox" id="saveApiKey" class="sr-only peer"><div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600 transition-colors"></div></div><span class="text-sm text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors font-medium">Remember API key for this session</span></label>`;
-             const tempDiv = document.createElement('div'); tempDiv.innerHTML = toggleHTML;
-             if (tempDiv.firstElementChild) parent.parentNode.replaceChild(tempDiv.firstElementChild, parent);
+             const toggleHTML = `<label class="flex items-center gap-3 cursor-pointer group select-none"><div class="relative inline-flex items-center"><input type="checkbox" id="saveApiKey" class="sr-only peer"><div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-600 transition-colors"></div></div><span class="text-sm text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors font-medium">Remember API key</span></label>`;
+             const tempDiv = document.createElement('div');
+             tempDiv.innerHTML = toggleHTML;
+             if (tempDiv.firstElementChild) {
+                parent.parentNode.replaceChild(tempDiv.firstElementChild, parent);
+             }
         }
         
         apiKeyInput = document.getElementById('apiKey');
@@ -159,8 +138,25 @@
     }
 
     function performGapAnalysis(foundGuardrails) {
-        const score = Math.round((foundGuardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING')).length / (foundGuardrails.length || 1)) * 100);
-        return { score: score || 0 };
+        const expectedDimensions = [
+            { id: "security", weight: 2.0, categories: ["Security", "Compliance"] },
+            { id: "privacy", weight: 2.0, categories: ["Privacy"] },
+            { id: "rai", weight: 1.5, categories: ["Responsible AI", "Ethics"] },
+            { id: "validation", weight: 1.5, categories: ["Input Validation", "Output Control", "QA"] }
+        ];
+        
+        let totalPossible = 0; 
+        let earned = 0;
+        const present = foundGuardrails.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location);
+
+        expectedDimensions.forEach(dim => {
+            totalPossible += dim.weight;
+            const hasCoverage = present.some(g => dim.categories.some(c => g.category.toLowerCase().includes(c.toLowerCase())));
+            if (hasCoverage) earned += dim.weight;
+        });
+
+        const score = totalPossible === 0 ? 0 : Math.round((earned / totalPossible) * 100);
+        return { score };
     }
 
     function renderScoreChart(score) {
@@ -189,9 +185,9 @@
                     <circle cx="60" cy="60" r="${radius}" fill="none" class="stroke-slate-100 dark:stroke-slate-800" stroke-width="8"></circle>
                     <circle cx="60" cy="60" r="${radius}" fill="none" stroke="${color}" stroke-width="8" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round" class="transition-all duration-1000 ease-out"></circle>
                 </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span class="text-4xl font-black ${textColor} tracking-tight">${score}%</span>
-                    <span class="text-[10px] font-bold uppercase tracking-wider ${textColor} mt-1">${label}</span>
+                <div class="absolute inset-0 flex flex-col items-center justify-center gap-1">
+                    <span class="text-4xl font-black ${textColor} tracking-tight leading-none">${score}%</span>
+                    <span class="text-[8px] font-bold uppercase tracking-widest ${textColor} opacity-90">${label}</span>
                 </div>
             </div>
         </div>`;
@@ -199,14 +195,16 @@
 
     // --- MAIN ANALYSIS ---
     async function analyzeInstruction(apiKey, instruction) {
-        hideError(); hideResults(); showLoading();
+        hideError();
+        hideResults();
+        showLoading();
     
         try {
             const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
             const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
             const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
           
-            updateProgress(10, 'Initializing Analysis Crew...');
+            updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
     
             const response = await fetch('/analyze', {
                 method: 'POST',
@@ -280,44 +278,44 @@
         if (gapData.score >= 80) topBarColor = "bg-emerald-500";
         else if (gapData.score >= 50) topBarColor = "bg-amber-500";
 
-        // 2. Render Executive Summary (Aligned Layout)
+        // 2. Render Executive Summary
         const summaryGridCols = enableGreenAI ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3';
 
         const summaryHTML = `
         <div id="executive-summary" class="grid ${summaryGridCols} gap-6 mb-10 fade-in">
             
-            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all hover:shadow-md aspect-square">
+            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col items-center">
                 <div class="absolute top-0 left-0 w-full h-1 ${topBarColor}"></div>
                 
-                <div class="absolute inset-0 flex flex-col items-center justify-center pb-12">
+                <div class="flex-1 flex flex-col items-center justify-center pt-4">
                     ${renderScoreChart(gapData.score)}
                 </div>
                 
-                <div class="absolute bottom-14 w-full text-center">
+                <div class="absolute bottom-8 w-full text-center">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Safety Rating</p>
                 </div>
             </div>
 
-            <div onclick="window.guardrailAnalyzer.filterByStatus('active')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all hover:shadow-md aspect-square">
+            <div onclick="window.guardrailAnalyzer.filterByStatus('active')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col items-center">
                 <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div> 
                 
-                <div class="absolute inset-0 flex flex-col items-center justify-center pb-12">
+                <div class="flex-1 flex flex-col items-center justify-center pb-8">
                     <div class="text-8xl font-black text-blue-600 dark:text-blue-400 tracking-tighter drop-shadow-sm leading-none">${presentGuardrails.length}</div>
                 </div>
 
-                <div class="absolute bottom-14 w-full text-center">
+                <div class="absolute bottom-8 w-full text-center">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Active Guardrails</p>
                 </div>
             </div>
 
-            <div onclick="window.guardrailAnalyzer.filterByStatus('missing')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all hover:shadow-md aspect-square">
+            <div onclick="window.guardrailAnalyzer.filterByStatus('missing')" class="cursor-pointer relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm p-6 overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col items-center">
                 <div class="absolute top-0 left-0 w-full h-1 bg-red-500"></div> 
                 
-                <div class="absolute inset-0 flex flex-col items-center justify-center pb-12">
+                <div class="flex-1 flex flex-col items-center justify-center pb-8">
                     <div class="text-8xl font-black text-red-500 dark:text-red-400 tracking-tighter drop-shadow-sm leading-none">${missingGuardrails.length}</div>
                 </div>
 
-                <div class="absolute bottom-14 w-full text-center">
+                <div class="absolute bottom-8 w-full text-center">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Missing Guards</p>
                 </div>
             </div>
@@ -360,7 +358,7 @@
         applyFilters();
     }
 
-    // --- CARD RENDERER (SQUARE Grid Tiles - Flat) ---
+    // --- CARD RENDERER (SQUARE Grid Tiles) ---
     function renderGuardrails(guardrails) { 
         const container = document.getElementById('guardrailsDisplay');
         if (guardrails.length === 0) { 
@@ -371,7 +369,6 @@
         container.innerHTML = guardrails.map((g, idx) => {
              const isMissing = g.name.toUpperCase().startsWith('MISSING') || !g.location || g.location.trim() === "";
              
-             // Theme
              const catLower = (g.category || 'default').toLowerCase();
              let theme = categoryStyles['default']; 
              for (const [key, style] of Object.entries(categoryStyles)) {
@@ -442,7 +439,7 @@
         }).join('');
     }
 
-    // --- UTILS & EXPORT ---
+    // --- FILTERS & UI ---
     function filterByStatus(status) { currentStatusFilter = status; applyFilters(); }
     function filterByCategory(category) { currentCategoryFilter = category; applyFilters(); }
     
@@ -466,23 +463,65 @@
             container.innerHTML = allCats.map(cat => {
                 const count = cat === 'all' ? analysisResults.guardrails.length : counts[cat];
                 const isSelected = currentCategoryFilter === cat;
+                
                 const activeClass = "bg-indigo-600 text-white shadow-lg border-transparent";
                 const inactiveClass = "bg-white dark:bg-[#151925] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700";
-                return `<button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" class="shrink-0 px-4 py-2 rounded-none text-xs font-bold transition-all duration-300 border flex items-center gap-2 ${isSelected ? activeClass : inactiveClass}"><span>${escapeHtml(cat === 'all' ? 'All Categories' : cat)}</span><span class="px-1.5 py-0.5 rounded-none text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">${count}</span></button>`;
+                
+                return `
+                <button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" 
+                    class="shrink-0 px-4 py-2 rounded-none text-xs font-bold transition-all duration-300 border flex items-center gap-2 ${isSelected ? activeClass : inactiveClass}">
+                    <span>${escapeHtml(cat === 'all' ? 'All Categories' : cat)}</span>
+                    <span class="px-1.5 py-0.5 rounded-none text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">
+                        ${count}
+                    </span>
+                </button>`;
             }).join('');
         }
     }
 
+    // --- ROBUST PDF EXPORT ---
     function exportPdf() {
         const element = document.getElementById('resultsSection');
-        if (!element || element.classList.contains('hidden')) { showError("No analysis results to export."); return; }
-        const btn = document.getElementById('exportPdfBtn'); const originalText = btn.innerHTML; btn.innerHTML = `Generating...`; btn.disabled = true;
-        const opt = { margin: [0.3, 0.3, 0.3, 0.3], filename: `Guardrail_Audit.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0, windowWidth: 1400 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } };
-        setTimeout(() => { window.html2pdf().set(opt).from(element).save().then(() => { btn.innerHTML = originalText; btn.disabled = false; }).catch(err => { console.error("PDF Export failed:", err); btn.innerHTML = originalText; btn.disabled = false; showError("PDF Export failed. Check console for details."); }); }, 500);
+        if (!element || element.classList.contains('hidden')) { 
+            showError("No analysis results to export."); 
+            return; 
+        }
+
+        const btn = document.getElementById('exportPdfBtn');
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...`;
+        btn.disabled = true;
+
+        const opt = {
+            margin:       [0.3, 0.3, 0.3, 0.3],
+            filename:     `Guardrail_Audit_${new Date().toISOString().slice(0,10)}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2, 
+                useCORS: true, 
+                letterRendering: true,
+                scrollY: 0,
+                windowWidth: 1400 
+            },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+        };
+
+        setTimeout(() => {
+            window.html2pdf().set(opt).from(element).save().then(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(err => {
+                console.error("PDF Export failed:", err);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showError("PDF Export failed. Check console for details.");
+            });
+        }, 500);
     }
-    
+
     function exportJson() { if(analysisResults) saveAsJson(analysisResults); }
-    function exportCsv() { /* ... */ } 
+    function exportCsv() { if(analysisResults) { /* Implement CSV logic here */ } }
 
     function showLoading() { loadingState.classList.remove('hidden'); analyzeBtn.disabled = true; }
     function hideLoading() { loadingState.classList.add('hidden'); analyzeBtn.disabled = false; progressBar.style.width = '0%'; }
@@ -493,5 +532,9 @@
 
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 
-    window.guardrailAnalyzer = { filterByCategory: filterByCategory, filterByStatus: filterByStatus, version: '4.8.0-absolute-alignment' };
+    window.guardrailAnalyzer = { 
+        filterByCategory: filterByCategory, 
+        filterByStatus: filterByStatus,
+        version: '4.8.0-absolute-alignment' 
+    };
 })();
