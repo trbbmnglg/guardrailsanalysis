@@ -184,10 +184,11 @@ class GuardrailsAuditCrew:
     @llm
     def main_llm(self):
         return ChatOpenAI(
-            model="openai/meta-llama/Llama-3.3-70B-Instruct",
+            #model="openai/meta-llama/Llama-3.3-70B-Instruct",
+            model="openai/deepseek-ai/DeepSeek-R1",
             base_url="https://router.huggingface.co/v1",
             api_key=self.api_key,
-            temperature=0.1,
+            temperature=0.6,
             max_tokens=10000,
         )
 
@@ -296,10 +297,11 @@ async def run_analysis(request: AnalysisRequest):
         # 1. Gatekeeper (Runs Outside Crew)
         if request.enable_gatekeeper:
             gatekeeper_llm = ChatOpenAI(
-                model="openai/meta-llama/Llama-3.2-3B-Instruct",
+                #model="openai/meta-llama/Llama-3.2-3B-Instruct",
+                model="openai/deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
                 base_url="https://router.huggingface.co/v1",
                 api_key=request.api_key,
-                temperature=0.1,
+                temperature=0.6,
                 max_tokens=500,
             )
             print("🛡️ Running Gatekeeper Check...")
