@@ -103,11 +103,16 @@
 
     function setupEventListeners() {
         if (instructionInput) instructionInput.addEventListener('input', () => charCount.textContent = instructionInput.value.length);
-        if (analyzeBtn) analyzeBtn.addEventListener('click', async () => {
+        if (analyzeBtn) analyzeBtn.addEventListener('click', async (e) => {
+            // 1. STOP the form from submitting natively
+            e.preventDefault(); 
+            
             if (!apiKeyInput.value.trim()) { showError('Please enter your HuggingFace API key.'); return; }
             if (!instructionInput.value.trim()) { showError('Please enter an instruction.'); return; }
+            
             await analyzeInstruction(apiKeyInput.value.trim(), instructionInput.value.trim());
         });
+      
         document.getElementById('exportPdfBtn')?.addEventListener('click', exportPdf);
         document.getElementById('exportJson')?.addEventListener('click', exportJson);
         document.getElementById('exportCsv')?.addEventListener('click', exportCsv);
