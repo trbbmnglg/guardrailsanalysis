@@ -5,35 +5,34 @@ def get_owasp_rag_tool():
     """
     Creates a RAG tool for the OWASP LLM Top 10 PDF.
     
-    CONFIGURATION UPDATE:
-    - Embedding: Uses 'sentence-transformers/all-MiniLM-L6-v2' (Standard HF Leaderboard model)
-    - LLM: Uses 'mistralai/Mistral-7B-Instruct-v0.2' for RAG summarization
-    - Auth: Strictly handles API keys to prevent OpenAI defaults.
+    CRITICAL CONFIGURATION:
+    1. Embedder: Uses 'sentence-transformers/all-MiniLM-L6-v2' (Local/Free)
+    2. LLM: Uses 'mistralai/Mistral-7B-Instruct-v0.2' (Hugging Face)
+    3. Auth: Sets a DUMMY OpenAI key to bypass Pydantic validation, 
+       while forcing the tool to use the HUGGINGFACEHUB_API_TOKEN.
     """
     
     pdf_path = "kb/LLMAll_en-US_FINAL.pdf"
     
-    # 1. Validation
+    # 1. Check file existence
     if not os.path.exists(pdf_path):
         print(f"⚠️ Warning: Knowledge base not found at {pdf_path}")
         return None
 
-    # 2. KEY MANAGEMENT (CRITICAL FIX)
-    # The 'upsert' error happens because the library sees 'OPENAI_API_KEY' and 
-    # assumes it should use OpenAI for embeddings, rejecting your 'hf_' token.
-    user_key = os.environ.get("OPENAI_API_KEY")
+    # --- KEY MANAGEMENT ---
+    # Capture the real key (which main.py puts in OPENAI_API_KEY)
+    real_key = os.environ.get("OPENAI_API_KEY")
     
-    # Ensure HuggingFace token is set for the 'huggingface' provider
-    if user_key and user_key.startswith("hf_"):
-        os.environ["HUGGINGFACEHUB_API_TOKEN"] = user_key
-    
-    # Temporarily remove OPENAI_API_KEY to force the library to use the 'huggingface' config
-    if "OPENAI_API_KEY" in os.environ:
-        del os.environ["OPENAI_API_KEY"]
+    # Set the key that Embedchain/HuggingFace actually needs
+    if real_key:
+        os.environ["HUGGINGFACEHUB_API_TOKEN"] = real_key
+
+    # BYPASS VALIDATION: Set dummy key so Pydantic doesn't crash with "Not Set"
+    os.environ["OPENAI_API_KEY"] = "NA"
 
     try:
-        # 3. INITIALIZE TOOL WITH HUGGING FACE CONFIG
-        # This matches the 'Advanced RAG' pattern of using specific HF endpoints.
+        # 2. INITIALIZE TOOL
+        # The config forces provider="huggingface", so it won't use the dummy key.
         tool = PDFSearchTool(
             pdf=pdf_path,
             config=dict(
@@ -56,11 +55,11 @@ def get_owasp_rag_tool():
         return tool
 
     except Exception as e:
-        print(f"❌ Error initializing OWASP RAG Tool: {e}")
+        print(f"❌ Error initializing OWASP Tool: {e}")
         return None
 
     finally:
-        # 4. RESTORE KEY
-        # Vital: Put the key back so the Agents (which use OpenAI/LiteLLM client) can function.
-        if user_key:
-            os.environ["OPENAI_API_KEY"] = user_key
+        # 3. RESTORE REAL KEY
+        # Vital: Put the key back so the main Agents (Security, Privacy) can run!
+        if real_key:
+            os.environ["OPENAI_API_KEY"] = real_key
