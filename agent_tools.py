@@ -8,7 +8,7 @@ def get_owasp_rag_tool():
     """
     Creates a RAG tool for the OWASP LLM Top 10 PDF.
     
-    Uses HuggingFace embeddings and ChromaDB for vector storage.
+    Uses HuggingFace embeddings and ChromaDB based on official CrewAI documentation.
     Handles API key mapping to work with CrewAI's requirements.
     """
     
@@ -33,29 +33,26 @@ def get_owasp_rag_tool():
     os.environ["OPENAI_API_KEY"] = "NA"
     
     try:
-        # Use a proper sentence-transformer model for embeddings
+        # Initialize PDFSearchTool with HuggingFace embeddings and ChromaDB
         tool = PDFSearchTool(
             pdf=pdf_path,
             config={
-                "llm": {
+                "embedding_model": {
                     "provider": "huggingface",
                     "config": {
-                        "model": "mistralai/Mistral-7B-Instruct-v0.2",
-                        "temperature": 0.7,
-                    },
-                },
-                "embedder": {
-                    "provider": "huggingface",
-                    "config": {
+                        # Use a proper sentence-transformer model for embeddings
                         "model": "sentence-transformers/all-MiniLM-L6-v2",
+                        # API key will be read from HUGGINGFACE_ACCESS_TOKEN env var
                     },
                 },
                 "vectordb": {
-                    "provider": "chroma",
+                    "provider": "chromadb",
                     "config": {
-                        "collection_name": "owasp_llm_top10",
-                        "dir": "/content/chroma",
-                        "allow_reset": True,
+                        "settings": Settings(
+                            persist_directory="/content/chroma",
+                            allow_reset=True,
+                            is_persistent=True,
+                        ),
                     },
                 },
             }
