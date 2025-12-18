@@ -316,7 +316,7 @@
                 </div>
 
                 <div class="absolute bottom-8 w-full text-center">
-                    <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Missing Guards</p>
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Missing Guardrails</p>
                 </div>
             </div>
 
