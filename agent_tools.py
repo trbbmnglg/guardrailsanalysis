@@ -62,10 +62,11 @@ def get_owasp_rag_tool():
         return tool
 
     except Exception as e:
+        print(f"❌ Error initializing OWASP Tool: {e}")    
         raise HTTPException(
             status_code=503,
-            print(f"❌ Error initializing OWASP Tool: {e}")
-        )        
+            detail=f"Gatekeeper LLM Error: Unable to verify input safety. ({e})"
+        ) 
         return None
 
     finally:
