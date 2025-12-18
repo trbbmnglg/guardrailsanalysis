@@ -1,6 +1,7 @@
 (function() {
     'use strict';
 
+    // --- CUSTOM "SIMPLE LEAF" ILLUSTRATION (SVG) ---
     const PLANT_SVGS = {
         green: `
         <svg viewBox="0 0 100 100" fill="none" class="w-full h-full drop-shadow-xl filter saturate-110">
@@ -18,37 +19,49 @@
 
     function render(data, containerId) {
         const container = document.getElementById(containerId);
-        if (!container || !data) return;
+        if (!container || !data || !data.status) return;
 
-        const theme = { color: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400", svg: PLANT_SVGS.green };
+        const statusLower = String(data.status).toLowerCase();
+        
+        const config = {
+            green: { svg: PLANT_SVGS.green, color: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
+            amber: { svg: PLANT_SVGS.amber, color: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
+            red: { svg: PLANT_SVGS.red, color: "bg-red-500", text: "text-red-500 dark:text-red-400" }
+        };
+
+        const theme = config[statusLower] || config.green;
+
+        // ALIGNMENT FIX:
+        // 1. Label at absolute bottom-8 (Aligns with other cards)
+        // 2. Content centered in remaining top space
+        // 3. Pill inserted below score number
         
         const html = `
-            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all hover:shadow-md aspect-square">
+            <div class="relative group bg-white dark:bg-[#1e2130] rounded-none border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all hover:shadow-md aspect-square flex flex-col items-center">
                 
                 <div class="absolute top-0 left-0 w-full h-1 ${theme.color}"></div>
                 
-                <div class="absolute inset-0 flex flex-col items-center justify-center pb-16">
+                <div class="flex-1 flex flex-col items-center justify-center pb-8">
                     <div class="w-20 h-20 mb-2 transition-transform duration-700 hover:scale-110">
                         ${theme.svg}
                     </div>
-                    <div class="text-7xl font-black ${theme.text} tracking-tighter drop-shadow-sm leading-none">
+                    
+                    <div class="text-8xl font-black ${theme.text} tracking-tighter drop-shadow-sm leading-none mb-1">
                         ${data.energy_score}
                     </div>
-                </div>
 
-                <div class="absolute bottom-14 w-full text-center">
-                    <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
-                        Green AI Score
-                    </p>
-                </div>
-                
-                <div class="absolute bottom-4 w-full flex justify-center">
-                    <div class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-none border border-slate-200 dark:border-slate-700">
-                         <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                         <span class="text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                    <div class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-none border border-slate-200 dark:border-slate-700">
+                         <svg class="w-2.5 h-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                         <span class="text-[9px] font-mono font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
                             ~${data.estimated_kwh_per_1k_req || '0'} kWh <span class="text-slate-400 font-normal">/ 1k</span>
                         </span>
                     </div>
+                </div>
+
+                <div class="absolute bottom-8 w-full text-center">
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                        Green AI Score
+                    </p>
                 </div>
             </div>
         `;
