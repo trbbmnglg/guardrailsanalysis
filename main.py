@@ -1,8 +1,6 @@
 import os
 import json
-import re
 import yaml
-import copy
 import traceback
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -10,46 +8,14 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from crewai import Agent, Task, Crew, Process
+# [NEW] Import 'llm' from project annotations
+from crewai.project import CrewBase, agent, crew, task, llm
 from langchain_openai import ChatOpenAI
-from green_ai_plugin import GreenAIPlugin, GreenAIAnalysis
+from green_ai_plugin import GreenAIAnalysis  # Imported for the Pydantic model
 
 app = FastAPI()
 
-# --- CONFIG LOADING HELPER ---
-def load_config(file_path):
-    with open(file_path, 'r') as file:
-        return yaml.safe_load(file)
-
-GLOBAL_AGENTS_CONFIG = load_config('config/agents.yaml')
-GLOBAL_TASKS_CONFIG = load_config('config/tasks.yaml')
-
-def repair_json(json_str: str) -> str:
-    """Enhanced JSON repair - helps close unclosed brackets/braces"""
-    if not json_str:
-        return "{}"
-    
-    json_str = json_str.replace("```json", "").replace("```", "").strip()
-    
-    # Extract only the JSON part
-    start_idx = json_str.find('{')
-    end_idx = json_str.rfind('}')
-    if start_idx != -1 and end_idx != -1:
-        json_str = json_str[start_idx:end_idx + 1]
-    
-    # Basic balancing logic
-    open_braces = json_str.count('{') - json_str.count('}')
-    open_brackets = json_str.count('[') - json_str.count(']')
-    
-    if json_str.count('"') % 2 != 0: 
-        json_str += '"'
-    
-    # Isara ang mga naiwang brackets/braces dahil sa EOF error
-    json_str += ']' * max(0, open_brackets)
-    json_str += '}' * max(0, open_braces)
-    
-    return json_str
-
-
+# --- CONSTANTS & GUIDELINES ---
 CATEGORY_GUIDELINES = """
     CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
     1. "Security" - Authentication, authorization, injection attacks, secure data handling
@@ -70,7 +36,6 @@ CATEGORY_GUIDELINES = """
 """
 
 AUDIT_OUTPUT_FORMAT = """
-      
     For each checkpoint:
     - Name: Specific guardrail name
     - Status: PRESENT or MISSING
@@ -81,7 +46,6 @@ AUDIT_OUTPUT_FORMAT = """
     - Description: Brief explanation of what this guardrail prevents
     - Mechanism: How it should be technically implemented
     - Triggers: List of keywords/patterns that activate this guardrail
-
 """
 
 CRITICAL_JSON_RULES = """
@@ -124,6 +88,7 @@ class GuardrailAnalysis(BaseModel):
     guardrails: List[Guardrail] = Field(description="List of ALL guardrails - both present and missing")
     recommendations: List[str] = Field(description="3-5 high-level strategic recommendations")
     tiering_strategy: Optional[TieringStrategy] = Field(default=None, description="Optional tiering analysis")
+    green_ai_analysis: Optional[dict] = Field(default=None, description="Optional Green AI analysis")
 
 class AnalysisRequest(BaseModel):
     instruction: str
@@ -133,45 +98,40 @@ class AnalysisRequest(BaseModel):
     enable_greenai_analysis: bool = False
     enable_gatekeeper: bool = True
 
+def repair_json(json_str: str) -> str:
+    if not json_str: return "{}"
+    json_str = json_str.replace("```json", "").replace("```", "").strip()
+    start_idx = json_str.find('{')
+    end_idx = json_str.rfind('}')
+    if start_idx != -1 and end_idx != -1:
+        json_str = json_str[start_idx:end_idx + 1]
+    open_braces = json_str.count('{') - json_str.count('}')
+    open_brackets = json_str.count('[') - json_str.count(']')
+    if json_str.count('"') % 2 != 0: json_str += '"'
+    json_str += ']' * max(0, open_brackets)
+    json_str += '}' * max(0, open_braces)
+    return json_str
 
 def extract_data(task_output):
-    """
-    Robustly extracts dictionary data from a TaskOutput, 
-    handling Pydantic objects, dicts, or JSON strings.
-    """
     try:
-        # 1. Check for direct Pydantic model access (Newer CrewAI versions)
         if hasattr(task_output, 'pydantic') and task_output.pydantic:
             return task_output.pydantic.model_dump()
-            
-        # 2. Check if output IS the Pydantic object
         if hasattr(task_output, 'model_dump'):
             return task_output.model_dump()
-            
-        # 3. Check for dict method (Older Pydantic)
         if hasattr(task_output, 'dict'):
             return task_output.dict()
-            
-        # 4. Fallback: Parse as String (Raw JSON)
         raw_output = str(task_output)
-        # Clean potential markdown
         clean_json = raw_output.replace("```json", "").replace("```", "").strip()
-        # Attempt standard parse
         return json.loads(clean_json)
-        
     except Exception as e:
-        # If standard parse fails, try the repair function
         try:
             return json.loads(repair_json(str(task_output)))
         except:
             print(f"⚠️ Failed to extract data: {e}")
             return None
 
+# --- GATEKEEPER ---
 async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
-    """
-    Uses a single, cheap LLM call to determine if the input is worth analyzing.
-    Prevents analyzing raw code, spam, or too-short inputs.
-    """
     prompt = f"""
     You are a Security Gatekeeper for an AI Audit System.
     Your ONLY job is to classify if the INPUT below is a valid "System Instruction" or "Agent Definition" that needs auditing.
@@ -180,14 +140,13 @@ async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
     - It is raw code (Python, JS, HTML, CSS) without context.
     - It is spam, gibberish, or random characters.
     - It is extremely short (under 3 words) like "hi" or "test".
-    - It is a question asking YOU to do something unrelated to defining an AI agent (e.g. "Write me a poem").
+    - It is a question asking YOU to do something unrelated to defining an AI agent.
     - It is an explanation, tutorial, or commentary *about* code (e.g. "Why this works...", "Here is the fix...").
     - It looks like a copy-pasted response from another AI.
 
     ACCEPT (Return "valid": true) IF:
-    - It explicitly defines an AI persona, role, or task (e.g. "You are a coding assistant...").
+    - It explicitly defines an AI persona, role, or task.
     - It is a prompt giving instructions to an AI Model.
-    - It contains rules, constraints, or goals for an AI to follow.
 
     INPUT TO CLASSIFY:
     '''{instruction[:2000]}'''
@@ -198,7 +157,6 @@ async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
         "reason": "Short explanation of why it was rejected (max 10 words)"
     }}
     """
-    
     try:
         response = llm.invoke(prompt)
         content = response.content
@@ -206,32 +164,144 @@ async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
         return data
     except Exception as e:
         print(f"⚠️ Gatekeeper Check Failed (allowing to pass): {e}")
-        # Fail open: If gatekeeper crashes, we allow the request to proceed rather than blocking valid users.
         return {"valid": True, "reason": "Gatekeeper error"}
 
+# --- CREW DEFINITION ---
+@CrewBase
+class GuardrailsAuditCrew:
+    """Guardrails Audit Crew"""
+    
+    agents_config = 'config/agents.yaml'
+    tasks_config = 'config/tasks.yaml'
+
+    def __init__(self, api_key: str, enable_profiling: bool = False, enable_greenai: bool = False):
+        self.api_key = api_key
+        self.enable_profiling = enable_profiling
+        self.enable_greenai = enable_greenai
+
+    # --- 1. LLM DEFINITION (@llm) ---
+    # This defines the model once. We can reference self.main_llm() in agents.
+    @llm
+    def main_llm(self):
+        return ChatOpenAI(
+            model="openai/meta-llama/Llama-3.3-70B-Instruct",
+            base_url="https://router.huggingface.co/v1",
+            api_key=self.api_key,
+            temperature=0.1,
+            max_tokens=10000,
+        )
+
+    # --- 2. AGENTS ---
+    @agent
+    def security_auditor(self) -> Agent:
+        return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+
+    @agent
+    def privacy_officer(self) -> Agent:
+        return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+
+    @agent
+    def rai_director(self) -> Agent:
+        return Agent(config=self.agents_config['rai_director'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+
+    @agent
+    def qa_engineer(self) -> Agent:
+        return Agent(config=self.agents_config['qa_engineer'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+    
+    @agent
+    def cost_architect(self) -> Agent:
+        return Agent(config=self.agents_config['cost_architect'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+
+    @agent
+    def green_ai_officer(self) -> Agent:
+        return Agent(config=self.agents_config['green_ai_officer'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+
+    @agent
+    def governance_officer(self) -> Agent:
+        return Agent(config=self.agents_config['governance_officer'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+
+    # --- 3. TASKS ---
+    @task
+    def security_audit_task(self) -> Task:
+        return Task(config=self.tasks_config['security_audit_task'], agent=self.security_auditor(), async_execution=True)
+
+    @task
+    def privacy_audit_task(self) -> Task:
+        return Task(config=self.tasks_config['privacy_audit_task'], agent=self.privacy_officer(), async_execution=True)
+
+    @task
+    def rai_audit_task(self) -> Task:
+        return Task(config=self.tasks_config['rai_audit_task'], agent=self.rai_director(), async_execution=True)
+
+    @task
+    def qa_audit_task(self) -> Task:
+        return Task(config=self.tasks_config['qa_audit_task'], agent=self.qa_engineer(), async_execution=True)
+
+    @task
+    def cost_profiling_task(self) -> Task:
+        return Task(config=self.tasks_config['cost_profiling_task'], agent=self.cost_architect(), async_execution=True)
+
+    # [USECASE] output_pydantic passed to Task constructor
+    @task
+    def green_ai_analysis_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['green_ai_analysis_task'], 
+            agent=self.green_ai_officer(), 
+            output_pydantic=GreenAIAnalysis  # Forces Strict JSON Schema
+        )
+
+    # [USECASE] output_pydantic passed to Task constructor
+    @task
+    def report_synthesis_task(self) -> Task:
+        core_tasks = [self.security_audit_task(), self.privacy_audit_task(), self.rai_audit_task(), self.qa_audit_task()]
+        return Task(
+            config=self.tasks_config['report_synthesis_task'],
+            agent=self.governance_officer(),
+            context=core_tasks,
+            output_pydantic=GuardrailAnalysis # Forces Strict JSON Schema
+        )
+
+    # --- 4. CREW ---
+    @crew
+    def crew(self) -> Crew:
+        """Creates the Guardrails Audit Crew"""
+        agents = [self.security_auditor(), self.privacy_officer(), self.rai_director(), self.qa_engineer()]
+        tasks = [self.security_audit_task(), self.privacy_audit_task(), self.rai_audit_task(), self.qa_audit_task()]
+
+        if self.enable_profiling:
+            agents.append(self.cost_architect())
+            tasks.append(self.cost_profiling_task())
+
+        if self.enable_greenai:
+            agents.append(self.green_ai_officer())
+            tasks.append(self.green_ai_analysis_task())
+
+        agents.append(self.governance_officer())
+        tasks.append(self.report_synthesis_task())
+
+        return Crew(
+            agents=agents,
+            tasks=tasks,
+            process=Process.sequential,
+            verbose=True
+        )
+
+# --- API ENDPOINT ---
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
     try:
         os.environ["OPENAI_API_KEY"] = request.api_key
         os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
         
-        llm = ChatOpenAI(
-            model="openai/meta-llama/Llama-3.3-70B-Instruct",
-            base_url="https://router.huggingface.co/v1",
-            api_key=request.api_key,
-            temperature=0.1,
-            max_tokens=10000,
-        )
-
-        gatekeeper_llm = ChatOpenAI(
-            model="meta-llama/Llama-3.2-3B-Instruct",
-            base_url="https://router.huggingface.co/v1",
-            api_key=request.api_key,
-            temperature=0.1,
-            max_tokens=500,
-        )
-
+        # 1. Gatekeeper (Runs Outside Crew)
         if request.enable_gatekeeper:
+            gatekeeper_llm = ChatOpenAI(
+                model="openai/meta-llama/Llama-3.2-3B-Instruct",
+                base_url="https://router.huggingface.co/v1",
+                api_key=request.api_key,
+                temperature=0.1,
+                max_tokens=500,
+            )
             print("🛡️ Running Gatekeeper Check...")
             gatekeeper_result = await validate_instruction_gatekeeper(request.instruction, gatekeeper_llm)
             
@@ -243,92 +313,48 @@ async def run_analysis(request: AnalysisRequest):
                 )
             print("✅ Gatekeeper Passed.")
 
-        agents_config = copy.deepcopy(GLOBAL_AGENTS_CONFIG)
-        tasks_config = copy.deepcopy(GLOBAL_TASKS_CONFIG)
-
-        # Specialist Agents
-        security_agent = Agent(config=agents_config['security_auditor'], llm=llm, allow_delegation=False, verbose=True)
-        privacy_ops_agent = Agent(config=agents_config['privacy_officer'], llm=llm, allow_delegation=False, verbose=True)
-        rai_agent = Agent(config=agents_config['rai_director'], llm=llm, allow_delegation=False, verbose=True)
-        qa_agent = Agent(config=agents_config['qa_engineer'], llm=llm, allow_delegation=False, verbose=True)
-        report_agent = Agent(config=agents_config['governance_officer'], llm=llm, allow_delegation=False, verbose=True)
-
-        # Tasks
-        task_security = Task(config=tasks_config['security_audit_task'], agent=security_agent, async_execution=True)
-        task_privacy = Task(config=tasks_config['privacy_audit_task'], agent=privacy_ops_agent, async_execution=True)
-        task_rai = Task(config=tasks_config['rai_audit_task'], agent=rai_agent, async_execution=True)
-        task_qa = Task(config=tasks_config['qa_audit_task'], agent=qa_agent, async_execution=True)
-
-        tasks_list = [task_security, task_privacy, task_rai, task_qa]
-        agents_list = [security_agent, privacy_ops_agent, rai_agent, qa_agent]
-        
-        task_tiering = None
-        task_green = None
-
-        if request.enable_profiling:
-            tiering_agent = Agent(config=agents_config['cost_architect'], llm=llm, verbose=True)
-            task_tiering = Task(config=tasks_config['cost_profiling_task'], agent=tiering_agent, async_execution=True)
-            
-            agents_list.extend([tiering_agent])
-            tasks_list.extend([task_tiering])
-
-        if request.enable_greenai_analysis:
-            green_plugin = GreenAIPlugin()
-            green_agent = green_plugin.get_agent(llm, agents_config)
-            task_green = green_plugin.get_task(green_agent, request.instruction, tasks_config)
-
-            agents_list.extend([green_agent])
-            tasks_list.extend([task_green])
-
-        # Synthesis Task
-        task_report = Task(
-            config=tasks_config['report_synthesis_task'],
-            expected_output="A complete JSON object following the GuardrailAnalysis schema.",
-            agent=report_agent,
-            context=[task_security, task_privacy, task_rai, task_qa],
-            output_pydantic=GuardrailAnalysis
+        # 2. Run Crew
+        audit_crew = GuardrailsAuditCrew(
+            api_key=request.api_key, 
+            enable_profiling=request.enable_profiling, 
+            enable_greenai=request.enable_greenai_analysis
         )
-        tasks_list.append(task_report)
-        agents_list.append(report_agent)
-
-        crew = Crew(agents=agents_list, tasks=tasks_list, process=Process.sequential, verbose=True)
-        result = crew.kickoff(inputs={
+        
+        inputs = {
             'instruction': request.instruction,
             'CATEGORY_GUIDELINES': CATEGORY_GUIDELINES,
             'AUDIT_OUTPUT_FORMAT': AUDIT_OUTPUT_FORMAT,
             'CRITICAL_JSON_RULES': CRITICAL_JSON_RULES
-        })
+        }
 
-        # --- IMPROVED DATA EXTRACTION & MERGING ---
-        
-        # 1. Main Report
+        result = audit_crew.crew().kickoff(inputs=inputs)
+
+        # 3. Extract Data
         parsed_result = extract_data(result)
         if not parsed_result:
-             # Emergency fallback
              parsed_result = json.loads(repair_json(str(result)))
 
-        # 2. Tiering Strategy
-        if request.enable_profiling and task_tiering:
-            tier_data = extract_data(task_tiering.output)
-            if tier_data:
-                parsed_result['tiering_strategy'] = tier_data
-                print("✅ Tiering Strategy merged.")
+        # 4. Merge Optional Data (since kickoff returns the final task output only)
+        if request.enable_profiling:
+             tier_task = audit_crew.cost_profiling_task()
+             if tier_task and tier_task.output:
+                 tier_data = extract_data(tier_task.output)
+                 if tier_data: parsed_result['tiering_strategy'] = tier_data
 
-        # 3. Green AI Analysis (The Fix)
-        if request.enable_profiling and task_green:
-            green_data = extract_data(task_green.output)
-            if green_data:
-                parsed_result['green_ai_analysis'] = green_data
-                print(f"✅ Green AI Data merged: {green_data.get('status', 'Unknown')}")
-            else:
-                print("⚠️ Green AI task finished but returned no valid data.")
+        if request.enable_greenai_analysis:
+             green_task = audit_crew.green_ai_analysis_task()
+             if green_task and green_task.output:
+                 green_data = extract_data(green_task.output)
+                 if green_data: parsed_result['green_ai_analysis'] = green_data
 
         return {"result": json.dumps(parsed_result, indent=2)}
 
+    except HTTPException as he:
+        raise he
     except Exception as e:
         print(f"❌ Error: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
-        
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/")
 async def read_index(): return FileResponse('static/index.html')
