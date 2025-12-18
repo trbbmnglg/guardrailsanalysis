@@ -75,6 +75,42 @@
         return div.innerHTML;
     }
 
+    // --- NEW: Error Cleaning Helper ---
+    function cleanErrorMessage(errData, status) {
+        // Fallback for network errors or empty responses
+        if (!errData) return `Server Error (${status})`;
+        
+        // 1. Identify the payload
+        let msg = errData.detail || errData.message || errData.error;
+        if (!msg) return `Error (${status})`;
+
+        // 2. Handle FastAPI/Pydantic Arrays (List of validation errors)
+        if (Array.isArray(msg)) {
+            // Join messages, removing "value_error" types if possible or just taking the msg
+            return msg.map(m => m.msg || JSON.stringify(m)).join(' | ');
+        }
+
+        // 3. Handle Python string artifacts (str(e))
+        // Example: "['Login failed']" or "('Login failed',)"
+        if (typeof msg === 'string') {
+            msg = msg.trim();
+            
+            // Regex to remove ["..."] or ['...']
+            if (/^\[['"](.+)['"]\]$/.test(msg)) {
+                msg = msg.replace(/^\[['"]|['"]\]$/g, '');
+            }
+            // Regex to remove ('...',)
+            else if (/^\(['"](.+)['"],?\)$/.test(msg)) {
+                msg = msg.replace(/^\(['"]|['"],?\)$/g, '');
+            }
+            
+            // Clean up typical "Error: " prefix if duplicate
+            if (msg.startsWith('Error:')) msg = msg.substring(6).trim();
+        }
+        
+        return msg;
+    }
+
     function init() {
         const saveKeyCheckbox = document.getElementById('saveApiKey');
         if (saveKeyCheckbox && saveKeyCheckbox.parentElement && saveKeyCheckbox.type === 'checkbox' && !saveKeyCheckbox.classList.contains('sr-only')) {
@@ -224,8 +260,10 @@
             });
     
             if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.detail || `Backend Error: ${response.status}`);
+                const errData = await response.json().catch(() => null);
+                // USE THE NEW CLEANING FUNCTION HERE
+                const cleanMsg = cleanErrorMessage(errData, response.status);
+                throw new Error(cleanMsg);
             }
     
             updateProgress(75, 'Generating Report...');
@@ -470,11 +508,11 @@
         updateCategoryChips();
     }
 
-function updateCategoryChips() {
+    // FIXED: Now respects the 'currentStatusFilter' (Active/Missing) when counting
+    function updateCategoryChips() {
         if (!analysisResults) return;
-
+        
         let pool = analysisResults.guardrails;
-
         if (currentStatusFilter === 'active') {
             pool = pool.filter(g => !g.name.toUpperCase().startsWith('MISSING') && g.location !== "");
         } else if (currentStatusFilter === 'missing') {
@@ -489,13 +527,13 @@ function updateCategoryChips() {
         const container = document.getElementById('categoryFilters');
         if (container) {
             container.innerHTML = allCats.map(cat => {
-              
                 const count = cat === 'all' ? pool.length : (counts[cat] || 0);
                 const isSelected = currentCategoryFilter === cat;
                 
                 const activeClass = "bg-indigo-600 text-white shadow-lg border-transparent";
                 const inactiveClass = "bg-white dark:bg-[#151925] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700";
                 
+                // Dim empty categories
                 const opacityClass = count === 0 && cat !== 'all' ? "opacity-50" : "opacity-100";
 
                 return `
@@ -510,6 +548,7 @@ function updateCategoryChips() {
         }
     }
 
+    // --- ROBUST PDF EXPORT ---
     function exportPdf() {
         const element = document.getElementById('resultsSection');
         if (!element || element.classList.contains('hidden')) { 
@@ -556,7 +595,7 @@ function updateCategoryChips() {
     function showLoading() { loadingState.classList.remove('hidden'); analyzeBtn.disabled = true; }
     function hideLoading() { loadingState.classList.add('hidden'); analyzeBtn.disabled = false; progressBar.style.width = '0%'; }
     function updateProgress(percent, text) { progressBar.style.width = percent + '%'; progressText.textContent = text; }
-    function showError(msg) { errorState.classList.remove('hidden'); document.getElementById('errorMessage').textContent = msg; setTimeout(hideError, 5000); }
+    function showError(msg) { errorState.classList.remove('hidden'); document.getElementById('errorMessage').innerText = msg; setTimeout(hideError, 5000); }
     function hideError() { errorState.classList.add('hidden'); }
     function hideResults() { resultsSection.classList.add('hidden'); }
 
