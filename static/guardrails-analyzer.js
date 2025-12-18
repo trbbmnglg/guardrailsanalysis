@@ -339,7 +339,7 @@
             </div>`;
 
         // 5. Build Final Layout
-        container.innerHTML = summaryHTML + performanceRowHTML + filterHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>';
+          container.innerHTML = summaryHTML + filterHTML + '<div id="guardrailsDisplay" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"></div>' + performanceRowHTML;
 
         // 6. Initialize Modules
         if (enableGreenAI && window.greenAIMonitor) {
