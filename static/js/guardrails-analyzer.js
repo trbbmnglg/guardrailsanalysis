@@ -331,6 +331,7 @@
         const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
         const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
         const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
+        const enableReasoning = document.getElementById('reasoningToggle')?.checked || false;
         const selectedEngine = document.querySelector('input[name="engineOption"]:checked')?.value || 'deepseek';
     
         // 1. DETERMINE AGENT LIST & INIT GRID
@@ -354,6 +355,7 @@
                     enable_profiling: enableProfiling, 
                     enable_rag_deep_scan: enableRagDeepScan,
                     enable_greenai_analysis: enableGreenAI,
+                    enable_reasoning: enableReasoning,
                     analysis_engine: selectedEngine
                 })
             });
