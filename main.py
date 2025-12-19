@@ -16,8 +16,8 @@ from agent_tools import get_owasp_rag_tool
 app = FastAPI()
 
 # --- CONSTANTS & GUIDELINES ---
-CATEGORY_GUIDELINES = """
-    CRITICAL: You MUST use EXACTLY these category names (case-sensitive):
+AUDIT_OUTPUT_FORMAT = """
+    CRITICAL: You MUST use EXACTLY these Category names (case-sensitive):
     1. "Security" - Authentication, authorization, injection attacks, secure data handling
     2. "Privacy" - PII handling, GDPR/CCPA, data residency, consent mechanisms
     3. "Responsible AI" - Bias, fairness, toxicity, harmful content, ethical boundaries
@@ -31,16 +31,14 @@ CATEGORY_GUIDELINES = """
     - Example: "MISSING: SQL Injection Prevention"
     
     LOCATION FIELD RULES:
-    - If guardrail EXISTS: Provide max 10 words exact quote from instruction
+    - If guardrail EXISTS: Provide max 8 words exact quote from instruction
     - If guardrail is MISSING: Set location to empty string ""
-"""
-
-AUDIT_OUTPUT_FORMAT = """
-    For each checkpoint:
+    
+    CRITICAL: For each check:
     - Name: Specific guardrail name
     - Status: PRESENT or MISSING
     - Location: Exact quote from instruction (if PRESENT) or empty string (if MISSING)
-    - Severity: Critical | High | Medium | Low (for MISSING items, explain risk)
+    - Severity: Critical | High | Medium | Low
     - Category: Use EXACT category names from guidelines
     - Enforcement: Single action verb (e.g., "Block", "Log", "Redact", "Validate")
     - Description: Brief explanation of what this guardrail prevents
@@ -190,14 +188,14 @@ class GuardrailsAuditCrew:
             base_url="https://router.huggingface.co/v1",
             api_key=self.api_key,
             temperature=0.1,
-            max_tokens=10000,
+            max_tokens=4000,
         )
 
     # --- 2. AGENTS ---
     @agent
     def security_auditor(self) -> Agent:
-        owasp_tool = get_owasp_rag_tool(api_key=self.api_key)
-        tools_list = [owasp_tool] if owasp_tool else []
+        #owasp_tool = get_owasp_rag_tool(api_key=self.api_key)
+        #tools_list = [owasp_tool] if owasp_tool else []
         return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), tools=tools_list, allow_delegation=False, verbose=True)
 
     @agent
@@ -251,7 +249,7 @@ class GuardrailsAuditCrew:
         return Task(
             config=self.tasks_config['green_ai_analysis_task'], 
             agent=self.green_ai_officer(), 
-            output_pydantic=GreenAIAnalysis  # Forces Strict JSON Schema
+            output_pydantic=GreenAIAnalysis
         )
 
     # [USECASE] output_pydantic passed to Task constructor
@@ -335,7 +333,6 @@ async def run_analysis(request: AnalysisRequest):
         
         inputs = {
             'instruction': request.instruction,
-            'CATEGORY_GUIDELINES': CATEGORY_GUIDELINES,
             'AUDIT_OUTPUT_FORMAT': AUDIT_OUTPUT_FORMAT,
             'CRITICAL_JSON_RULES': CRITICAL_JSON_RULES
         }
