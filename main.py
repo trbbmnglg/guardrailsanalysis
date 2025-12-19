@@ -172,7 +172,8 @@ class GuardrailsAuditCrew:
         self.loop = asyncio.get_running_loop() if status_queue else None
 
         self.security_knowledge = []
-        kb_path = "LLMAll_en-US_FINAL.pdf"
+        kb_path = "knowledge/LLMAll_en-US_FINAL.pdf"
+
         if os.path.exists(kb_path):
             try:
                 self.security_knowledge = [PDFKnowledgeSource(file_paths=[kb_path])]
