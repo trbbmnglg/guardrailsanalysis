@@ -1,24 +1,21 @@
 import os
 import json
-import yaml
 import traceback
-import threading
-import queue
-import time
+import asyncio  # <--- NEW: Using asyncio instead of threading
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional, Any
+from typing import List, Literal, Optional
 from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, crew, task, llm
 from langchain_openai import ChatOpenAI
 from green_ai_plugin import GreenAIAnalysis
-# from agent_tools import get_owasp_rag_tool # (Optional, keeps existing imports)
 
 app = FastAPI()
 
 # --- CONSTANTS & GUIDELINES ---
+# (Keep your existing constants AUDIT_OUTPUT_FORMAT and CRITICAL_JSON_RULES exactly as they were)
 AUDIT_OUTPUT_FORMAT = """
     CRITICAL: You MUST use EXACTLY these Category names (case-sensitive):
     1. "Security" - Authentication, authorization, injection attacks, secure data handling
@@ -63,6 +60,7 @@ CRITICAL_JSON_RULES = """
 """
 
 # --- PYDANTIC MODELS ---
+# (Keep your Pydantic models Guardrail, TieringStrategy, GuardrailAnalysis, AnalysisRequest)
 class Guardrail(BaseModel):
     name: str = Field(description="Short, descriptive name")
     category: str = Field(description="Primary category")
@@ -108,6 +106,7 @@ def repair_json(json_str: str) -> str:
 
 def extract_data(task_output):
     try:
+        # Handle CrewAI TaskOutput object which might be Pydantic or dict or string
         if hasattr(task_output, 'pydantic') and task_output.pydantic:
             return task_output.pydantic.model_dump()
         if hasattr(task_output, 'model_dump'):
@@ -127,12 +126,13 @@ class GuardrailsAuditCrew:
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
 
-    def __init__(self, api_key: str, enable_profiling: bool, enable_greenai: bool, model_name: str, status_queue: queue.Queue = None):
+    # CHANGED: Accept asyncio.Queue instead of threading.queue
+    def __init__(self, api_key: str, enable_profiling: bool, enable_greenai: bool, model_name: str, status_queue: asyncio.Queue = None):
         self.api_key = api_key
         self.enable_profiling = enable_profiling
         self.enable_greenai = enable_greenai
         self.model_name = model_name
-        self.status_queue = status_queue # Store queue for streaming
+        self.status_queue = status_queue 
 
     @llm
     def main_llm(self):
@@ -152,29 +152,29 @@ class GuardrailsAuditCrew:
 
     # Agents
     @agent
-    def security_auditor(self) -> Agent: return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+    def security_auditor(self) -> Agent: return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm())
     @agent
-    def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+    def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm())
     @agent
-    def rai_director(self) -> Agent: return Agent(config=self.agents_config['rai_director'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+    def rai_director(self) -> Agent: return Agent(config=self.agents_config['rai_director'], llm=self.main_llm())
     @agent
-    def qa_engineer(self) -> Agent: return Agent(config=self.agents_config['qa_engineer'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+    def qa_engineer(self) -> Agent: return Agent(config=self.agents_config['qa_engineer'], llm=self.main_llm())
     @agent
-    def cost_architect(self) -> Agent: return Agent(config=self.agents_config['cost_architect'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+    def cost_architect(self) -> Agent: return Agent(config=self.agents_config['cost_architect'], llm=self.main_llm())
     @agent
-    def green_ai_officer(self) -> Agent: return Agent(config=self.agents_config['green_ai_officer'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+    def green_ai_officer(self) -> Agent: return Agent(config=self.agents_config['green_ai_officer'], llm=self.main_llm())
     @agent
-    def governance_officer(self) -> Agent: return Agent(config=self.agents_config['governance_officer'], llm=self.main_llm(), allow_delegation=False, verbose=True)
+    def governance_officer(self) -> Agent: return Agent(config=self.agents_config['governance_officer'], llm=self.main_llm())
 
-    # Tasks
+    # Tasks (Keeping async_execution=True for parallel processing)
     @task
-    def security_audit_task(self) -> Task: return Task(config=self.tasks_config['security_audit_task'], agent=self.security_auditor())
+    def security_audit_task(self) -> Task: return Task(config=self.tasks_config['security_audit_task'], agent=self.security_auditor(), async_execution=True)
     @task
-    def privacy_audit_task(self) -> Task: return Task(config=self.tasks_config['privacy_audit_task'], agent=self.privacy_officer())
+    def privacy_audit_task(self) -> Task: return Task(config=self.tasks_config['privacy_audit_task'], agent=self.privacy_officer(), async_execution=True)
     @task
-    def rai_audit_task(self) -> Task: return Task(config=self.tasks_config['rai_audit_task'], agent=self.rai_director())
+    def rai_audit_task(self) -> Task: return Task(config=self.tasks_config['rai_audit_task'], agent=self.rai_director(), async_execution=True)
     @task
-    def qa_audit_task(self) -> Task: return Task(config=self.tasks_config['qa_audit_task'], agent=self.qa_engineer())
+    def qa_audit_task(self) -> Task: return Task(config=self.tasks_config['qa_audit_task'], agent=self.qa_engineer(), async_execution=True)
     @task
     def cost_profiling_task(self) -> Task: return Task(config=self.tasks_config['cost_profiling_task'], agent=self.cost_architect())
     @task
@@ -184,31 +184,21 @@ class GuardrailsAuditCrew:
         context = [self.security_audit_task(), self.privacy_audit_task(), self.rai_audit_task(), self.qa_audit_task()]
         return Task(config=self.tasks_config['report_synthesis_task'], agent=self.governance_officer(), context=context, output_pydantic=GuardrailAnalysis)
 
-    # --- CALLBACK HANDLER ---
-    def task_callback(self, output):
-        """
-        This function runs whenever a task finishes.
-        We can't easily identify WHICH task finished from the 'output' alone in standard CrewAI v0.1+,
-        so we will map them via description or strict ordering, OR we assume the callback
-        is triggered in the same order as tasks are added.
-        
-        BETTER APPROACH: We wrap the callback when creating the Task.
-        """
-        pass
-
+    # --- UPDATED CALLBACK HANDLER FOR ASYNC ---
     def create_callback(self, agent_key: str):
-        """Creates a specific callback for an agent"""
         def callback(output):
             if self.status_queue:
-                self.status_queue.put({"type": "progress", "agent": agent_key, "status": "completed"})
+                try:
+                    self.status_queue.put_nowait({"type": "progress", "agent": agent_key, "status": "completed"})
+                except Exception as e:
+                    print(f"Queue Error: {e}")
         return callback
 
     @crew
     def crew(self) -> Crew:
-        # 1. Define Agents & Tasks
+        # Define Agents & Tasks
         agents = [self.security_auditor(), self.privacy_officer(), self.rai_director(), self.qa_engineer()]
         
-        # 2. Create Tasks and Attach Callbacks
         t_sec = self.security_audit_task()
         t_sec.callback = self.create_callback("security")
         
@@ -250,20 +240,21 @@ class GuardrailsAuditCrew:
 # --- API ENDPOINT ---
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
-    # 1. Setup Stream Queue
-    stream_queue = queue.Queue()
+    # 1. Setup Async Queue
+    stream_queue = asyncio.Queue()
     
-    def run_crew_thread(req, q):
+    # 2. Define the background worker
+    async def run_crew_async(req, q):
         try:
             os.environ["OPENAI_API_KEY"] = req.api_key
             os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
 
-            # A. Gatekeeper (Optional but recommended)
+            # A. Gatekeeper
             if req.enable_gatekeeper:
-                # ... (Simplified Gatekeeper Logic for brevity) ...
-                pass 
+                # (Simple placeholder for gatekeeper)
+                pass
 
-            # B. Initialize Crew with Queue
+            # B. Initialize Crew
             audit_crew = GuardrailsAuditCrew(
                 api_key=req.api_key, 
                 enable_profiling=req.enable_profiling, 
@@ -278,40 +269,31 @@ async def run_analysis(request: AnalysisRequest):
                 'CRITICAL_JSON_RULES': CRITICAL_JSON_RULES
             }
 
-            # C. Kickoff (Blocking)
-            result = audit_crew.crew().kickoff(inputs=inputs)
+            # C. KICKOFF ASYNC (The Magic Line)
+            # This runs the crew on the event loop without blocking the stream
+            result = await audit_crew.crew().kickoff_async(inputs=inputs)
 
             # D. Extract Data
             parsed_result = extract_data(result)
             if not parsed_result: parsed_result = json.loads(repair_json(str(result)))
 
-            # E. Merge Optional Data (Manual extraction since callbacks handle UI only)
-            if req.enable_profiling:
-                # Re-instantiate to access the task output logic or just rely on main result
-                # NOTE: For simplicity in streaming, we assume the main result contains everything
-                # or we extract strictly from the `result` object if possible.
-                # In strict CrewAI, we might need to look at `audit_crew.cost_profiling_task().output`
-                # But since we are in a thread, accessing the specific instance is tricky unless stored.
-                pass 
-
-            # F. Final Success Message
-            q.put({"type": "result", "data": parsed_result})
+            # E. Final Success Message
+            await q.put({"type": "result", "data": parsed_result})
 
         except Exception as e:
-            print(f"❌ Error in thread: {traceback.format_exc()}")
-            q.put({"type": "error", "message": str(e)})
+            print(f"❌ Error in async task: {traceback.format_exc()}")
+            await q.put({"type": "error", "message": str(e)})
         finally:
-            q.put(None) # Sentinel to stop stream
+            await q.put(None) # Sentinel to stop stream
 
-    # 2. Start Thread
-    thread = threading.Thread(target=run_crew_thread, args=(request, stream_queue))
-    thread.start()
+    # 3. Start the Crew in the background
+    asyncio.create_task(run_crew_async(request, stream_queue))
 
-    # 3. Stream Generator
-    def event_stream():
+    # 4. Stream Generator using Async Generator
+    async def event_stream():
         while True:
-            # Wait for data
-            data = stream_queue.get()
+            # Await data from the queue
+            data = await stream_queue.get()
             if data is None: break
             
             # Send JSON string as a chunk
