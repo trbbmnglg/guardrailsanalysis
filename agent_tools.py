@@ -2,7 +2,7 @@ import os
 import sys
 from crewai_tools import PDFSearchTool
 
-def get_owasp_rag_tool(api_key):
+def get_owasp_rag_tool(api_key=None):
     pdf_path = "kb/LLMAll_en-US_FINAL.pdf"
 
     os.environ["OPENAI_API_KEY"] = api_key
