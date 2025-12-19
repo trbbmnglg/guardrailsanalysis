@@ -134,21 +134,16 @@
                             <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-brand-purple transition-colors"></div>
                         </div>
                     </label>
-                    <div class="flex items-center justify-between p-4 bg-white dark:bg-[#151925] border border-slate-200 dark:border-slate-700 rounded-xl">
-                      <div class="flex items-center gap-3">
-                          <div class="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
-                              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                          </div>
-                          <div>
-                              <span class="text-sm font-bold text-slate-700 dark:text-slate-200 block">CoT Reasoning</span>
-                              <span class="text-xs text-slate-400">Force agents to plan & think step-by-step (Slower but smarter).</span>
-                          </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <div class="flex-1 mr-4">
+                        <span class="text-sm font-bold text-slate-700 dark:text-slate-200 block">CoT Reasoning</span>
+                        <span class="text-xs text-slate-400">Set agents to plan & think step-by-step (slower but smarter).</span>
                       </div>
-                      <label class="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" id="reasoningToggle" class="sr-only peer">
-                          <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
-                      </label>
-                  </div>
+                      <div class="relative inline-flex items-center">
+                        <input type="checkbox" id="reasoningToggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                      </div>
+                    </label>
                 </div>
             </div>
             <div id="content-engine" class="drawer-section hidden">
