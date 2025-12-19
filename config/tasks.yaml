@@ -33,7 +33,6 @@ security_audit_task:
         → Ensure argument sanitization before execution
         → Confirm injection prevention for tool parameters
 
-    {CATEGORY_GUIDELINES}    
     {AUDIT_OUTPUT_FORMAT}
     
   expected_output: >
@@ -72,7 +71,6 @@ privacy_audit_task:
         → Check redaction mechanisms ([REDACTED] or tokens)
         → Confirm sanitization before task processing
           
-    {CATEGORY_GUIDELINES}    
     {AUDIT_OUTPUT_FORMAT}
       
   expected_output: >
@@ -120,7 +118,6 @@ rai_audit_task:
         → Confirm standardized refusal responses
         → Check logging/flagging for bypass attempts
 
-    {CATEGORY_GUIDELINES}    
     {AUDIT_OUTPUT_FORMAT}
         
   expected_output: >
@@ -165,7 +162,6 @@ qa_audit_task:
         → Verify inline documentation of constraints
         → Check version control compatibility
           
-    {CATEGORY_GUIDELINES}    
     {AUDIT_OUTPUT_FORMAT}
         
   expected_output: >
@@ -211,20 +207,19 @@ report_synthesis_task:
   description: >
     **FINAL COMPLIANCE REPORT SYNTHESIS**
     
-    You are receiving audit findings from Security, Privacy, RAI, and QA specialists.
+    You are receiving audit findings from Security, Privacy, RAI, and QA Specialists.
     
     **YOUR MISSION:**
-    1. **Review All Findings**: Examine outputs from all audit agents
-    2. **Eliminate Duplicates**: If 2+ agents flag the same issue (same location quote), merge into ONE guardrail
-    3. **Resolve Conflicts**: If agents disagree on severity, ASK them for justification
-       - Example: "Security Agent, why is the API Key issue 'Medium'? Privacy marked it 'Critical'."
-    4. **Assign Final Ratings**: You have veto power on severity and category
-    5. **Generate Recommendations**: Provide 3-5 strategic, actionable recommendations
+    1. **Review All Findings**: Examine outputs from all audit agents. Strategize and think
+    2. **Eliminate Duplicates**: If 2+ agents flag the same audit, merge into ONE guardrail
+    3. **Assign Final Ratings**: You have veto power on Severity and Category
+    4. **Generate Recommendations**: Provide 3-5 strategic, actionable recommendations
     
     **DEDUPLICATION RULES:**
     - Compare the 'location' field: if quotes overlap >80%, it's a duplicate
     - Keep the highest severity rating
     - Use the most specific category (Security > Privacy > RAI > QA)
+    - Watch out audit on PII, ensure to merge findings to one only and no duplications
     
     **SEVERITY ASSESSMENT:**
     - Critical: Regulatory violation risk, immediate breach potential, safety failure
@@ -232,7 +227,6 @@ report_synthesis_task:
     - Medium: Best practice deviation, minor gap
     - Low: Documentation issue, minor improvement
 
-    {CATEGORY_GUIDELINES}   
     {AUDIT_OUTPUT_FORMAT}
     
     **OUTPUT FORMAT:**
