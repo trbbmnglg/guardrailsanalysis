@@ -90,6 +90,7 @@ class AnalysisRequest(BaseModel):
     enable_rag_deep_scan: bool = False
     enable_greenai_analysis: bool = False
     enable_gatekeeper: bool = True
+    enable_reasoning: bool = False
     analysis_engine: Literal["deepseek", "llama", "qwen"] = "deepseek"
 
 # --- HELPER FUNCTIONS ---
@@ -160,10 +161,11 @@ class GuardrailsAuditCrew:
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
 
-    def __init__(self, api_key: str, enable_profiling: bool, enable_greenai: bool, model_name: str, status_queue: asyncio.Queue = None):
+    def __init__(self, api_key: str, enable_profiling: bool, enable_greenai: bool, enable_reasoning: bool, model_name: str, status_queue: asyncio.Queue = None):
         self.api_key = api_key
         self.enable_profiling = enable_profiling
         self.enable_greenai = enable_greenai
+        self.enable_reasoning = enable_reasoning
         self.model_name = model_name
         self.status_queue = status_queue
         # Capture the running loop if queue exists
@@ -187,7 +189,7 @@ class GuardrailsAuditCrew:
 
     # Agents
     @agent
-    def security_auditor(self) -> Agent: return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm())
+    def security_auditor(self) -> Agent: return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), reasoning=self.enable_reasoning)
     @agent
     def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm())
     @agent
@@ -325,6 +327,7 @@ async def run_analysis(request: AnalysisRequest):
                 api_key=req.api_key, 
                 enable_profiling=req.enable_profiling, 
                 enable_greenai=req.enable_greenai_analysis,
+                enable_reasoning=req.enable_reasoning,
                 model_name=req.analysis_engine,
                 status_queue=q
             )
