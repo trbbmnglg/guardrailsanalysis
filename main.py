@@ -128,7 +128,8 @@ class GuardrailsAuditCrew:
         self.enable_profiling = enable_profiling
         self.enable_greenai = enable_greenai
         self.model_name = model_name
-        self.status_queue = status_queue 
+        self.status_queue = status_queue
+        self.loop = asyncio.get_running_loop() if status_queue else None
 
     @llm
     def main_llm(self):
@@ -183,11 +184,15 @@ class GuardrailsAuditCrew:
     # Callback Handler
     def create_callback(self, agent_key: str):
         def callback(output):
-            if self.status_queue:
+            if self.status_queue and self.loop:
                 try:
-                    self.status_queue.put_nowait({"type": "progress", "agent": agent_key, "status": "completed"})
+                    # Schedules the queue update on the main event loop
+                    self.loop.call_soon_threadsafe(
+                        self.status_queue.put_nowait,
+                        {"type": "progress", "agent": agent_key, "status": "completed"}
+                    )
                 except Exception as e:
-                    print(f"Queue Error: {e}")
+                    print(f"❌ Queue Error for {agent_key}: {e}")
         return callback
 
     @crew
