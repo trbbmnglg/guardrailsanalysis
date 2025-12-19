@@ -1,7 +1,7 @@
 import os
 import json
 import traceback
-import asyncio  # <--- NEW: Using asyncio instead of threading
+import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
@@ -15,7 +15,6 @@ from green_ai_plugin import GreenAIAnalysis
 app = FastAPI()
 
 # --- CONSTANTS & GUIDELINES ---
-# (Keep your existing constants AUDIT_OUTPUT_FORMAT and CRITICAL_JSON_RULES exactly as they were)
 AUDIT_OUTPUT_FORMAT = """
     CRITICAL: You MUST use EXACTLY these Category names (case-sensitive):
     1. "Security" - Authentication, authorization, injection attacks, secure data handling
@@ -60,7 +59,6 @@ CRITICAL_JSON_RULES = """
 """
 
 # --- PYDANTIC MODELS ---
-# (Keep your Pydantic models Guardrail, TieringStrategy, GuardrailAnalysis, AnalysisRequest)
 class Guardrail(BaseModel):
     name: str = Field(description="Short, descriptive name")
     category: str = Field(description="Primary category")
@@ -106,7 +104,6 @@ def repair_json(json_str: str) -> str:
 
 def extract_data(task_output):
     try:
-        # Handle CrewAI TaskOutput object which might be Pydantic or dict or string
         if hasattr(task_output, 'pydantic') and task_output.pydantic:
             return task_output.pydantic.model_dump()
         if hasattr(task_output, 'model_dump'):
@@ -126,7 +123,6 @@ class GuardrailsAuditCrew:
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
 
-    # CHANGED: Accept asyncio.Queue instead of threading.queue
     def __init__(self, api_key: str, enable_profiling: bool, enable_greenai: bool, model_name: str, status_queue: asyncio.Queue = None):
         self.api_key = api_key
         self.enable_profiling = enable_profiling
@@ -166,7 +162,7 @@ class GuardrailsAuditCrew:
     @agent
     def governance_officer(self) -> Agent: return Agent(config=self.agents_config['governance_officer'], llm=self.main_llm())
 
-    # Tasks (Keeping async_execution=True for parallel processing)
+    # Tasks
     @task
     def security_audit_task(self) -> Task: return Task(config=self.tasks_config['security_audit_task'], agent=self.security_auditor(), async_execution=True)
     @task
@@ -184,7 +180,7 @@ class GuardrailsAuditCrew:
         context = [self.security_audit_task(), self.privacy_audit_task(), self.rai_audit_task(), self.qa_audit_task()]
         return Task(config=self.tasks_config['report_synthesis_task'], agent=self.governance_officer(), context=context, output_pydantic=GuardrailAnalysis)
 
-    # --- UPDATED CALLBACK HANDLER FOR ASYNC ---
+    # Callback Handler
     def create_callback(self, agent_key: str):
         def callback(output):
             if self.status_queue:
@@ -196,18 +192,14 @@ class GuardrailsAuditCrew:
 
     @crew
     def crew(self) -> Crew:
-        # Define Agents & Tasks
         agents = [self.security_auditor(), self.privacy_officer(), self.rai_director(), self.qa_engineer()]
         
         t_sec = self.security_audit_task()
         t_sec.callback = self.create_callback("security")
-        
         t_priv = self.privacy_audit_task()
         t_priv.callback = self.create_callback("privacy")
-        
         t_rai = self.rai_audit_task()
         t_rai.callback = self.create_callback("rai")
-        
         t_qa = self.qa_audit_task()
         t_qa.callback = self.create_callback("qa")
         
@@ -240,21 +232,16 @@ class GuardrailsAuditCrew:
 # --- API ENDPOINT ---
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
-    # 1. Setup Async Queue
     stream_queue = asyncio.Queue()
     
-    # 2. Define the background worker
     async def run_crew_async(req, q):
         try:
             os.environ["OPENAI_API_KEY"] = req.api_key
             os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
 
-            # A. Gatekeeper
             if req.enable_gatekeeper:
-                # (Simple placeholder for gatekeeper)
-                pass
+                pass # Simplified
 
-            # B. Initialize Crew
             audit_crew = GuardrailsAuditCrew(
                 api_key=req.api_key, 
                 enable_profiling=req.enable_profiling, 
@@ -269,34 +256,46 @@ async def run_analysis(request: AnalysisRequest):
                 'CRITICAL_JSON_RULES': CRITICAL_JSON_RULES
             }
 
-            # C. KICKOFF ASYNC (The Magic Line)
-            # This runs the crew on the event loop without blocking the stream
+            # C. KICKOFF
             result = await audit_crew.crew().kickoff_async(inputs=inputs)
 
-            # D. Extract Data
+            # D. Extract Governance Result
             parsed_result = extract_data(result)
             if not parsed_result: parsed_result = json.loads(repair_json(str(result)))
 
-            # E. Final Success Message
+            if hasattr(result, 'tasks_output'):
+                for task_out in result.tasks_output:
+                    
+                    # 1. Merge Green AI
+                    if req.enable_greenai_analysis:
+                        # Check by Pydantic Type
+                        if hasattr(task_out, 'pydantic') and isinstance(task_out.pydantic, GreenAIAnalysis):
+                            parsed_result['green_ai_analysis'] = task_out.pydantic.model_dump()
+                        # Fallback: Check by Agent Role Name if Pydantic failed
+                        elif hasattr(task_out, 'agent') and "Eco-Efficiency" in str(task_out.agent):
+                            extracted = extract_data(task_out)
+                            if extracted: parsed_result['green_ai_analysis'] = extracted
+
+                    # 2. Merge Cost/Tiering (Optional, if needed later)
+                    if req.enable_profiling and hasattr(task_out, 'agent') and "FinOps" in str(task_out.agent):
+                        # Cost output is usually text, but we can try to parse or attach it
+                        pass
+
+            # E. Final Output
             await q.put({"type": "result", "data": parsed_result})
 
         except Exception as e:
             print(f"❌ Error in async task: {traceback.format_exc()}")
             await q.put({"type": "error", "message": str(e)})
         finally:
-            await q.put(None) # Sentinel to stop stream
+            await q.put(None)
 
-    # 3. Start the Crew in the background
     asyncio.create_task(run_crew_async(request, stream_queue))
 
-    # 4. Stream Generator using Async Generator
     async def event_stream():
         while True:
-            # Await data from the queue
             data = await stream_queue.get()
             if data is None: break
-            
-            # Send JSON string as a chunk
             yield json.dumps(data) + "\n"
 
     return StreamingResponse(event_stream(), media_type="application/x-ndjson")
