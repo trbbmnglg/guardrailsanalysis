@@ -191,17 +191,17 @@ class GuardrailsAuditCrew:
     @agent
     def security_auditor(self) -> Agent: return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), reasoning=self.enable_reasoning)
     @agent
-    def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm())
+    def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
     @agent
-    def rai_director(self) -> Agent: return Agent(config=self.agents_config['rai_director'], llm=self.main_llm())
+    def rai_director(self) -> Agent: return Agent(config=self.agents_config['rai_director'], llm=self.main_llm(), reasoning=self.enable_reasoning)
     @agent
-    def qa_engineer(self) -> Agent: return Agent(config=self.agents_config['qa_engineer'], llm=self.main_llm())
+    def qa_engineer(self) -> Agent: return Agent(config=self.agents_config['qa_engineer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
     @agent
-    def cost_architect(self) -> Agent: return Agent(config=self.agents_config['cost_architect'], llm=self.main_llm())
+    def cost_architect(self) -> Agent: return Agent(config=self.agents_config['cost_architect'], llm=self.main_llm(), reasoning=self.enable_reasoning)
     @agent
-    def green_ai_officer(self) -> Agent: return Agent(config=self.agents_config['green_ai_officer'], llm=self.main_llm())
+    def green_ai_officer(self) -> Agent: return Agent(config=self.agents_config['green_ai_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
     @agent
-    def governance_officer(self) -> Agent: return Agent(config=self.agents_config['governance_officer'], llm=self.main_llm())
+    def governance_officer(self) -> Agent: return Agent(config=self.agents_config['governance_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
 
     # Tasks
     @task
