@@ -189,14 +189,15 @@ class GuardrailsAuditCrew:
             model="openai/deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
             base_url="https://router.huggingface.co/v1",
             api_key=self.api_key,
-            temperature=0.6,
+            temperature=0.1,
             max_tokens=10000,
         )
 
     # --- 2. AGENTS ---
     @agent
-    def security_auditor(self) -> Agent:
-        owasp_tool = get_owasp_rag_tool(api_key)
+    def security_auditor(self, api_key: str) -> Agent:
+        self.api_key = api_key
+        owasp_tool = get_owasp_rag_tool(self.api_key)
         tools_list = [owasp_tool] if owasp_tool else []
         return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), tools=tools_list, allow_delegation=False, verbose=True)
 
