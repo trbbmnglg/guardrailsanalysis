@@ -75,38 +75,27 @@
         return div.innerHTML;
     }
 
-    // --- NEW: Advanced Error Cleaning Helper ---
     function cleanErrorMessage(errData, status) {
         if (!errData) return `Server Error (${status})`;
         let msg = errData.detail || errData.message || errData.error;
         if (!msg) return `Error (${status})`;
 
-        // 1. Handle Array errors (FastAPI validation)
         if (Array.isArray(msg)) return msg.map(m => m.msg || JSON.stringify(m)).join(' | ');
 
         if (typeof msg === 'string') {
             msg = msg.trim();
-
-            // 2. [NEW] Extract "You have reached..." from inside {'error': '...'} structure
-            // Matches anything looking like: { ... 'error': 'THE MESSAGE' ... }
             const innerErrorMatch = msg.match(/\{.*['"]error['"]\s*:\s*['"]([^'"]+)['"].*\}/);
             if (innerErrorMatch && innerErrorMatch[1]) {
-                // Return just the clean inner message found in the dictionary
                 return innerErrorMatch[1]; 
             }
-
-            // 3. Remove Python list/tuple wrappers ["..."] or ('...',)
             if (/^\[['"](.+)['"]\]$/.test(msg)) {
                 msg = msg.replace(/^\[['"]|['"]\]$/g, '');
             } else if (/^\(['"](.+)['"],?\)$/.test(msg)) {
                 msg = msg.replace(/^\(['"]|['"],?\)$/g, '');
             }
-            
-            // 4. Clean common prefixes
             if (msg.startsWith('Error:')) msg = msg.substring(6).trim();
             if (msg.startsWith('Gatekeeper LLM Error:')) msg = msg.replace('Gatekeeper LLM Error:', '').trim();
         }
-        
         return msg;
     }
 
@@ -139,12 +128,9 @@
     function setupEventListeners() {
         if (instructionInput) instructionInput.addEventListener('input', () => charCount.textContent = instructionInput.value.length);
         if (analyzeBtn) analyzeBtn.addEventListener('click', async (e) => {
-            // 1. STOP the form from submitting natively
             e.preventDefault(); 
-            
             if (!apiKeyInput.value.trim()) { showError('Please enter your HuggingFace API key.'); return; }
             if (!instructionInput.value.trim()) { showError('Please enter an instruction.'); return; }
-            
             await analyzeInstruction(apiKeyInput.value.trim(), instructionInput.value.trim());
         });
       
@@ -165,16 +151,6 @@
     function loadCachedApiKey() {
         const cachedKey = sessionStorage.getItem('hf_api_key');
         if (cachedKey && apiKeyInput) apiKeyInput.value = cachedKey;
-    }
-
-    function cleanAndParseJSON(rawText) {
-        let clean = rawText.replace(/```json\s*|\s*```/g, '').trim();
-        clean = clean.replace(/```\s*|\s*```/g, '').trim();
-        try { return JSON.parse(clean); } catch (e) {
-            const match = rawText.match(/\{[\s\S]*\}/);
-            if (match) { try { return JSON.parse(match[0]); } catch (e2) {} }
-            throw new Error("Could not extract valid JSON from response.");
-        }
     }
 
     function performGapAnalysis(foundGuardrails) {
@@ -234,209 +210,118 @@
     }
 
     const AGENT_DEFS = {
-    security: { 
-        name: "Security Auditor", 
-        role: "OWASP Specialist",
-        icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`,
-        color: "text-red-500"
-    },
-    privacy: { 
-        name: "Privacy Officer", 
-        role: "GDPR/PII Expert",
-        icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>`,
-        color: "text-emerald-500"
-    },
-    rai: { 
-        name: "RAI Director", 
-        role: "Ethics & Safety",
-        icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>`,
-        color: "text-purple-500"
-    },
-    qa: { 
-        name: "QA Engineer", 
-        role: "Quality Assurance",
-        icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>`,
-        color: "text-blue-500"
-    },
-    cost: { 
-        name: "FinOps Architect", 
-        role: "Cost & Latency",
-        icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-        color: "text-amber-500"
-    },
-    green: { 
-        name: "Green AI Officer", 
-        role: "Sustainability",
-        icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>`,
-        color: "text-emerald-600"
-    },
-    governance: { 
-        name: "Governance Lead", 
-        role: "Report Synthesis",
-        icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`,
-        color: "text-slate-500"
-    }
+        security: { 
+            name: "Security Auditor", 
+            role: "OWASP Specialist",
+            icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>`,
+            color: "text-red-500"
+        },
+        privacy: { 
+            name: "Privacy Officer", 
+            role: "GDPR/PII Expert",
+            icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>`,
+            color: "text-emerald-500"
+        },
+        rai: { 
+            name: "RAI Director", 
+            role: "Ethics & Safety",
+            icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>`,
+            color: "text-purple-500"
+        },
+        qa: { 
+            name: "QA Engineer", 
+            role: "Quality Assurance",
+            icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>`,
+            color: "text-blue-500"
+        },
+        cost: { 
+            name: "FinOps Architect", 
+            role: "Cost & Latency",
+            icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
+            color: "text-amber-500"
+        },
+        green: { 
+            name: "Green AI Officer", 
+            role: "Sustainability",
+            icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>`,
+            color: "text-emerald-600"
+        },
+        governance: { 
+            name: "Governance Lead", 
+            role: "Report Synthesis",
+            icon: `<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`,
+            color: "text-slate-500"
+        }
     };
-    
-    let progressInterval = null;
     
     // --- Helper: Render Agent Grid ---
     function initAgentGrid(activeAgents) {
-    const grid = document.getElementById('agentGrid');
-    if (!grid) return;
+        const grid = document.getElementById('agentGrid');
+        if (!grid) return;
+        
+        grid.innerHTML = activeAgents.map((key, index) => {
+            const agent = AGENT_DEFS[key];
+            return `
+                <div id="agent-card-${key}" class="agent-card agent-status-waiting relative bg-white dark:bg-[#151925] border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center gap-3 text-center h-32">
+                    <div class="absolute top-2 right-2">
+                       <div id="agent-icon-${key}" class="hidden text-emerald-500">
+                            <svg class="w-5 h-5 checkmark-path" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                       </div>
+                       <div id="agent-spinner-${key}" class="hidden">
+                            <svg class="animate-spin w-4 h-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                       </div>
+                    </div>
+                    
+                    <div class="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center ${agent.color} opacity-80">
+                        ${agent.icon}
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200 leading-tight">${agent.name}</h4>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">${agent.role}</span>
+                    </div>
     
-    grid.innerHTML = activeAgents.map((key, index) => {
-        const agent = AGENT_DEFS[key];
-        // Use 'border-slate-200' for waiting state, dynamically updated later
-        return `
-            <div id="agent-card-${key}" class="agent-card agent-status-waiting relative bg-white dark:bg-[#151925] border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center gap-3 text-center h-32">
-                <div class="absolute top-2 right-2">
-                   <div id="agent-icon-${key}" class="hidden text-emerald-500">
-                        <svg class="w-5 h-5 checkmark-path" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
-                   </div>
-                   <div id="agent-spinner-${key}" class="hidden">
-                        <svg class="animate-spin w-4 h-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                   </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-1 mt-1 rounded-full overflow-hidden">
+                        <div id="agent-bar-${key}" class="h-full bg-indigo-500 w-0 transition-all duration-300"></div>
+                    </div>
                 </div>
-                
-                <div class="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center ${agent.color} opacity-80">
-                    ${agent.icon}
-                </div>
-                
-                <div>
-                    <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200 leading-tight">${agent.name}</h4>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">${agent.role}</span>
-                </div>
-    
-                <div class="w-full bg-slate-100 dark:bg-slate-800 h-1 mt-1 rounded-full overflow-hidden">
-                    <div id="agent-bar-${key}" class="h-full bg-indigo-500 w-0 transition-all duration-300"></div>
-                </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
     }
     
-    // --- Helper: Simulate Progress ---
-    function startProgressSimulation(activeAgents) {
-    if (progressInterval) clearInterval(progressInterval);
+    function updateAgentStatus(key, status) {
+          const card = document.getElementById(`agent-card-${key}`);
+          const icon = document.getElementById(`agent-icon-${key}`);
+          const spinner = document.getElementById(`agent-spinner-${key}`);
+          const bar = document.getElementById(`agent-bar-${key}`);
+          
+          if (!card) return;
     
-    let currentIndex = 0;
-    const totalAgents = activeAgents.length;
-    const stepTime = 6000; // 6 seconds per agent (approximate)
+          // --- FIX: SAFETY CHECK ---
+          // If the card is already completed, NEVER switch it back to active/waiting
+          if (card.classList.contains('agent-status-completed')) {
+              return; 
+          }
     
-    // Reset Overall Bar
-    document.getElementById('progressBar').style.width = '5%';
-    document.getElementById('progressPercentage').innerText = '5%';
-    
-    // Helper to set agent state
-    const setAgentState = (key, state) => {
-        const card = document.getElementById(`agent-card-${key}`);
-        const icon = document.getElementById(`agent-icon-${key}`);
-        const spinner = document.getElementById(`agent-spinner-${key}`);
-        const bar = document.getElementById(`agent-bar-${key}`);
-        
-        if (!card) return;
-    
-        // Reset classes
-        card.classList.remove('agent-status-waiting', 'agent-status-active', 'agent-status-completed');
-        icon.classList.add('hidden');
-        spinner.classList.add('hidden');
-        bar.style.width = '0%';
-    
-        if (state === 'active') {
-            card.classList.add('agent-status-active');
-            spinner.classList.remove('hidden');
-            bar.style.width = '60%'; // Indeterminate loading look
-            document.getElementById('swarmStatusText').innerText = `${AGENT_DEFS[key].name} is auditing...`;
-        } else if (state === 'completed') {
-            card.classList.add('agent-status-completed');
-            icon.classList.remove('hidden');
-            bar.style.width = '100%';
-        } else {
-            card.classList.add('agent-status-waiting');
-        }
-    };
-    
-    // Initialize first
-    setAgentState(activeAgents[0], 'active');
-    
-    progressInterval = setInterval(() => {
-        // Complete current
-        setAgentState(activeAgents[currentIndex], 'completed');
-        
-        // Move to next
-        currentIndex++;
-        
-        // Calculate overall progress
-        const overallPercent = Math.round((currentIndex / totalAgents) * 90);
-        document.getElementById('progressBar').style.width = `${overallPercent}%`;
-        document.getElementById('progressPercentage').innerText = `${overallPercent}%`;
-    
-        if (currentIndex < totalAgents) {
-            setAgentState(activeAgents[currentIndex], 'active');
-        } else {
-            // All 'simulated' done, but waiting for server. Keep last one active-ish or just wait.
-            // Actually, keep Governance active until real response comes.
-            clearInterval(progressInterval);
-            document.getElementById('swarmStatusText').innerText = "Finalizing Report...";
-        }
-    }, stepTime);
+          if (status === 'active') {
+              card.classList.remove('agent-status-waiting', 'agent-status-completed');
+              card.classList.add('agent-status-active');
+              spinner.classList.remove('hidden');
+              icon.classList.add('hidden');
+              bar.style.width = '60%'; 
+              
+              const name = AGENT_DEFS[key]?.name || 'Agent';
+              document.getElementById('swarmStatusText').innerText = `${name} is auditing...`;
+              
+          } else if (status === 'completed') {
+              card.classList.remove('agent-status-active', 'agent-status-waiting');
+              card.classList.add('agent-status-completed');
+              spinner.classList.add('hidden');
+              icon.classList.remove('hidden');
+              bar.style.width = '100%';
+          }
     }
     
-    // --- Helper: Force Complete All (When response arrives) ---
-    function completeAllAgents(activeAgents) {
-    if (progressInterval) clearInterval(progressInterval);
-    
-    activeAgents.forEach(key => {
-        const card = document.getElementById(`agent-card-${key}`);
-        const icon = document.getElementById(`agent-icon-${key}`);
-        const spinner = document.getElementById(`agent-spinner-${key}`);
-        const bar = document.getElementById(`agent-bar-${key}`);
-        
-        if (card) {
-            card.classList.remove('agent-status-waiting', 'agent-status-active');
-            card.classList.add('agent-status-completed');
-            icon.classList.remove('hidden');
-            spinner.classList.add('hidden');
-            bar.style.width = '100%';
-        }
-    });
-    
-    document.getElementById('progressBar').style.width = '100%';
-    document.getElementById('progressPercentage').innerText = '100%';
-    document.getElementById('swarmStatusText').innerText = "Audit Complete!";
-    }
-  
-  function updateAgentStatus(key, status) {
-      const card = document.getElementById(`agent-card-${key}`);
-      const icon = document.getElementById(`agent-icon-${key}`);
-      const spinner = document.getElementById(`agent-spinner-${key}`);
-      const bar = document.getElementById(`agent-bar-${key}`);
-      
-      if (!card) return;
-  
-      if (status === 'active') {
-          card.classList.remove('agent-status-waiting', 'agent-status-completed');
-          card.classList.add('agent-status-active');
-          spinner.classList.remove('hidden');
-          icon.classList.add('hidden');
-          bar.style.width = '60%'; // Indeterminate
-          
-          // Scroll slightly to keep active agent in view if needed
-          // card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          
-          const name = AGENT_DEFS[key]?.name || 'Agent';
-          document.getElementById('swarmStatusText').innerText = `${name} is auditing...`;
-          
-      } else if (status === 'completed') {
-          card.classList.remove('agent-status-active', 'agent-status-waiting');
-          card.classList.add('agent-status-completed');
-          spinner.classList.add('hidden');
-          icon.classList.remove('hidden');
-          bar.style.width = '100%';
-      }
-  }
-  
     // --- MAIN ANALYSIS ---
     async function analyzeInstruction(apiKey, instruction) {
         hideError();
@@ -495,22 +380,26 @@
                         const msg = JSON.parse(line);
                         
                         if (msg.type === 'progress') {
-                            // Mark current as done
-                            updateAgentStatus(msg.agent, 'completed');
-                            completedCount++;
-                            
-                            // Update Progress Bar
-                            const percent = Math.round((completedCount / activeAgents.length) * 100);
-                            document.getElementById('progressBar').style.width = `${percent}%`;
-                            document.getElementById('progressPercentage').innerText = `${percent}%`;
+                          // Mark CURRENT agent as done
+                          updateAgentStatus(msg.agent, 'completed');
+                          completedCount++;
+                          
+                          // Update Progress Bar
+                          const percent = Math.round((completedCount / activeAgents.length) * 100);
+                          document.getElementById('progressBar').style.width = `${percent}%`;
+                          document.getElementById('progressPercentage').innerText = `${percent}%`;
     
-                            // Activate next agent
-                            const nextIdx = activeAgents.indexOf(msg.agent) + 1;
-                            if (nextIdx < activeAgents.length) {
-                                updateAgentStatus(activeAgents[nextIdx], 'active');
-                            }
+                          // --- FIX: SMART ACTIVATION ---
+                          const nextWaiting = activeAgents.find(key => {
+                              const el = document.getElementById(`agent-card-${key}`);
+                              return el && el.classList.contains('agent-status-waiting');
+                          });
     
-                        } else if (msg.type === 'result') {
+                          if (nextWaiting) {
+                              updateAgentStatus(nextWaiting, 'active');
+                          }
+    
+                      } else if (msg.type === 'result') {
                             // FINAL SUCCESS
                             analysisResults = msg.data;
                             
@@ -649,7 +538,7 @@
         if (enableGreenAI && window.greenAIMonitor) {
             window.greenAIMonitor.render(analysisResults.green_ai_analysis, 'slot-green-ai');
         }
-        // ... (rest of function)
+        
         if (enableProfiling && window.latencyProfiler) {
              window.latencyProfiler.analyze(
                  analysisResults.guardrails, 
@@ -757,7 +646,6 @@
         updateCategoryChips();
     }
 
-    // FIXED: Now respects the 'currentStatusFilter' (Active/Missing) when counting
     function updateCategoryChips() {
         if (!analysisResults) return;
         
@@ -782,7 +670,6 @@
                 const activeClass = "bg-indigo-600 text-white shadow-lg border-transparent";
                 const inactiveClass = "bg-white dark:bg-[#151925] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700";
                 
-                // Dim empty categories
                 const opacityClass = count === 0 && cat !== 'all' ? "opacity-50" : "opacity-100";
 
                 return `
@@ -836,6 +723,19 @@
                 showError("PDF Export failed. Check console for details.");
             });
         }, 500);
+    }
+    
+    // --- ADDED MISSING HELPER ---
+    function saveAsJson(data) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `analysis_report_${new Date().getTime()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     function exportJson() { if(analysisResults) saveAsJson(analysisResults); }
