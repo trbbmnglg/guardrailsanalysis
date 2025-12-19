@@ -204,9 +204,22 @@ class GuardrailsAuditCrew:
     @agent
     def security_auditor(self) -> Agent: return Agent(
         config=self.agents_config['security_auditor'],
-        llm=self.main_llm(),
+        'llm': {
+        'provider': 'huggingface',
+        'config': {
+          'model': 'mistralai/Mistral-7B-Instruct-v0.2',
+          'top_p': 0.5
+            }
+        },
         reasoning=self.enable_reasoning,
-        knowledge_sources=self.security_knowledge
+        knowledge_sources=self.security_knowledge,
+        embedder={
+        "provider": "huggingface",
+        "config": {
+            "model_name": "sentence-transformers/all-mpnet-base-v2",
+            "api_key": "your-google-key"
+            }
+        }
     )
         
     @agent
