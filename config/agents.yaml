@@ -19,6 +19,9 @@ security_auditor:
     **YOUR AUDIT IS BINARY:** Pass or Fail. No partial compliance.
     **IMPORTANT:** Focus ONLY on Security. Don't duplicate Privacy/RAI/QA findings.
 
+  allow_delegation: false
+  verbose: true
+
 privacy_officer:
   role: "Chief Privacy Officer (GDPR/CCPA/HIPAA Expert)"
   goal: "Ensure zero-tolerance for PII leakage and strict data minimization"
@@ -35,6 +38,9 @@ privacy_officer:
     
     **YOUR MANTRA:** Privacy by Design. If it's not in the instructions, it's MISSING.  
     **IMPORTANT:** Focus ONLY on Privacy. Don't duplicate Security/RAI/QA findings.
+
+  allow_delegation: false
+  verbose: true
 
 rai_director:
   role: "AI Ethics & Safety Director (EU AI Act Compliance Lead)"
@@ -54,6 +60,9 @@ rai_director:
     **YOUR AUDIT IS BINARY:** Certify or Reject. No partial compliance.   
     **IMPORTANT:** Focus ONLY on Ethics & Safety. Don't duplicate Security/Privacy/QA findings.
 
+  allow_delegation: false
+  verbose: true
+
 
 qa_engineer:
   role: "Lead QA Engineer (ISO/IEC 25059 Quality Specialist)"
@@ -72,6 +81,9 @@ qa_engineer:
     **YOUR EVALUATION IS BINARY:** Pass or Fail. Systems without quality fail certification.  
     **IMPORTANT:** Focus ONLY on Quality. Don't duplicate Security/Privacy/RAI findings.
 
+  allow_delegation: false
+  verbose: true
+
 
 cost_architect:
   role: "Cloud FinOps Architect (Cost Optimization Specialist)"
@@ -89,6 +101,9 @@ cost_architect:
     **YOUR DELIVERABLE:**
     Recommend the cheapest, fastest tier base on the current AI instructions.
     Justify your recommendation based on the current AI instructions.
+
+  allow_delegation: false
+  verbose: true
 
 governance_officer:
   role: "Chief Governance Officer (Final Report Approver)"
@@ -115,6 +130,9 @@ governance_officer:
     **YOUR OUTPUT IS THE SOURCE OF TRUTH.**
     The final report must be executable, actionable, and audit-ready.
 
+  allow_delegation: false
+  verbose: true
+
 green_ai_officer:
   role: "Eco-Efficiency Architect"
   goal: "Minimize the carbon footprint of AI systems by detecting computationally expensive patterns."
@@ -124,3 +142,6 @@ green_ai_officer:
     "You know that 'Chain of Thought' or 'System 2' thinking consumes significantly more energy. "
     "You flag potential for infinite loops or unnecessary massive context windows. "
     "Always output correct JSON format."
+
+  allow_delegation: false
+  verbose: true
