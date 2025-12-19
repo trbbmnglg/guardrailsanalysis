@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, crew, task, llm
+from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
 from langchain_openai import ChatOpenAI
 from green_ai_plugin import GreenAIAnalysis
 
@@ -168,8 +169,18 @@ class GuardrailsAuditCrew:
         self.enable_reasoning = enable_reasoning
         self.model_name = model_name
         self.status_queue = status_queue
-        # Capture the running loop if queue exists
         self.loop = asyncio.get_running_loop() if status_queue else None
+
+        self.security_knowledge = []
+        kb_path = "kb/LLMAll_en-US_FINAL.pdf"
+        if os.path.exists(kb_path):
+            try:
+                self.security_knowledge = [PDFKnowledgeSource(file_paths=[kb_path])]
+                print(f"✅ Loaded Knowledge Base: {kb_path}")
+            except Exception as e:
+                print(f"⚠️ Failed to load Knowledge PDF: {e}")
+        else:
+            print(f"ℹ️ Knowledge file not found at {kb_path}, skipping.")
 
     @llm
     def main_llm(self):
@@ -189,7 +200,13 @@ class GuardrailsAuditCrew:
 
     # Agents
     @agent
-    def security_auditor(self) -> Agent: return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), reasoning=self.enable_reasoning)
+    def security_auditor(self) -> Agent: return Agent(
+        config=self.agents_config['security_auditor'],
+        llm=self.main_llm(),
+        reasoning=self.enable_reasoning,
+        knowledge_sources=self.security_knowledge
+    )
+        
     @agent
     def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
     @agent
