@@ -243,8 +243,9 @@
             const enableProfiling = document.getElementById('aiProfilingToggle')?.checked || false;
             const enableRagDeepScan = document.getElementById('enableRagDeepScan')?.checked || false;
             const enableGreenAI = document.getElementById('greenAIToggle')?.checked || false;
-          
-            updateProgress(10, enableProfiling ? 'Initializing Full Agent Crew...' : 'Initializing Core Audit Agents...');
+            const selectedEngine = document.querySelector('input[name="engineOption"]:checked')?.value || 'deepseek';
+      
+            updateProgress(10, `Initializing ${selectedEngine.toUpperCase()} Crew...`);
     
             const response = await fetch('/analyze', {
                 method: 'POST',
@@ -254,7 +255,8 @@
                     api_key: apiKey,
                     enable_profiling: enableProfiling, 
                     enable_rag_deep_scan: enableRagDeepScan,
-                    enable_greenai_analysis: enableGreenAI
+                    enable_greenai_analysis: enableGreenAI,
+                    analysis_engine: selectedEngine
                 })
             });
     
