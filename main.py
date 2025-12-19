@@ -145,12 +145,12 @@ async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
     }}
     """
     try:
-        response = llm.invoke(prompt)
+        # FIX: Use ainvoke (async) to prevent blocking the event loop
+        response = await llm.ainvoke(prompt)
         content = response.content
         data = json.loads(repair_json(content))
         return data
     except Exception as e:
-        # 🔴 CHANGED: Return a specific error key instead of defaulting to Valid=True
         print(f"⚠️ Gatekeeper System Error: {e}")
         return {"system_error": str(e)}
         
@@ -166,6 +166,7 @@ class GuardrailsAuditCrew:
         self.enable_greenai = enable_greenai
         self.model_name = model_name
         self.status_queue = status_queue
+        # Capture the running loop if queue exists
         self.loop = asyncio.get_running_loop() if status_queue else None
 
     @llm
@@ -274,40 +275,51 @@ class GuardrailsAuditCrew:
 # --- API ENDPOINT ---
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
+    # 1. SETUP: Gatekeeper Check (Run BEFORE stream starts to allow 400 Errors)
+    if request.enable_gatekeeper:
+        try:
+            gatekeeper_llm = ChatOpenAI(
+                model="Qwen/Qwen2.5-72B-Instruct",
+                base_url="https://router.huggingface.co/v1",
+                api_key=request.api_key,
+                temperature=0.6,
+                max_tokens=500,
+            )
+            print("🛡️ Running Gatekeeper Check...")
+            
+            # Using Await/Async Invoke
+            gatekeeper_result = await validate_instruction_gatekeeper(request.instruction, gatekeeper_llm)
+            
+            if "system_error" in gatekeeper_result:
+                error_msg = gatekeeper_result["system_error"]
+                print(f"⛔ Gatekeeper Failed to Run: {error_msg}")
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Gatekeeper LLM Error: Unable to verify input safety. ({error_msg})"
+                )
+
+            if not gatekeeper_result.get("valid", True):
+                print(f"⛔ Gatekeeper Rejected Content: {gatekeeper_result.get('reason')}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Invalid Instruction Rejected: {gatekeeper_result.get('reason', 'Input does not look like an agent prompt.')}"
+                )
+            
+            print("✅ Gatekeeper Passed.")
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            # If gatekeeper setup fails entirely, allow pass or fail? Fails safe here.
+            raise HTTPException(status_code=500, detail=f"Gatekeeper Initialization Error: {str(e)}")
+
+    # 2. SETUP: Async Queue for Streaming
     stream_queue = asyncio.Queue()
     
+    # 3. WORKER: The Background Crew Task
     async def run_crew_async(req, q):
         try:
             os.environ["OPENAI_API_KEY"] = req.api_key
             os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
-
-            if request.enable_gatekeeper:
-                gatekeeper_llm = ChatOpenAI(
-                    model="Qwen/Qwen2.5-72B-Instruct",
-                    base_url="https://router.huggingface.co/v1",
-                    api_key=request.api_key,
-                    temperature=0.6,
-                    max_tokens=500,
-                )
-                print("🛡️ Running Gatekeeper Check...")
-                gatekeeper_result = await validate_instruction_gatekeeper(request.instruction, gatekeeper_llm)
-                
-                if "system_error" in gatekeeper_result:
-                    error_msg = gatekeeper_result["system_error"]
-                    print(f"⛔ Gatekeeper Failed to Run: {error_msg}")
-                    raise HTTPException(
-                        status_code=503,
-                        detail=f"Gatekeeper LLM Error: Unable to verify input safety. ({error_msg})"
-                    )
-    
-                if not gatekeeper_result.get("valid", True):
-                    print(f"⛔ Gatekeeper Rejected Content: {gatekeeper_result.get('reason')}")
-                    raise HTTPException(
-                        status_code=400, 
-                        detail=f"Invalid Instruction Rejected: {gatekeeper_result.get('reason', 'Input does not look like an agent prompt.')}"
-                    )
-                
-                print("✅ Gatekeeper Passed.")
 
             audit_crew = GuardrailsAuditCrew(
                 api_key=req.api_key, 
@@ -330,35 +342,36 @@ async def run_analysis(request: AnalysisRequest):
             parsed_result = extract_data(result)
             if not parsed_result: parsed_result = json.loads(repair_json(str(result)))
 
+            # E. Merge Green AI & Cost Data
             if hasattr(result, 'tasks_output'):
                 for task_out in result.tasks_output:
                     
                     # 1. Merge Green AI
                     if req.enable_greenai_analysis:
-                        # Check by Pydantic Type
                         if hasattr(task_out, 'pydantic') and isinstance(task_out.pydantic, GreenAIAnalysis):
                             parsed_result['green_ai_analysis'] = task_out.pydantic.model_dump()
-                        # Fallback: Check by Agent Role Name if Pydantic failed
                         elif hasattr(task_out, 'agent') and "Eco-Efficiency" in str(task_out.agent):
                             extracted = extract_data(task_out)
                             if extracted: parsed_result['green_ai_analysis'] = extracted
 
-                    # 2. Merge Cost/Tiering (Optional, if needed later)
+                    # 2. Merge Cost/Tiering (Optional)
                     if req.enable_profiling and hasattr(task_out, 'agent') and "FinOps" in str(task_out.agent):
-                        # Cost output is usually text, but we can try to parse or attach it
                         pass
 
-            # E. Final Output
+            # F. Final Output
             await q.put({"type": "result", "data": parsed_result})
 
         except Exception as e:
             print(f"❌ Error in async task: {traceback.format_exc()}")
+            # IMPORTANT: Push error to queue, do NOT raise exception (it would be swallowed by background task)
             await q.put({"type": "error", "message": str(e)})
         finally:
             await q.put(None)
 
+    # 4. EXECUTION: Start Background Task
     asyncio.create_task(run_crew_async(request, stream_queue))
 
+    # 5. RESPONSE: Start Stream
     async def event_stream():
         while True:
             data = await stream_queue.get()
