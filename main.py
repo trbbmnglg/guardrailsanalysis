@@ -174,7 +174,7 @@ class GuardrailsAuditCrew:
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
 
-    def __init__(self, api_key: str, enable_profiling: bool = False, enable_greenai: bool = False):
+    def __init__(self, api_key: str, enable_profiling: bool = False, enable_greenai: bool = False, model_name: str = "deepseek"):
         self.api_key = api_key
         self.enable_profiling = enable_profiling
         self.enable_greenai = enable_greenai
