@@ -206,15 +206,7 @@ class GuardrailsAuditCrew:
         config=self.agents_config['security_auditor'],
         llm=self.main_llm(),
         reasoning=self.enable_reasoning,
-        knowledge_sources=self.security_knowledge,
-        embedder={
-            "provider": "huggingface",
-            "config": {
-                "model_name": "sentence-transformers/all-mpnet-base-v2",
-                "api_key": os.getenv("HF_TOKEN"),
-                "api_url": "https://api-inference.huggingface.co"
-            }
-        }
+        knowledge_sources=self.security_knowledge
     )
         
     @agent
@@ -298,7 +290,15 @@ class GuardrailsAuditCrew:
             agents=agents,
             tasks=tasks,
             process=Process.sequential,
-            verbose=True
+            verbose=True,
+            embedder={
+                "provider": "huggingface",
+                "config": {
+                    "model_name": "sentence-transformers/all-mpnet-base-v2",
+                    "api_key": os.getenv("HF_TOKEN"),
+                    "api_url": "https://api-inference.huggingface.co"
+                }
+            }
         )
 
 # --- API ENDPOINT ---
