@@ -25,11 +25,12 @@ if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && w
 function handleNavClick(section) {
     const drawer = document.getElementById('controlDrawer');
     const drawerTitle = document.getElementById('drawerTitle');
-    const sections = ['instruction', 'auth', 'config'];
+    const sections = ['instruction', 'auth', 'config','engine'];
     const titles = {
         'instruction': 'Agent Instruction',
         'auth': 'Authentication',
-        'config': 'Analysis Configuration'
+        'config': 'Analysis Configuration',
+        'engine': 'Analysis Engine'
     };
 
     // Close if clicking same
