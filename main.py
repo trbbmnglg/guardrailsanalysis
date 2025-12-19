@@ -117,6 +117,43 @@ def extract_data(task_output):
         except:
             return None
 
+# --- GATEKEEPER ---
+async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
+    prompt = f"""
+    You are a Security Gatekeeper for an AI Audit System.
+    Your ONLY job is to classify if the INPUT below is a valid "System Instruction" or "Agent Definition" that needs auditing.
+
+    REJECT (Return "valid": false) IF:
+    - It is raw code (Python, JS, HTML, CSS) without context.
+    - It is spam, gibberish, or random characters.
+    - It is extremely short (under 3 words) like "hi" or "test".
+    - It is a question asking YOU to do something unrelated to defining an AI agent.
+    - It is an explanation, tutorial, or commentary *about* code (e.g. "Why this works...", "Here is the fix...").
+    - It looks like a copy-pasted response from another AI.
+
+    ACCEPT (Return "valid": true) IF:
+    - It explicitly defines an AI persona, role, or task.
+    - It is a prompt giving instructions to an AI Model.
+
+    INPUT TO CLASSIFY:
+    '''{instruction[:2000]}'''
+
+    RETURN ONLY JSON:
+    {{
+        "valid": boolean,
+        "reason": "Short explanation of why it was rejected (max 10 words)"
+    }}
+    """
+    try:
+        response = llm.invoke(prompt)
+        content = response.content
+        data = json.loads(repair_json(content))
+        return data
+    except Exception as e:
+        # 🔴 CHANGED: Return a specific error key instead of defaulting to Valid=True
+        print(f"⚠️ Gatekeeper System Error: {e}")
+        return {"system_error": str(e)}
+        
 # --- CREW DEFINITION ---
 @CrewBase
 class GuardrailsAuditCrew:
