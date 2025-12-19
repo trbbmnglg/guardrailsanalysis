@@ -244,8 +244,33 @@ async def run_analysis(request: AnalysisRequest):
             os.environ["OPENAI_API_KEY"] = req.api_key
             os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
 
-            if req.enable_gatekeeper:
-                pass # Simplified
+            if request.enable_gatekeeper:
+                gatekeeper_llm = ChatOpenAI(
+                    model="Qwen/Qwen2.5-72B-Instruct",
+                    base_url="https://router.huggingface.co/v1",
+                    api_key=request.api_key,
+                    temperature=0.6,
+                    max_tokens=500,
+                )
+                print("🛡️ Running Gatekeeper Check...")
+                gatekeeper_result = await validate_instruction_gatekeeper(request.instruction, gatekeeper_llm)
+                
+                if "system_error" in gatekeeper_result:
+                    error_msg = gatekeeper_result["system_error"]
+                    print(f"⛔ Gatekeeper Failed to Run: {error_msg}")
+                    raise HTTPException(
+                        status_code=503,
+                        detail=f"Gatekeeper LLM Error: Unable to verify input safety. ({error_msg})"
+                    )
+    
+                if not gatekeeper_result.get("valid", True):
+                    print(f"⛔ Gatekeeper Rejected Content: {gatekeeper_result.get('reason')}")
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Invalid Instruction Rejected: {gatekeeper_result.get('reason', 'Input does not look like an agent prompt.')}"
+                    )
+                
+                print("✅ Gatekeeper Passed.")
 
             audit_crew = GuardrailsAuditCrew(
                 api_key=req.api_key, 
