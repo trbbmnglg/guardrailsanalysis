@@ -196,7 +196,7 @@ class GuardrailsAuditCrew:
     # --- 2. AGENTS ---
     @agent
     def security_auditor(self) -> Agent:
-        owasp_tool = get_owasp_rag_tool()
+        owasp_tool = get_owasp_rag_tool(api_key)
         tools_list = [owasp_tool] if owasp_tool else []
         return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), tools=tools_list, allow_delegation=False, verbose=True)
 
