@@ -12,3 +12,6 @@ sentence-transformers
 huggingface-hub
 pyyaml
 chromadb
+threading
+queue
+time
