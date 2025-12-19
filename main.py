@@ -197,7 +197,7 @@ class GuardrailsAuditCrew:
             base_url="https://router.huggingface.co/v1",
             api_key=self.api_key,
             temperature=0.1,
-            max_tokens=4000,
+            max_tokens=8000,
         )
 
     # --- 2. AGENTS ---
