@@ -178,7 +178,7 @@ class GuardrailsAuditCrew:
         if os.path.exists(kb_physical_path):
             try:
                 self.security_knowledge = [PDFKnowledgeSource(file_paths=[kb_filename])]
-                print(f"✅ Loaded Knowledge Base: {kb_path}")
+                print(f"✅ Loaded Knowledge Base: {kb_filename}")
             except Exception as e:
                 print(f"⚠️ Failed to load Knowledge PDF: {e}")
         else:
