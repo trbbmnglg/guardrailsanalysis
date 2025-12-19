@@ -211,7 +211,8 @@ class GuardrailsAuditCrew:
             "provider": "huggingface",
             "config": {
                 "model_name": "sentence-transformers/all-mpnet-base-v2",
-                "api_key": os.getenv("HF_TOKEN")
+                "api_key": os.getenv("HF_TOKEN"),
+                "api_url": "https://api-inference.huggingface.co"
             }
         }
     )
