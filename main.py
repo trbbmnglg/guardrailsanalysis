@@ -172,16 +172,17 @@ class GuardrailsAuditCrew:
         self.loop = asyncio.get_running_loop() if status_queue else None
 
         self.security_knowledge = []
-        kb_path = "knowledge/LLMAll_en-US_FINAL.pdf"
+        kb_filename = "LLMAll_en-US_FINAL.pdf" 
+        kb_physical_path = os.path.join("knowledge", kb_filename)
 
-        if os.path.exists(kb_path):
+        if os.path.exists(kb_physical_path):
             try:
-                self.security_knowledge = [PDFKnowledgeSource(file_paths=[kb_path])]
+                self.security_knowledge = [PDFKnowledgeSource(file_paths=[kb_filename])]
                 print(f"✅ Loaded Knowledge Base: {kb_path}")
             except Exception as e:
                 print(f"⚠️ Failed to load Knowledge PDF: {e}")
         else:
-            print(f"ℹ️ Knowledge file not found at {kb_path}, skipping.")
+            print(f"ℹ️ Knowledge file not found at {kb_physical_path}, skipping.")
 
     @llm
     def main_llm(self):
