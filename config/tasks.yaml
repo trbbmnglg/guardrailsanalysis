@@ -210,7 +210,7 @@ report_synthesis_task:
     You are receiving audit findings from Security, Privacy, RAI, and QA Specialists.
     
     **YOUR MISSION:**
-    1. **Review All Findings**: Examine outputs from all audit agents. Strategize and think
+    1. **Review All Findings**: Examine outputs from all audit agents
     2. **Eliminate Duplicates**: If 2+ agents flag the same audit, merge into ONE guardrail
     3. **Assign Final Ratings**: You have veto power on Severity and Category
     4. **Generate Recommendations**: Provide 3-5 strategic, actionable recommendations
