@@ -95,6 +95,7 @@ class AnalysisRequest(BaseModel):
     enable_rag_deep_scan: bool = False
     enable_greenai_analysis: bool = False
     enable_gatekeeper: bool = True
+    analysis_engine: Literal["deepseek", "llama", "qwen"] = "deepseek"
 
 def repair_json(json_str: str) -> str:
     if not json_str: return "{}"
@@ -177,15 +178,22 @@ class GuardrailsAuditCrew:
         self.api_key = api_key
         self.enable_profiling = enable_profiling
         self.enable_greenai = enable_greenai
+        self.model_name = model_name
 
     # --- 1. LLM DEFINITION (@llm) ---
     # This defines the model once. We can reference self.main_llm() in agents.
     @llm
     def main_llm(self):
+        model_map = {
+            "deepseek": "openai/deepseek-ai/DeepSeek-V3.2",
+            "llama": "openai/meta-llama/Llama-3.3-70B-Instruct",
+            "qwen": "openai/Qwen/Qwen2.5-72B-Instruct"
+        }
+        
+        selected_model = model_map.get(self.model_name, model_map["deepseek"])
+
         return ChatOpenAI(
-            #model="openai/meta-llama/Llama-3.3-70B-Instruct",
-            #model="openai/deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
-            model="openai/deepseek-ai/DeepSeek-V3.2",
+            model=selected_model,
             base_url="https://router.huggingface.co/v1",
             api_key=self.api_key,
             temperature=0.1,
@@ -329,7 +337,8 @@ async def run_analysis(request: AnalysisRequest):
         audit_crew = GuardrailsAuditCrew(
             api_key=request.api_key, 
             enable_profiling=request.enable_profiling, 
-            enable_greenai=request.enable_greenai_analysis
+            enable_greenai=request.enable_greenai_analysis,
+            model_name=request.analysis_engine
         )
         
         inputs = {
