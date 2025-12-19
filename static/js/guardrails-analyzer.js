@@ -358,7 +358,12 @@
                 })
             });
     
-            if (!response.ok) throw new Error(`Server Error: ${response.status}`);
+            if (!response.ok) {
+                 // --- FIX: READ JSON ERROR BODY ---
+                 const errData = await response.json().catch(() => null);
+                 const cleanMsg = cleanErrorMessage(errData, response.status);
+                 throw new Error(cleanMsg);
+            }
     
             // 2. READ STREAM
             const reader = response.body.getReader();
