@@ -5,8 +5,8 @@ from crewai_tools import PDFSearchTool
 def get_owasp_rag_tool(api_key):
     pdf_path = "kb/LLMAll_en-US_FINAL.pdf"
 
-     os.environ["OPENAI_API_KEY"] = api_key
-     os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
+    os.environ["OPENAI_API_KEY"] = api_key
+    os.environ["OPENAI_API_BASE"] = "https://router.huggingface.co/v1"
     
     if not os.path.exists(pdf_path):
         print(f"⚠️ Warning: Knowledge base not found at {pdf_path}")
