@@ -291,10 +291,11 @@ class GuardrailsAuditCrew:
             tasks=tasks,
             process=Process.sequential,
             verbose=True,
+            memory=True,
             embedder={
                 "provider": "huggingface",
                 "config": {
-                    "model_name": "sentence-transformers/all-mpnet-base-v2",
+                    "model_name": "Qwen/Qwen3-Embedding-0.6B",
                     "api_key": os.getenv("HF_TOKEN"),
                     "api_url": "https://api-inference.huggingface.co"
                 }
