@@ -143,8 +143,8 @@ class GuardrailsAuditCrew:
             model=selected_model,
             base_url="https://router.huggingface.co/v1",
             api_key=self.api_key,
-            temperature=0.1,
-            max_tokens=4000,
+            temperature=0.0,
+            max_tokens=10000,
         )
 
     # Agents
