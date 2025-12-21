@@ -12,6 +12,7 @@ from crewai.project import CrewBase, agent, crew, task, llm
 from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
 from langchain_openai import ChatOpenAI
 from green_ai_plugin import GreenAIAnalysis
+from crewai.embeddings import HuggingFaceEmbeddings
 
 app = FastAPI()
 
@@ -221,22 +222,20 @@ class GuardrailsAuditCrew:
 
     # Agents
     @agent
-    def security_auditor(self) -> Agent: 
+    def security_auditor(self) -> Agent:
         return Agent(
-            config=self.agents_config['security_auditor'], 
+            config=self.agents_config['security_auditor'],
             llm=self.main_llm(),
             memory=True,
-            embedder={
-                "provider": "huggingface",
-                "config": {
-                    "api_key": os.getenv("HF_TOKEN"),
-                    "model": "Qwen/Qwen3-Embedding-0.6B",
-                    "api_url": "https://api-inference.huggingface.co"
-                }
-            },
+            embedder=HuggingFaceEmbeddings(
+                model="Qwen/Qwen3-Embedding-0.6B",
+                api_key=os.getenv("HF_TOKEN"),
+                api_url="https://api-inference.huggingface.co"
+            ),
             reasoning=self.enable_reasoning,
-            knowledge_sources=self.security_knowledge 
+            knowledge_sources=self.security_knowledge
         )
+
     
     @agent
     def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
