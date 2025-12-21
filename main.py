@@ -12,7 +12,7 @@ from crewai.project import CrewBase, agent, crew, task, llm
 from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
 from langchain_openai import ChatOpenAI
 from green_ai_plugin import GreenAIAnalysis
-from langchain_community.embeddings.huggingface import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
 model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 print(model.embed_query("Test sentence"))
