@@ -14,7 +14,6 @@ from crewai.rag.config.utils import set_rag_config, get_rag_client, clear_rag_co
 from crewai.rag.chromadb.config import ChromaDBConfig
 from langchain_openai import ChatOpenAI
 from green_ai_plugin import GreenAIAnalysis
-from crewai.embeddings import HuggingFaceProviderSpec
 
 app = FastAPI()
 
