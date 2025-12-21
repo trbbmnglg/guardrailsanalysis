@@ -12,7 +12,7 @@ from crewai.project import CrewBase, agent, crew, task, llm
 from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
 from langchain_openai import ChatOpenAI
 from green_ai_plugin import GreenAIAnalysis
-from crewai.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
 
 app = FastAPI()
 
