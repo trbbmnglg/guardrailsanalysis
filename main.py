@@ -227,12 +227,6 @@ class GuardrailsAuditCrew:
         return Agent(
             config=self.agents_config['security_auditor'],
             llm=self.main_llm(),
-            memory=True,
-            embedder=HuggingFaceProviderSpec(
-                api_key=self.api_key,
-                model="sentence-transformers/all-MiniLM-L6-v2",
-                api_url="https://api-inference.huggingface.co"
-            ),
             knowledge_sources=self.security_knowledge,
             reasoning=self.enable_reasoning
         )
