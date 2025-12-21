@@ -232,14 +232,16 @@ class GuardrailsAuditCrew:
             config=self.agents_config['security_auditor'],
             llm=self.main_llm(),
             memory=True,
-            embedder=HuggingFaceEmbeddings(
-                model_name="sentence-transformers/all-MiniLM-L6-v2",
-                model_kwargs={"device": "cpu"},
-                api_key=os.getenv("HF_TOKEN"),
-                api_url="https://api-inference.huggingface.co"
-            ),
-            reasoning=self.enable_reasoning,
-            knowledge_sources=self.security_knowledge
+            embedder={
+                "provider": "huggingface",
+                "config": {
+                    "api_key": os.getenv("HF_TOKEN"),
+                    "model": "sentence-transformers/all-MiniLM-L6-v2",
+                    "api_url": "https://api-inference.huggingface.co"
+                }
+            },
+            knowledge_sources=self.security_knowledge,
+            reasoning=self.enable_reasoning
         )
 
     
