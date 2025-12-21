@@ -14,6 +14,9 @@ from langchain_openai import ChatOpenAI
 from green_ai_plugin import GreenAIAnalysis
 from langchain.embeddings import HuggingFaceEmbeddings
 
+model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+print(model.embed_query("Test sentence"))
+
 app = FastAPI()
 
 # --- CONSTANTS & GUIDELINES ---
