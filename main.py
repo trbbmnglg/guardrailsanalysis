@@ -228,6 +228,13 @@ class GuardrailsAuditCrew:
             config=self.agents_config['security_auditor'],
             llm=self.main_llm(),
             knowledge_sources=self.security_knowledge,
+            embedder={
+                "provider": "huggingface",
+                "config": {
+                    "model": "sentence-transformers/all-MiniLM-L6-v2",
+                    "api_key": self.api_key
+                }
+            },
             reasoning=self.enable_reasoning
         )
 
