@@ -14,10 +14,7 @@ from crewai.rag.config.utils import set_rag_config, get_rag_client, clear_rag_co
 from crewai.rag.chromadb.config import ChromaDBConfig
 from langchain_openai import ChatOpenAI
 from green_ai_plugin import GreenAIAnalysis
-from langchain_huggingface import HuggingFaceEmbeddings
-
-model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-print(model.embed_query("Test sentence"))
+from crewai.embeddings import HuggingFaceProviderSpec
 
 app = FastAPI()
 
@@ -232,14 +229,11 @@ class GuardrailsAuditCrew:
             config=self.agents_config['security_auditor'],
             llm=self.main_llm(),
             memory=True,
-            embedder={
-                "provider": "huggingface",
-                "config": {
-                    "api_key": os.getenv("HF_TOKEN"),
-                    "model": "sentence-transformers/all-MiniLM-L6-v2",
-                    "api_url": "https://api-inference.huggingface.co"
-                }
-            },
+            embedder=HuggingFaceProviderSpec(
+                api_key=self.api_key,
+                model="sentence-transformers/all-MiniLM-L6-v2",
+                api_url="https://api-inference.huggingface.co"
+            ),
             knowledge_sources=self.security_knowledge,
             reasoning=self.enable_reasoning
         )
