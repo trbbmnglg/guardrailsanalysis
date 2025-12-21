@@ -10,6 +10,8 @@ from typing import List, Literal, Optional
 from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, crew, task, llm
 from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
+from crewai.rag.config.utils import set_rag_config, get_rag_client, clear_rag_config
+from crewai.rag.chromadb.config import ChromaDBConfig
 from langchain_openai import ChatOpenAI
 from green_ai_plugin import GreenAIAnalysis
 from langchain_huggingface import HuggingFaceEmbeddings
