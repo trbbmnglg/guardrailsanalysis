@@ -224,7 +224,16 @@ class GuardrailsAuditCrew:
     def security_auditor(self) -> Agent: 
         return Agent(
             config=self.agents_config['security_auditor'], 
-            llm=self.main_llm(), 
+            llm=self.main_llm(),
+            memory=True,
+            embedder={
+                "provider": "huggingface",
+                "config": {
+                    "api_key": os.getenv("HF_TOKEN"),
+                    "model": "Qwen/Qwen3-Embedding-0.6B",
+                    "api_url": "https://api-inference.huggingface.co"
+                }
+            },
             reasoning=self.enable_reasoning,
             knowledge_sources=self.security_knowledge 
         )
