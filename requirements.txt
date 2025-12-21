@@ -3,8 +3,8 @@ uvicorn
 crewai>=0.75.0
 crewai[tools]>=0.75.0
 langchain>=0.1.7
-langchain_openai
-langchain-community>=0.0.187
+langchain-openai
+langchain-huggingface>=0.0.10
 sentence-transformers>=2.6.0
 huggingface-hub>=0.20.0
 pypdf
