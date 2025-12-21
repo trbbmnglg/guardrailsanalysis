@@ -12,7 +12,7 @@ from crewai.project import CrewBase, agent, crew, task, llm
 from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
 from langchain_openai import ChatOpenAI
 from green_ai_plugin import GreenAIAnalysis
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings.huggingface import HuggingFaceEmbeddings
 
 model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 print(model.embed_query("Test sentence"))
@@ -231,7 +231,8 @@ class GuardrailsAuditCrew:
             llm=self.main_llm(),
             memory=True,
             embedder=HuggingFaceEmbeddings(
-                model="Qwen/Qwen3-Embedding-0.6B",
+                model_name="sentence-transformers/all-MiniLM-L6-v2",
+                model_kwargs={"device": "cpu"},
                 api_key=os.getenv("HF_TOKEN"),
                 api_url="https://api-inference.huggingface.co"
             ),
