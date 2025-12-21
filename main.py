@@ -92,6 +92,7 @@ class AnalysisRequest(BaseModel):
     enable_greenai_analysis: bool = False
     enable_gatekeeper: bool = True
     enable_reasoning: bool = False
+    enable_memory: bool = False
     analysis_engine: Literal["deepseek", "llama", "qwen"] = "deepseek"
 
 # --- HELPER FUNCTIONS ---
@@ -119,8 +120,20 @@ def extract_data(task_output):
         except:
             return None
 
+def clean_text(text: str) -> str:
+    """Safe encode/decode to remove non-printable characters that crash ASCII terminals"""
+    if not text: return ""
+    try:
+        # Encode to ASCII, ignore errors, then decode back
+        return text.encode('ascii', 'ignore').decode('ascii')
+    except:
+        return text
+
 # --- GATEKEEPER ---
 async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
+    # FIX: Sanitize instruction to prevent UnicodeEncodeError
+    safe_instruction = clean_text(instruction)
+    
     prompt = f"""
     You are a Security Gatekeeper for an AI Audit System.
     Your ONLY job is to classify if the INPUT below is a valid "System Instruction" or "Agent Definition" that needs auditing.
@@ -138,7 +151,7 @@ async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
     - It is a prompt giving instructions to an AI Model.
 
     INPUT TO CLASSIFY:
-    '''{instruction[:2000]}'''
+    '''{safe_instruction[:2000]}'''
 
     RETURN ONLY JSON:
     {{
@@ -147,14 +160,14 @@ async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
     }}
     """
     try:
-        # FIX: Use ainvoke (async) to prevent blocking the event loop
         response = await llm.ainvoke(prompt)
         content = response.content
         data = json.loads(repair_json(content))
         return data
     except Exception as e:
-        print(f"⚠️ Gatekeeper System Error: {e}")
-        return {"system_error": str(e)}
+        safe_err = clean_text(str(e))
+        print(f"⚠️ Gatekeeper System Error: {safe_err}")
+        return {"system_error": safe_err}
         
 # --- CREW DEFINITION ---
 @CrewBase
@@ -162,27 +175,32 @@ class GuardrailsAuditCrew:
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
 
-    def __init__(self, api_key: str, enable_profiling: bool, enable_greenai: bool, enable_reasoning: bool, model_name: str, status_queue: asyncio.Queue = None):
+    def __init__(self, api_key: str, enable_profiling: bool, enable_greenai: bool, enable_reasoning: bool, enable_memory: bool, model_name: str, status_queue: asyncio.Queue = None):
         self.api_key = api_key
         self.enable_profiling = enable_profiling
         self.enable_greenai = enable_greenai
         self.enable_reasoning = enable_reasoning
+        self.enable_memory = enable_memory
         self.model_name = model_name
         self.status_queue = status_queue
         self.loop = asyncio.get_running_loop() if status_queue else None
-
+        
+        # --- INITIALIZE KNOWLEDGE SOURCE ---
         self.security_knowledge = []
+        
+        # CrewAI expects a 'knowledge' folder at root
         kb_filename = "LLMAll_en-US_FINAL.pdf" 
         kb_physical_path = os.path.join("knowledge", kb_filename)
-
+        
         if os.path.exists(kb_physical_path):
             try:
+                # IMPORTANT: Pass only the filename; CrewAI prepends 'knowledge/'
                 self.security_knowledge = [PDFKnowledgeSource(file_paths=[kb_filename])]
                 print(f"✅ Loaded Knowledge Base: {kb_filename}")
             except Exception as e:
                 print(f"⚠️ Failed to load Knowledge PDF: {e}")
         else:
-            print(f"ℹ️ Knowledge file not found at {kb_physical_path}, skipping.")
+            print(f"ℹ️ Knowledge file not found at {kb_physical_path}. Ensure you created the 'knowledge' folder.")
 
     @llm
     def main_llm(self):
@@ -202,13 +220,14 @@ class GuardrailsAuditCrew:
 
     # Agents
     @agent
-    def security_auditor(self) -> Agent: return Agent(
-        config=self.agents_config['security_auditor'],
-        llm=self.main_llm(),
-        reasoning=self.enable_reasoning,
-        knowledge_sources=self.security_knowledge
-    )
-        
+    def security_auditor(self) -> Agent: 
+        return Agent(
+            config=self.agents_config['security_auditor'], 
+            llm=self.main_llm(), 
+            reasoning=self.enable_reasoning,
+            knowledge_sources=self.security_knowledge 
+        )
+    
     @agent
     def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
     @agent
@@ -245,7 +264,6 @@ class GuardrailsAuditCrew:
         def callback(output):
             if self.status_queue and self.loop:
                 try:
-                    # Schedules the queue update on the main event loop
                     self.loop.call_soon_threadsafe(
                         self.status_queue.put_nowait,
                         {"type": "progress", "agent": agent_key, "status": "completed"}
@@ -291,21 +309,13 @@ class GuardrailsAuditCrew:
             tasks=tasks,
             process=Process.sequential,
             verbose=True,
-            memory=True,
-            embedder={
-                "provider": "huggingface",
-                "config": {
-                    "model_name": "Qwen/Qwen3-Embedding-0.6B",
-                    "api_key": os.getenv("HF_TOKEN"),
-                    "api_url": "https://api-inference.huggingface.co"
-                }
-            }
+            memory=self.enable_memory
         )
 
 # --- API ENDPOINT ---
 @app.post("/analyze")
 async def run_analysis(request: AnalysisRequest):
-    # 1. SETUP: Gatekeeper Check (Run BEFORE stream starts to allow 400 Errors)
+    # 1. SETUP: Gatekeeper Check
     if request.enable_gatekeeper:
         try:
             gatekeeper_llm = ChatOpenAI(
@@ -317,7 +327,6 @@ async def run_analysis(request: AnalysisRequest):
             )
             print("🛡️ Running Gatekeeper Check...")
             
-            # Using Await/Async Invoke
             gatekeeper_result = await validate_instruction_gatekeeper(request.instruction, gatekeeper_llm)
             
             if "system_error" in gatekeeper_result:
@@ -339,10 +348,11 @@ async def run_analysis(request: AnalysisRequest):
         except HTTPException as he:
             raise he
         except Exception as e:
-            # If gatekeeper setup fails entirely, allow pass or fail? Fails safe here.
-            raise HTTPException(status_code=500, detail=f"Gatekeeper Initialization Error: {str(e)}")
+            # Catch encoding errors in the top-level exception
+            safe_e = clean_text(str(e))
+            raise HTTPException(status_code=500, detail=f"Gatekeeper Initialization Error: {safe_e}")
 
-    # 2. SETUP: Async Queue for Streaming
+    # 2. SETUP: Async Queue
     stream_queue = asyncio.Queue()
     
     # 3. WORKER: The Background Crew Task
@@ -356,12 +366,13 @@ async def run_analysis(request: AnalysisRequest):
                 enable_profiling=req.enable_profiling, 
                 enable_greenai=req.enable_greenai_analysis,
                 enable_reasoning=req.enable_reasoning,
+                enable_memory=req.enable_memory,
                 model_name=req.analysis_engine,
                 status_queue=q
             )
             
             inputs = {
-                'instruction': req.instruction,
+                'instruction': clean_text(req.instruction), # CLEAN INPUT HERE TOO
                 'AUDIT_OUTPUT_FORMAT': AUDIT_OUTPUT_FORMAT,
                 'CRITICAL_JSON_RULES': CRITICAL_JSON_RULES
             }
@@ -377,7 +388,6 @@ async def run_analysis(request: AnalysisRequest):
             if hasattr(result, 'tasks_output'):
                 for task_out in result.tasks_output:
                     
-                    # 1. Merge Green AI
                     if req.enable_greenai_analysis:
                         if hasattr(task_out, 'pydantic') and isinstance(task_out.pydantic, GreenAIAnalysis):
                             parsed_result['green_ai_analysis'] = task_out.pydantic.model_dump()
@@ -385,24 +395,20 @@ async def run_analysis(request: AnalysisRequest):
                             extracted = extract_data(task_out)
                             if extracted: parsed_result['green_ai_analysis'] = extracted
 
-                    # 2. Merge Cost/Tiering (Optional)
-                    if req.enable_profiling and hasattr(task_out, 'agent') and "FinOps" in str(task_out.agent):
-                        pass
-
             # F. Final Output
             await q.put({"type": "result", "data": parsed_result})
 
         except Exception as e:
-            print(f"❌ Error in async task: {traceback.format_exc()}")
-            # IMPORTANT: Push error to queue, do NOT raise exception (it would be swallowed by background task)
-            await q.put({"type": "error", "message": str(e)})
+            safe_e = clean_text(str(e))
+            print(f"❌ Error in async task: {safe_e}")
+            await q.put({"type": "error", "message": safe_e})
         finally:
             await q.put(None)
 
-    # 4. EXECUTION: Start Background Task
+    # 4. EXECUTION
     asyncio.create_task(run_crew_async(request, stream_queue))
 
-    # 5. RESPONSE: Start Stream
+    # 5. RESPONSE
     async def event_stream():
         while True:
             data = await stream_queue.get()
