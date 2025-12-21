@@ -12,6 +12,14 @@ ENV HOME=/home/user \
 COPY --chown=user requirements.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
+# 3.1 VERIFY CrewAI embeddings exist (fail fast)
+RUN python - <<EOF
+from crewai.embeddings import HuggingFaceEmbeddings
+import crewai
+print("CrewAI version:", crewai.__version__)
+print("Embeddings OK")
+EOF
+
 # 4. Copy your app files
 COPY --chown=user . .
 
