@@ -226,13 +226,13 @@ class GuardrailsAuditCrew:
     def security_auditor(self) -> Agent:
         return Agent(
             config=self.agents_config['security_auditor'],
-            llm=self.main_llm(),
             knowledge_sources=self.security_knowledge,
             embedder={
                 "provider": "huggingface",
                 "config": {
                     "model": "sentence-transformers/all-MiniLM-L6-v2",
-                    "api_key": self.api_key
+                    "api_key": self.api_key,
+                    "api_base": "https://router.huggingface.co/v1",
                 }
             },
             reasoning=self.enable_reasoning
