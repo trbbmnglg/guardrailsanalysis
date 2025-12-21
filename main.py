@@ -131,7 +131,7 @@ def clean_text(text: str) -> str:
 
 # --- GATEKEEPER ---
 async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
-    # FIX: Sanitize instruction to prevent UnicodeEncodeError
+    # FIX: Sanitize input to prevent UnicodeEncodeError inside LLM processing
     safe_instruction = clean_text(instruction)
     
     prompt = f"""
@@ -165,6 +165,7 @@ async def validate_instruction_gatekeeper(instruction: str, llm: ChatOpenAI):
         data = json.loads(repair_json(content))
         return data
     except Exception as e:
+        # FIX: Sanitize error message before returning
         safe_err = clean_text(str(e))
         print(f"⚠️ Gatekeeper System Error: {safe_err}")
         return {"system_error": safe_err}
@@ -330,7 +331,8 @@ async def run_analysis(request: AnalysisRequest):
             gatekeeper_result = await validate_instruction_gatekeeper(request.instruction, gatekeeper_llm)
             
             if "system_error" in gatekeeper_result:
-                error_msg = gatekeeper_result["system_error"]
+                # FIX: Sanitize the error message before printing to prevent console crash
+                error_msg = clean_text(gatekeeper_result["system_error"])
                 print(f"⛔ Gatekeeper Failed to Run: {error_msg}")
                 raise HTTPException(
                     status_code=503,
@@ -338,17 +340,18 @@ async def run_analysis(request: AnalysisRequest):
                 )
 
             if not gatekeeper_result.get("valid", True):
-                print(f"⛔ Gatekeeper Rejected Content: {gatekeeper_result.get('reason')}")
+                reason = clean_text(gatekeeper_result.get('reason', 'Input does not look like an agent prompt.'))
+                print(f"⛔ Gatekeeper Rejected Content: {reason}")
                 raise HTTPException(
                     status_code=400, 
-                    detail=f"Invalid Instruction Rejected: {gatekeeper_result.get('reason', 'Input does not look like an agent prompt.')}"
+                    detail=f"Invalid Instruction Rejected: {reason}"
                 )
             
             print("✅ Gatekeeper Passed.")
         except HTTPException as he:
             raise he
         except Exception as e:
-            # Catch encoding errors in the top-level exception
+            # Catch all other errors and sanitize
             safe_e = clean_text(str(e))
             raise HTTPException(status_code=500, detail=f"Gatekeeper Initialization Error: {safe_e}")
 
@@ -372,7 +375,7 @@ async def run_analysis(request: AnalysisRequest):
             )
             
             inputs = {
-                'instruction': clean_text(req.instruction), # CLEAN INPUT HERE TOO
+                'instruction': clean_text(req.instruction),
                 'AUDIT_OUTPUT_FORMAT': AUDIT_OUTPUT_FORMAT,
                 'CRITICAL_JSON_RULES': CRITICAL_JSON_RULES
             }
