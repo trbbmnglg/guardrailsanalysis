@@ -234,6 +234,7 @@ class GuardrailsAuditCrew:
                     "api_base": "https://router.huggingface.co/v1",
                 }
             },
+            llm=self.main_llm(),
             reasoning=self.enable_reasoning
         )
 
