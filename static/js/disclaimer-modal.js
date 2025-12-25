@@ -1,24 +1,16 @@
-// Disclaimer Modal - Standalone JavaScript File
-// Updated for "Flat/Square" Aesthetic (rounded-none)
-
 (function() {
     'use strict';
     
     let disclaimerAccepted = false;
-
-    // Show disclaimer modal on page load
+  
     window.addEventListener('DOMContentLoaded', function() {
         showDisclaimerModal();
     });
 
     function showDisclaimerModal() {
-        // Create modal backdrop
         const modal = document.createElement('div');
         modal.id = 'disclaimerModal';
-        // Backdrop: blurred and dark
         modal.className = 'fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-opacity duration-300 opacity-0';
-        
-        // Modal Content - SQUARED OFF (rounded-none)
         modal.innerHTML = `
             <div class="bg-white rounded-none shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden transform scale-95 transition-all duration-300 border border-slate-200" id="modalContent">
                 
@@ -117,7 +109,6 @@
         
         document.body.appendChild(modal);
 
-        // Animation entry
         requestAnimationFrame(() => {
             modal.classList.remove('opacity-0');
             const content = document.getElementById('modalContent');
@@ -127,12 +118,10 @@
             }
         });
 
-        // Get elements
         const checkbox = document.getElementById('acceptDisclaimer');
         const acceptBtn = document.getElementById('acceptBtn');
         const declineBtn = document.getElementById('declineBtn');
 
-        // Logic
         checkbox.addEventListener('change', function() {
             if (checkbox.checked) {
                 acceptBtn.disabled = false;
@@ -165,7 +154,7 @@
         });
 
         declineBtn.addEventListener('click', function() {
-            // Replace body content with Access Denied message
+
             document.body.innerHTML = `
                <div class="fixed inset-0 bg-slate-50 flex flex-col items-center justify-center p-4">
                    <div class="bg-white p-12 shadow-xl max-w-md text-center border border-slate-200">
