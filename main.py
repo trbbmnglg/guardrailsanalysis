@@ -221,24 +221,7 @@ class GuardrailsAuditCrew:
 
     # Agents
     @agent
-    def security_auditor(self) -> Agent:
-        return Agent(
-            config=self.agents_config['security_auditor'],
-            knowledge_sources=self.security_knowledge,
-            memory=True,
-            embedder={
-                "provider": "huggingface",
-                "config": {
-                    "model": "sentence-transformers/all-MiniLM-L6-v2",
-                    "api_key": self.api_key,
-                    "api_base": "https://router.huggingface.co/v1",
-                }
-            },
-            llm=self.main_llm(),
-            reasoning=self.enable_reasoning
-        )
-
-    
+    def security_auditor(self) -> Agent: return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), reasoning=self.enable_reasoning)  
     @agent
     def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
     @agent
