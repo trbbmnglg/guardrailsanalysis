@@ -26,7 +26,7 @@ logger = logging.getLogger("guardrails")
 DEBUG = os.getenv("GR_DEBUG", "").lower() in ("1", "true", "yes")
 HF_ROUTER_BASE = "https://router.huggingface.co/v1"
 GR_MAX_CONCURRENT = int(os.getenv("GR_MAX_CONCURRENT", "2"))
-GR_TIMEOUT = float(os.getenv("GR_TIMEOUT", "240"))
+GR_TIMEOUT = float(os.getenv("GR_TIMEOUT", "600"))  # governance synthesis of a large report is slow
 GR_MAX_INSTRUCTION = int(os.getenv("GR_MAX_INSTRUCTION", "20000"))
 
 # Local, key-free embedder for RAG (matches sentence-transformers dep / Dockerfile check).
@@ -473,9 +473,17 @@ async def run_analysis(request: Request, payload: AnalysisRequest):
 
     # 5. RESPONSE
     async def event_stream():
+        # Heartbeat: the governance synthesis step emits no progress for a while, so send a
+        # keepalive every 15s of silence to stop proxies/clients from dropping an idle stream.
+        # The frontend ignores {"type":"ping"}.
         while True:
-            data = await stream_queue.get()
-            if data is None: break
+            try:
+                data = await asyncio.wait_for(stream_queue.get(), timeout=15)
+            except asyncio.TimeoutError:
+                yield json.dumps({"type": "ping"}) + "\n"
+                continue
+            if data is None:
+                break
             yield json.dumps(data) + "\n"
 
     return StreamingResponse(event_stream(), media_type="application/x-ndjson")
