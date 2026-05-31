@@ -6,52 +6,47 @@ logger = logging.getLogger("guardrails")
 
 # OWASP LLM Top-10 knowledge base. Single canonical location (matches the LFS-tracked file).
 PDF_PATH = os.path.join("knowledge", "LLMAll_en-US_FINAL.pdf")
-HF_ROUTER_BASE = "https://router.huggingface.co/v1"
 
-# Once construction fails for a config-level reason (independent of the user's key),
-# stop retrying on every request.
+# Process-level cache. The PDF is static and embeddings are LOCAL (token-independent),
+# so build/index the tool ONCE and reuse it across all requests (no per-request
+# re-indexing, no per-user state). _RAG_DISABLED short-circuits retries after a
+# config-level failure so we don't re-attempt construction on every request.
+_RAG_TOOL = None
 _RAG_DISABLED = False
 
 
-def get_owasp_rag_tool(api_key=None):
-    global _RAG_DISABLED
+def get_owasp_rag_tool():
+    """Return a cached PDFSearchTool over the OWASP LLM Top-10 PDF, or None if unavailable.
+
+    Uses LOCAL sentence-transformers embeddings — no API key, no OpenAI call. crewai-tools
+    1.14.6 expects config key `embedding_model` with provider `sentence-transformer`; when
+    unset it defaults to OpenAI embeddings (requires OPENAI_API_KEY), which is why earlier
+    attempts hit OpenAI's /embeddings. First call downloads all-MiniLM-L6-v2 (~80MB) and
+    indexes the PDF locally; later calls reuse the cached instance.
+    """
+    global _RAG_TOOL, _RAG_DISABLED
+    if _RAG_TOOL is not None:
+        return _RAG_TOOL
     if _RAG_DISABLED:
         return None
-    """Return a PDFSearchTool over the OWASP LLM Top-10 PDF, or None if unavailable.
-
-    - Embedder: local sentence-transformers (no API key).
-    - Answer LLM: routed through the HF OpenAI-compatible router using the caller's
-      token (PDFSearchTool/embedchain otherwise defaults to OpenAI and demands
-      OPENAI_API_KEY). Never mutates a process-global env var.
-    """
     if not os.path.exists(PDF_PATH):
         logger.warning("OWASP knowledge base not found at %s; RAG tool disabled", PDF_PATH)
-        return None
-    if not api_key:
-        logger.warning("No api_key for RAG answer-LLM; RAG tool disabled")
+        _RAG_DISABLED = True
         return None
 
     try:
         config = {
-            "llm": {
-                "provider": "openai",
-                "config": {
-                    "model": "Qwen/Qwen2.5-72B-Instruct",
-                    "api_key": api_key,
-                    "base_url": HF_ROUTER_BASE,
-                },
+            "embedding_model": {
+                "provider": "sentence-transformer",
+                "config": {"model_name": "all-MiniLM-L6-v2", "device": "cpu"},
             },
-            "embedder": {
-                "provider": "huggingface",
-                "config": {"model": "sentence-transformers/all-MiniLM-L6-v2"},
-            },
+            "vectordb": {"provider": "chromadb", "config": {}},
         }
-        tool = PDFSearchTool(pdf=PDF_PATH, config=config)
-        logger.info("OWASP RAG tool initialized (local embeddings + HF-router answer LLM)")
-        return tool
+        _RAG_TOOL = PDFSearchTool(pdf=PDF_PATH, config=config)
+        logger.info("OWASP RAG tool initialized (local sentence-transformers embeddings)")
+        return _RAG_TOOL
     except Exception as e:
-        # Config-level failure (e.g. embedchain demanding OPENAI_API_KEY) — same for every
-        # request, so disable to avoid per-request retries. Re-enable by fixing the config.
+        # Config-level failure (same for every request) — disable to avoid per-request retries.
         _RAG_DISABLED = True
         logger.warning("Error initializing RAG tool, disabling it for this process: %s", e)
         return None

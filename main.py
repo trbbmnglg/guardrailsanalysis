@@ -209,14 +209,13 @@ class GuardrailsAuditCrew:
         self.rag_tool = None
         if enable_rag:
             try:
-                self.rag_tool = get_owasp_rag_tool(self.api_key)
+                self.rag_tool = get_owasp_rag_tool()  # local embeddings; no token needed
                 if self.rag_tool:
                     logger.info("OWASP RAG tool ready")
             except Exception as e:
                 logger.warning("OWASP RAG tool unavailable, auditor will run without it: %s", clean_text(str(e)))
 
-    @llm
-    def main_llm(self):
+    def _build_llm(self, max_tokens: int):
         model_map = {
             "deepseek": "openai/deepseek-ai/DeepSeek-V3.2",
             "llama": "openai/meta-llama/Llama-3.3-70B-Instruct",
@@ -231,28 +230,41 @@ class GuardrailsAuditCrew:
             base_url=HF_ROUTER_BASE,
             api_key=self.api_key,
             temperature=0.0,
-            max_tokens=8000,
+            max_tokens=max_tokens,
         )
 
-    # Agents
+    @llm
+    def main_llm(self):
+        # Per-domain audit agents emit a single findings list — 4000 is plenty.
+        return self._build_llm(4000)
+
+    @llm
+    def synthesis_llm(self):
+        # Governance merges every agent's findings into ONE large JSON report; give it
+        # ample room so the final output can't truncate into unparseable JSON.
+        return self._build_llm(12000)
+
+    # Agents. max_iter caps the ReAct loop (default 25); these are single-shot JSON
+    # agents so 3 is plenty. security_auditor gets 5 to allow a RAG tool search +
+    # reasoning + final answer when the "Deep Compliance Scan" toggle is on.
     @agent
     def security_auditor(self) -> Agent:
         # Only this agent is told (in agents.yaml) that it can search the OWASP PDF,
         # so it is the only one wired with the RAG tool.
         tools = [self.rag_tool] if self.rag_tool else []
-        return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), tools=tools, reasoning=self.enable_reasoning)
+        return Agent(config=self.agents_config['security_auditor'], llm=self.main_llm(), tools=tools, reasoning=self.enable_reasoning, max_iter=5)
     @agent
-    def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
+    def privacy_officer(self) -> Agent: return Agent(config=self.agents_config['privacy_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning, max_iter=3)
     @agent
-    def rai_director(self) -> Agent: return Agent(config=self.agents_config['rai_director'], llm=self.main_llm(), reasoning=self.enable_reasoning)
+    def rai_director(self) -> Agent: return Agent(config=self.agents_config['rai_director'], llm=self.main_llm(), reasoning=self.enable_reasoning, max_iter=3)
     @agent
-    def qa_engineer(self) -> Agent: return Agent(config=self.agents_config['qa_engineer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
+    def qa_engineer(self) -> Agent: return Agent(config=self.agents_config['qa_engineer'], llm=self.main_llm(), reasoning=self.enable_reasoning, max_iter=3)
     @agent
-    def cost_architect(self) -> Agent: return Agent(config=self.agents_config['cost_architect'], llm=self.main_llm(), reasoning=self.enable_reasoning)
+    def cost_architect(self) -> Agent: return Agent(config=self.agents_config['cost_architect'], llm=self.main_llm(), reasoning=self.enable_reasoning, max_iter=3)
     @agent
-    def green_ai_officer(self) -> Agent: return Agent(config=self.agents_config['green_ai_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
+    def green_ai_officer(self) -> Agent: return Agent(config=self.agents_config['green_ai_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning, max_iter=3)
     @agent
-    def governance_officer(self) -> Agent: return Agent(config=self.agents_config['governance_officer'], llm=self.main_llm(), reasoning=self.enable_reasoning)
+    def governance_officer(self) -> Agent: return Agent(config=self.agents_config['governance_officer'], llm=self.synthesis_llm(), reasoning=self.enable_reasoning, max_iter=3)
 
     # Tasks
     @task
@@ -263,10 +275,12 @@ class GuardrailsAuditCrew:
     def rai_audit_task(self) -> Task: return Task(config=self.tasks_config['rai_audit_task'], agent=self.rai_director(), async_execution=True)
     @task
     def qa_audit_task(self) -> Task: return Task(config=self.tasks_config['qa_audit_task'], agent=self.qa_engineer(), async_execution=True)
+    # cost + green are independent of the audits and of each other → run them async too
+    # so they overlap with the 4 audits. The sync report_synthesis_task joins all of them.
     @task
-    def cost_profiling_task(self) -> Task: return Task(config=self.tasks_config['cost_profiling_task'], agent=self.cost_architect())
+    def cost_profiling_task(self) -> Task: return Task(config=self.tasks_config['cost_profiling_task'], agent=self.cost_architect(), async_execution=True)
     @task
-    def green_ai_analysis_task(self) -> Task: return Task(config=self.tasks_config['green_ai_analysis_task'], agent=self.green_ai_officer())
+    def green_ai_analysis_task(self) -> Task: return Task(config=self.tasks_config['green_ai_analysis_task'], agent=self.green_ai_officer(), async_execution=True)
     @task
     def report_synthesis_task(self) -> Task:
         # No output_pydantic: crewai's structured-output (instructor) path ignores our
@@ -409,6 +423,10 @@ async def run_analysis(request: Request, payload: AnalysisRequest):
             raw_text = getattr(result, "raw", None) or str(result)
             parsed_result = extract_data(raw_text)
             if not parsed_result:
+                # Diagnostic without leaking content: length + whether it ends with a
+                # closing brace (a missing brace ⇒ truncated output, i.e. raise max_tokens).
+                logger.warning("Synthesis unparseable: len=%d ends_with_brace=%s",
+                               len(raw_text), raw_text.rstrip().endswith('}'))
                 raise ValueError("Audit result was not parseable JSON")
 
             if req.enable_greenai_analysis and hasattr(result, 'tasks_output'):
@@ -417,6 +435,23 @@ async def run_analysis(request: Request, payload: AnalysisRequest):
                         extracted = extract_data(getattr(task_out, 'raw', None) or str(task_out))
                         if extracted:
                             parsed_result['green_ai_analysis'] = extracted
+
+            # Cost/FinOps tiering: extract the cost agent's output into tiering_strategy
+            # (governance no longer emits it). A None extraction is tolerated -> the
+            # frontend falls back to heuristic tiering.
+            if req.enable_profiling and hasattr(result, 'tasks_output'):
+                for task_out in result.tasks_output:
+                    if "FinOps" in str(getattr(task_out, 'agent', '')):
+                        extracted = extract_data(getattr(task_out, 'raw', None) or str(task_out))
+                        if extracted:
+                            parsed_result['tiering_strategy'] = extracted
+
+            # Guarantee every guardrail has an integer complexity_tier in 1-5 (the latency
+            # profiler reads it); default to 2 if the model omitted it or it's out of range.
+            for g in (parsed_result.get('guardrails') or []):
+                tier = g.get('complexity_tier')
+                if not isinstance(tier, int) or not (1 <= tier <= 5):
+                    g['complexity_tier'] = 2
 
             await q.put({"type": "result", "data": parsed_result})
 
