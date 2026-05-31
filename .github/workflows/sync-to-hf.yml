@@ -1,0 +1,26 @@
+name: Sync to Hugging Face Space
+
+# GitHub is the source of truth. Every push to `main` (and manual runs)
+# force-pushes the repo to the Hugging Face Space, which then redeploys.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history + LFS
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git push --force \
+            "https://rbrtbmnglg:${HF_TOKEN}@huggingface.co/spaces/rbrtbmnglg/guardrailsanalysis" \
+            main
