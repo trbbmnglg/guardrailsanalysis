@@ -12,7 +12,6 @@ from typing import List, Literal, Optional
 from crewai import Agent, Task, Crew, Process, LLM
 from crewai.project import CrewBase, agent, crew, task, llm
 from langchain_openai import ChatOpenAI
-from green_ai_plugin import GreenAIAnalysis
 from agent_tools import get_owasp_rag_tool
 
 # Rate limiting (slowapi)
@@ -267,11 +266,14 @@ class GuardrailsAuditCrew:
     @task
     def cost_profiling_task(self) -> Task: return Task(config=self.tasks_config['cost_profiling_task'], agent=self.cost_architect())
     @task
-    def green_ai_analysis_task(self) -> Task: return Task(config=self.tasks_config['green_ai_analysis_task'], agent=self.green_ai_officer(), output_pydantic=GreenAIAnalysis)
+    def green_ai_analysis_task(self) -> Task: return Task(config=self.tasks_config['green_ai_analysis_task'], agent=self.green_ai_officer())
     @task
     def report_synthesis_task(self) -> Task:
+        # No output_pydantic: crewai's structured-output (instructor) path ignores our
+        # custom base_url and routes to default OpenAI ("invalid model ID"). We enforce
+        # JSON via the task prompt + CRITICAL_JSON_RULES and parse it ourselves.
         context = [self.security_audit_task(), self.privacy_audit_task(), self.rai_audit_task(), self.qa_audit_task()]
-        return Task(config=self.tasks_config['report_synthesis_task'], agent=self.governance_officer(), context=context, output_pydantic=GuardrailAnalysis)
+        return Task(config=self.tasks_config['report_synthesis_task'], agent=self.governance_officer(), context=context)
 
     # Callback Handler
     def create_callback(self, agent_key: str):
@@ -403,17 +405,18 @@ async def run_analysis(request: Request, payload: AnalysisRequest):
                     timeout=GR_TIMEOUT,
                 )
 
-            parsed_result = extract_data(result)
-            if not parsed_result: parsed_result = json.loads(repair_json(str(result)))
+            # Parse the governance synthesis (final task) JSON ourselves.
+            raw_text = getattr(result, "raw", None) or str(result)
+            parsed_result = extract_data(raw_text)
+            if not parsed_result:
+                raise ValueError("Audit result was not parseable JSON")
 
-            if hasattr(result, 'tasks_output'):
+            if req.enable_greenai_analysis and hasattr(result, 'tasks_output'):
                 for task_out in result.tasks_output:
-                    if req.enable_greenai_analysis:
-                        if hasattr(task_out, 'pydantic') and isinstance(task_out.pydantic, GreenAIAnalysis):
-                            parsed_result['green_ai_analysis'] = task_out.pydantic.model_dump()
-                        elif hasattr(task_out, 'agent') and "Eco-Efficiency" in str(task_out.agent):
-                            extracted = extract_data(task_out)
-                            if extracted: parsed_result['green_ai_analysis'] = extracted
+                    if "Eco-Efficiency" in str(getattr(task_out, 'agent', '')):
+                        extracted = extract_data(getattr(task_out, 'raw', None) or str(task_out))
+                        if extracted:
+                            parsed_result['green_ai_analysis'] = extracted
 
             await q.put({"type": "result", "data": parsed_result})
 
