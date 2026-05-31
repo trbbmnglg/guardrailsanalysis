@@ -1,7 +1,5 @@
 # green_ai_plugin.py
-from crewai import Agent, Task
 from pydantic import BaseModel, Field, field_validator
-from typing import Literal, Optional, Union
 
 # --- Data Model ---
 class GreenAIAnalysis(BaseModel):
@@ -19,11 +17,3 @@ class GreenAIAnalysis(BaseModel):
         normalized = v.strip().capitalize()
         # Fallback to 'Green' if the LLM outputs something weird, preventing a crash
         return normalized if normalized in valid else "Green"
-
-# --- Agent & Task Configuration ---
-class GreenAIPlugin:
-    def get_agent(self, llm,agents_config):
-        return Agent(config=agents_config['green_ai_officer'], llm=llm, verbose=True, allow_delegation=False)
-
-    def get_task(self, agent, instruction, tasks_config):
-        return Task(config=tasks_config['green_ai_analysis_task'], agent=agent, output_pydantic=GreenAIAnalysis)

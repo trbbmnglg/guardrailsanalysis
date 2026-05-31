@@ -75,6 +75,14 @@
         return div.innerHTML;
     }
 
+    // Attribute-safe escape (escapeHtml does NOT encode quotes, so it is unsafe inside
+    // an HTML attribute / inline handler). Use this for any model-derived attribute value.
+    function escapeAttr(text) {
+        return String(text == null ? '' : text)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     function cleanErrorMessage(errData, status) {
         if (!errData) return `Server Error (${status})`;
         let msg = errData.detail || errData.message || errData.error;
@@ -145,6 +153,12 @@
         document.getElementById('saveApiKey')?.addEventListener('change', (e) => {
             if (e.target.checked && apiKeyInput.value.trim()) sessionStorage.setItem('hf_api_key', apiKeyInput.value.trim());
             else sessionStorage.removeItem('hf_api_key');
+        });
+
+        // Delegated handler for dynamically-rendered category chips (replaces inline onclick).
+        document.addEventListener('click', (e) => {
+            const chip = e.target.closest ? e.target.closest('.cat-chip') : null;
+            if (chip) filterByCategory(chip.dataset.cat);
         });
     }
 
@@ -680,8 +694,8 @@
                 const opacityClass = count === 0 && cat !== 'all' ? "opacity-50" : "opacity-100";
 
                 return `
-                <button onclick="window.guardrailAnalyzer.filterByCategory('${escapeHtml(cat)}')" 
-                    class="shrink-0 px-4 py-2 rounded-none text-xs font-bold transition-all duration-300 border flex items-center gap-2 ${isSelected ? activeClass : inactiveClass} ${opacityClass}">
+                <button type="button" data-cat="${escapeAttr(cat)}"
+                    class="cat-chip shrink-0 px-4 py-2 rounded-none text-xs font-bold transition-all duration-300 border flex items-center gap-2 ${isSelected ? activeClass : inactiveClass} ${opacityClass}">
                     <span>${escapeHtml(cat === 'all' ? 'All Categories' : cat)}</span>
                     <span class="px-1.5 py-0.5 rounded-none text-[10px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">
                         ${count}

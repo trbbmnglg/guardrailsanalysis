@@ -1,0 +1,25 @@
+# Keep the Docker build context (and image) free of secrets, local junk, and dev tooling.
+# NOTE: README.md is intentionally NOT ignored — HF Spaces reads its YAML frontmatter.
+.git
+.gitattributes
+.github
+
+# Secrets / local env
+.env
+.env.*
+.venv
+venv
+env
+
+# Python / runtime artifacts
+__pycache__
+*.pyc
+*.pyo
+chroma_db
+
+# Local dev tooling (also gitignored; never needed in the image)
+.claude
+skills
+CLAUDE.md
+AUDIT.md
+audit-reports

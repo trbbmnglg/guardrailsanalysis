@@ -11,6 +11,16 @@ __pycache__/
 venv/
 env/
 
+# RAG vector store (created at runtime)
+chroma_db/
+
+# Local dev tooling — Claude Code (NEVER commit; must not sync to HF Space)
+CLAUDE.md
+AUDIT.md
+.claude/
+skills/
+audit-reports/
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db

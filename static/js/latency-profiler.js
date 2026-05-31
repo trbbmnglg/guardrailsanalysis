@@ -2,6 +2,9 @@
 (function() {
     'use strict';
 
+    // Escape model-derived strings before they touch innerHTML (XSS defense).
+    const esc = (s) => { const d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; };
+
     // SVG Icons Definition
     const ICONS = {
         lightning: `<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>`,
@@ -98,7 +101,7 @@
                 title: "Async Post-Processing", 
                 icon: ICONS.hourglass, 
                 impact: "Medium", 
-                desc: `Move the <b>${asyncCandidates[0].name}</b> check to a background job. Compliance logging should not block the user response.` 
+                desc: `Move the <b>${esc(asyncCandidates[0].name)}</b> check to a background job. Compliance logging should not block the user response.`
             });
         }
         if (tierLevel === 4) {
@@ -245,7 +248,7 @@
                 <span class="inline-block bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 text-xs font-medium px-2 py-1 rounded-none w-fit mb-4">
                     ${data.model.type}
                 </span>
-                <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 flex-1">${data.model.description}</p>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mb-6 flex-1">${esc(data.model.description)}</p>
                 <div class="bg-slate-50 dark:bg-slate-800/50 rounded-none p-4 border border-slate-200 dark:border-slate-700">
                     <div class="flex justify-between items-end mb-2">
                         <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Monthly Volume</label>
@@ -280,7 +283,7 @@
                       data.breakdown.slice(0, 5).map(item => `
                         <div class="flex items-center gap-3 text-sm group">
                             <div class="w-8 h-8 rounded-none flex items-center justify-center text-xs font-bold ${getTierBadge(item.tier)}">T${item.tier}</div>
-                            <div class="w-1/3 truncate text-slate-700 dark:text-slate-300 font-medium" title="${item.name}">${item.name}</div>
+                            <div class="w-1/3 truncate text-slate-700 dark:text-slate-300 font-medium" title="${esc(item.name)}">${esc(item.name)}</div>
                             <div class="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-none overflow-hidden">
                                 <div class="h-full rounded-none ${getBarColor(item.tier)}" style="width: ${Math.min(100, (item.baseCost / 1000) * 100)}%"></div>
                             </div>

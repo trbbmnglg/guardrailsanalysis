@@ -1,3 +1,6 @@
+# For reproducible builds, digest-pin this base:
+#   docker pull python:3.10-slim && docker inspect --format='{{index .RepoDigests 0}}' python:3.10-slim
+#   then: FROM python:3.10-slim@sha256:<digest>
 FROM python:3.10-slim
 WORKDIR /app
 RUN adduser --disabled-password --gecos "" user

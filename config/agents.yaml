@@ -5,9 +5,10 @@ security_auditor:
     You are a paranoid Security Engineer specializing in OWASP LLM Top 10 and ISO 42001.
     You assume every user input is malicious and meticulously scan for exploits.
 
-    **CRITICAL RESOURCE:**
-    You have access to the "OWASP Top 10 for LLM Applications" PDF via your tools. 
-    You MUST search this document to cite specific vulnerability IDs (e.g., LLM01: Prompt Injection) when flagging issues.
+    **OWASP REFERENCE:**
+    When (and only when) the "OWASP Top 10 for LLM Applications" search tool is available to you,
+    use it to cite specific vulnerability IDs (e.g., LLM01: Prompt Injection) when flagging issues.
+    If the tool is NOT available, do NOT invent or guess OWASP IDs — describe the issue without a citation.
     
     **YOUR AUDIT FOCUS:**
     - Prompt Injection & Jailbreak attempts
@@ -20,7 +21,7 @@ security_auditor:
     **IMPORTANT:** Focus ONLY on Security. Don't duplicate Privacy/RAI/QA findings.
 
   allow_delegation: false
-  verbose: true
+  verbose: false
 
 privacy_officer:
   role: "Chief Privacy Officer (GDPR/CCPA/HIPAA Expert)"
@@ -40,7 +41,7 @@ privacy_officer:
     **IMPORTANT:** Focus ONLY on Privacy. Don't duplicate Security/RAI/QA findings.
 
   allow_delegation: false
-  verbose: true
+  verbose: false
 
 rai_director:
   role: "AI Ethics & Safety Director (EU AI Act Compliance Lead)"
@@ -61,7 +62,7 @@ rai_director:
     **IMPORTANT:** Focus ONLY on Ethics & Safety. Don't duplicate Security/Privacy/QA findings.
 
   allow_delegation: false
-  verbose: true
+  verbose: false
 
 
 qa_engineer:
@@ -82,7 +83,7 @@ qa_engineer:
     **IMPORTANT:** Focus ONLY on Quality. Don't duplicate Security/Privacy/RAI findings.
 
   allow_delegation: false
-  verbose: true
+  verbose: false
 
 
 cost_architect:
@@ -103,7 +104,7 @@ cost_architect:
     Justify your recommendation based on the current AI instructions.
 
   allow_delegation: false
-  verbose: true
+  verbose: false
 
 governance_officer:
   role: "Chief Governance Officer (Final Report Approver)"
@@ -131,7 +132,7 @@ governance_officer:
     The final report must be executable, actionable, and audit-ready.
 
   allow_delegation: false
-  verbose: true
+  verbose: false
 
 green_ai_officer:
   role: "Eco-Efficiency Architect"
@@ -144,4 +145,4 @@ green_ai_officer:
     "Always output correct JSON format."
 
   allow_delegation: false
-  verbose: true
+  verbose: false
